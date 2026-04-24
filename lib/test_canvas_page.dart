@@ -1,4 +1,5 @@
 // lib/test_canvas_page.dart
+import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
@@ -13,7 +14,8 @@ import 'package:pdf/widgets.dart' as pw;
 // ─────────────────────────────────────────────
 // Enums
 // ─────────────────────────────────────────────
-enum CanvasItemType { textSection, line, rectangle, circle, imageBox, icon,
+enum CanvasItemType {
+  textSection, line, rectangle, circle, imageBox, icon,
   triangle, star, arrow, diamond, hexagon, skewedRectangle
 }
 
@@ -52,7 +54,8 @@ class _ItemSnapshot {
 class _CanvasSnapshot {
   final List<_ItemSnapshot> items;
   final String? selectedId;
-  _CanvasSnapshot(this.items, this.selectedId);
+  final Color canvasBackground;
+  _CanvasSnapshot(this.items, this.selectedId, this.canvasBackground);
 }
 
 // ─────────────────────────────────────────────
@@ -97,24 +100,20 @@ class CanvasItem {
   }
 }
 
-
 List<Offset> _shapeVertices(CanvasItemType type) {
   switch (type) {
     case CanvasItemType.triangle:
       return [const Offset(0.5, 0), const Offset(1, 1), const Offset(0, 1)];
-
     case CanvasItemType.diamond:
       return [
         const Offset(0.5, 0), const Offset(1, 0.5),
         const Offset(0.5, 1), const Offset(0, 0.5),
       ];
-
     case CanvasItemType.hexagon:
       return List.generate(6, (i) {
         final angle = (math.pi / 3) * i - math.pi / 6;
         return Offset(0.5 + 0.5 * math.cos(angle), 0.5 + 0.5 * math.sin(angle));
       });
-
     case CanvasItemType.star:
       final pts = <Offset>[];
       for (int i = 0; i < 10; i++) {
@@ -123,25 +122,21 @@ List<Offset> _shapeVertices(CanvasItemType type) {
         pts.add(Offset(0.5 + r * math.cos(angle), 0.5 + r * math.sin(angle)));
       }
       return pts;
-
     case CanvasItemType.arrow:
       return [
         const Offset(0, 0.3), const Offset(0.6, 0.3), const Offset(0.6, 0),
         const Offset(1, 0.5),
         const Offset(0.6, 1), const Offset(0.6, 0.7), const Offset(0, 0.7),
       ];
-
     case CanvasItemType.skewedRectangle:
       return [
         const Offset(0.15, 0), const Offset(1, 0),
         const Offset(0.85, 1), const Offset(0, 1),
       ];
-
     default:
       return [];
   }
 }
-
 
 // ─────────────────────────────────────────────
 // Page
@@ -167,6 +162,9 @@ class _TestCanvasPageState extends State<TestCanvasPage> {
   String _globalFont = 'OpenSans';
   double _globalFontSize = 12;
 
+  // ── Canvas background (updated by templates) ──
+  Color _canvasBackground = Colors.white;
+
   static const Map<String, String> _fontItems = {
     'Arial': 'Arial', 'Open Sans': 'OpenSans',
     'Poppins': 'Poppins', 'Sekuya': 'Sekuya',
@@ -176,15 +174,16 @@ class _TestCanvasPageState extends State<TestCanvasPage> {
   final List<_CanvasSnapshot> _redoStack = [];
   final Map<String, pw.Font> _pdfFonts = {};
   bool _fontsLoaded = false;
+  bool _templateLoading = false;
   final FocusNode _keyboardFocus = FocusNode();
 
   @override
   void initState() {
     super.initState();
     _addTextSection(title: 'Personal Info', position: const Offset(20, 20), width: 555, height: 60);
-    _addTextSection(title: 'Summary', position: const Offset(20, 100), width: 555, height: 60);
-    _addTextSection(title: 'Experience', position: const Offset(20, 180), width: 340, height: 60);
-    _addTextSection(title: 'Skills', position: const Offset(375, 180), width: 200, height: 60);
+    _addTextSection(title: 'Summary',       position: const Offset(20, 100), width: 555, height: 60);
+    _addTextSection(title: 'Experience',    position: const Offset(20, 180), width: 340, height: 60);
+    _addTextSection(title: 'Skills',        position: const Offset(375, 180), width: 200, height: 60);
     _preloadFonts();
     HardwareKeyboard.instance.addHandler(_globalKeyHandler);
   }
@@ -223,20 +222,32 @@ class _TestCanvasPageState extends State<TestCanvasPage> {
   // ── Undo/redo ────────────────────────────────
 
   void _saveSnapshot() {
-    _undoStack.add(_CanvasSnapshot(_items.map(_ItemSnapshot.from).toList(), _selectedId));
+    _undoStack.add(_CanvasSnapshot(
+      _items.map(_ItemSnapshot.from).toList(),
+      _selectedId,
+      _canvasBackground,
+    ));
     _redoStack.clear();
     if (_undoStack.length > 50) _undoStack.removeAt(0);
   }
 
   void _undo() {
     if (_undoStack.isEmpty) return;
-    _redoStack.add(_CanvasSnapshot(_items.map(_ItemSnapshot.from).toList(), _selectedId));
+    _redoStack.add(_CanvasSnapshot(
+      _items.map(_ItemSnapshot.from).toList(),
+      _selectedId,
+      _canvasBackground,
+    ));
     _restoreSnapshot(_undoStack.removeLast());
   }
 
   void _redo() {
     if (_redoStack.isEmpty) return;
-    _undoStack.add(_CanvasSnapshot(_items.map(_ItemSnapshot.from).toList(), _selectedId));
+    _undoStack.add(_CanvasSnapshot(
+      _items.map(_ItemSnapshot.from).toList(),
+      _selectedId,
+      _canvasBackground,
+    ));
     _restoreSnapshot(_redoStack.removeLast());
   }
 
@@ -275,7 +286,139 @@ class _TestCanvasPageState extends State<TestCanvasPage> {
     final order = snapshot.items.map((s) => s.id).toList();
     _items.sort((a, b) => order.indexOf(a.id).compareTo(order.indexOf(b.id)));
 
-    setState(() { _selectedId = snapshot.selectedId; _multiSelected.clear(); _toolbarKey = UniqueKey(); });
+    setState(() {
+      _selectedId = snapshot.selectedId;
+      _multiSelected.clear();
+      _canvasBackground = snapshot.canvasBackground;
+      _toolbarKey = UniqueKey();
+    });
+  }
+
+  // ─────────────────────────────────────────────
+  // TEMPLATE SYSTEM
+  // ─────────────────────────────────────────────
+
+  /// Parses a hex color string like "#1A1A2E" or "1A1A2E" into a Flutter Color.
+  Color _hexColor(String hex) {
+    final cleaned = hex.replaceFirst('#', '');
+    return Color(int.parse('FF$cleaned', radix: 16));
+  }
+
+  /// Maps the JSON "type" string to our CanvasItemType enum.
+  CanvasItemType _parseType(String raw) {
+    switch (raw) {
+      case 'textSection':      return CanvasItemType.textSection;
+      case 'line':             return CanvasItemType.line;
+      case 'rectangle':        return CanvasItemType.rectangle;
+      case 'circle':           return CanvasItemType.circle;
+      case 'imageBox':         return CanvasItemType.imageBox;
+      case 'icon':             return CanvasItemType.icon;
+      case 'triangle':         return CanvasItemType.triangle;
+      case 'star':             return CanvasItemType.star;
+      case 'arrow':            return CanvasItemType.arrow;
+      case 'diamond':          return CanvasItemType.diamond;
+      case 'hexagon':          return CanvasItemType.hexagon;
+      case 'skewedRectangle':  return CanvasItemType.skewedRectangle;
+      default:                 return CanvasItemType.rectangle;
+    }
+  }
+
+  /// Loads a template JSON from assets, disposes all current items,
+  /// and rebuilds the canvas from the JSON definition.
+  Future<void> _loadTemplate(String assetPath) async {
+    setState(() => _templateLoading = true);
+
+    try {
+      // Save current state so user can Ctrl+Z back
+      _saveSnapshot();
+
+      final raw = await rootBundle.loadString(assetPath);
+      final Map<String, dynamic> json = jsonDecode(raw);
+
+      // Dispose all current items
+      for (final item in _items) item.dispose();
+      _items.clear();
+
+      // Canvas background
+      final bg = json['canvasBackground'] as String? ?? '#FFFFFF';
+
+      // Build new items
+      final rawItems = json['items'] as List<dynamic>;
+      for (final rawItem in rawItems) {
+        final map    = rawItem as Map<String, dynamic>;
+        final type   = _parseType(map['type'] as String);
+        final item   = CanvasItem(
+          type:        type,
+          position:    Offset((map['x'] as num).toDouble(), (map['y'] as num).toDouble()),
+          width:       (map['w'] as num).toDouble(),
+          height:      (map['h'] as num).toDouble(),
+          rotation:    (map['rotation'] as num? ?? 0).toDouble(),
+          color:       _hexColor(map['color'] as String),
+          borderColor: _hexColor(map['borderColor'] as String),
+          borderWidth: (map['borderWidth'] as num? ?? 1).toDouble(),
+          title:       map['title'] as String? ?? '',
+          flipX:       map['flipX'] as bool? ?? false,
+          flipY:       map['flipY'] as bool? ?? false,
+        );
+
+        // Wire up focus listener for text sections
+        if (item.isText) {
+          item.focusNode!.addListener(() {
+            if (item.focusNode!.hasFocus && _selectedId != item.id) {
+              setState(() {
+                _selectedId = item.id;
+                _multiSelected.clear();
+                _toolbarKey = UniqueKey();
+              });
+            }
+          });
+        }
+
+        _items.add(item);
+      }
+
+      setState(() {
+        _canvasBackground = _hexColor(bg);
+        _selectedId = null;
+        _multiSelected.clear();
+        _toolbarKey = UniqueKey();
+        _templateLoading = false;
+      });
+
+    } catch (e) {
+      setState(() => _templateLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Template load error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  /// Shows a simple dropdown/menu of available templates.
+  /// Right now only Classic CV exists — add more entries here as you build them.
+  void _showTemplateMenu(BuildContext context) {
+    final templates = [
+      {'label': 'Classic CV', 'asset': 'assets/templates/classic_cv.json'},
+      // Add more templates here later:
+      // {'label': 'Two Column', 'asset': 'assets/templates/two_column.json'},
+      // {'label': 'Minimal',    'asset': 'assets/templates/minimal.json'},
+    ];
+
+    showMenu<String>(
+      context: context,
+      position: const RelativeRect.fromLTRB(100, kToolbarHeight, 0, 0),
+      items: templates.map((t) => PopupMenuItem<String>(
+        value: t['asset'],
+        child: Row(children: [
+          const Icon(Icons.description_outlined, size: 16, color: Colors.blue),
+          const SizedBox(width: 8),
+          Text(t['label']!, style: const TextStyle(fontSize: 13)),
+        ]),
+      )).toList(),
+    ).then((asset) {
+      if (asset != null) _loadTemplate(asset);
+    });
   }
 
   // ── Item management ──────────────────────────
@@ -302,17 +445,17 @@ class _TestCanvasPageState extends State<TestCanvasPage> {
   void _addShape(CanvasItemType type) {
     _saveSnapshot();
     final defaults = <CanvasItemType, Map<String, dynamic>>{
-      CanvasItemType.line:      {'w': 200.0, 'h': 4.0,   'color': Colors.transparent, 'border': Colors.black},
-      CanvasItemType.rectangle: {'w': 160.0, 'h': 100.0, 'color': Colors.blue.shade50, 'border': Colors.blue},
-      CanvasItemType.circle:    {'w': 100.0, 'h': 100.0, 'color': Colors.green.shade50,'border': Colors.green},
-      CanvasItemType.imageBox:  {'w': 160.0, 'h': 120.0, 'color': Colors.grey.shade100,'border': Colors.grey},
-      CanvasItemType.icon:      {'w': 48.0,  'h': 48.0,  'color': Colors.transparent,  'border': Colors.blue},
-      CanvasItemType.triangle:         {'w': 120.0, 'h': 120.0, 'color': Colors.orange.shade50, 'border': Colors.orange},
-      CanvasItemType.star:             {'w': 120.0, 'h': 120.0, 'color': Colors.yellow.shade50, 'border': Colors.orange},
-      CanvasItemType.arrow:            {'w': 160.0, 'h': 80.0,  'color': Colors.teal.shade50,   'border': Colors.teal},
-      CanvasItemType.diamond:          {'w': 100.0, 'h': 120.0, 'color': Colors.pink.shade50,   'border': Colors.pink},
-      CanvasItemType.hexagon:          {'w': 120.0, 'h': 120.0, 'color': Colors.purple.shade50, 'border': Colors.purple},
-      CanvasItemType.skewedRectangle:  {'w': 160.0, 'h': 80.0,  'color': Colors.indigo.shade50, 'border': Colors.indigo},
+      CanvasItemType.line:             {'w': 200.0, 'h': 4.0,   'color': Colors.transparent,     'border': Colors.black},
+      CanvasItemType.rectangle:        {'w': 160.0, 'h': 100.0, 'color': Colors.blue.shade50,    'border': Colors.blue},
+      CanvasItemType.circle:           {'w': 100.0, 'h': 100.0, 'color': Colors.green.shade50,   'border': Colors.green},
+      CanvasItemType.imageBox:         {'w': 160.0, 'h': 120.0, 'color': Colors.grey.shade100,   'border': Colors.grey},
+      CanvasItemType.icon:             {'w': 48.0,  'h': 48.0,  'color': Colors.transparent,     'border': Colors.blue},
+      CanvasItemType.triangle:         {'w': 120.0, 'h': 120.0, 'color': Colors.orange.shade50,  'border': Colors.orange},
+      CanvasItemType.star:             {'w': 120.0, 'h': 120.0, 'color': Colors.yellow.shade50,  'border': Colors.orange},
+      CanvasItemType.arrow:            {'w': 160.0, 'h': 80.0,  'color': Colors.teal.shade50,    'border': Colors.teal},
+      CanvasItemType.diamond:          {'w': 100.0, 'h': 120.0, 'color': Colors.pink.shade50,    'border': Colors.pink},
+      CanvasItemType.hexagon:          {'w': 120.0, 'h': 120.0, 'color': Colors.purple.shade50,  'border': Colors.purple},
+      CanvasItemType.skewedRectangle:  {'w': 160.0, 'h': 80.0,  'color': Colors.indigo.shade50,  'border': Colors.indigo},
     };
     final d = defaults[type]!;
     final item = CanvasItem(
@@ -499,16 +642,13 @@ class _TestCanvasPageState extends State<TestCanvasPage> {
 
   pw.Widget _itemToPdf(CanvasItem item) {
     pw.Widget content;
-
-    // Polygon-based shapes
     final vertices = _shapeVertices(item.type);
     if (vertices.isNotEmpty) {
       content = pw.CustomPaint(
         size: PdfPoint(item.width, item.height),
         painter: (PdfGraphics canvas, PdfPoint size) {
           if (vertices.isEmpty) return;
-          final pts = vertices.map((v) =>
-              PdfPoint(v.dx * size.x, v.dy * size.y)).toList();
+          final pts = vertices.map((v) => PdfPoint(v.dx * size.x, v.dy * size.y)).toList();
           canvas.moveTo(pts.first.x, pts.first.y);
           for (final pt in pts.skip(1)) canvas.lineTo(pt.x, pt.y);
           canvas.closePath();
@@ -525,7 +665,6 @@ class _TestCanvasPageState extends State<TestCanvasPage> {
       );
     }
 
-    // Primitive shapes
     switch (item.type) {
       case CanvasItemType.textSection:
         final spans = <pw.InlineSpan>[];
@@ -619,6 +758,22 @@ class _TestCanvasPageState extends State<TestCanvasPage> {
       appBar: AppBar(
         title: const Text('Test 3: Free Canvas CV'),
         actions: [
+          // ── Templates button ──
+          _templateLoading
+              ? const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12),
+            child: SizedBox(
+              width: 20, height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+            ),
+          )
+              : TextButton.icon(
+            onPressed: () => _showTemplateMenu(context),
+            icon: const Icon(Icons.dashboard_customize_outlined,
+                color: Colors.white, size: 18),
+            label: const Text('Templates',
+                style: TextStyle(color: Colors.white, fontSize: 13)),
+          ),
           IconButton(icon: const Icon(Icons.undo), tooltip: 'Undo (Ctrl+Z)',
               onPressed: _undoStack.isNotEmpty ? _undo : null),
           IconButton(icon: const Icon(Icons.redo), tooltip: 'Redo (Ctrl+Y)',
@@ -653,18 +808,18 @@ class _TestCanvasPageState extends State<TestCanvasPage> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 child: Wrap(spacing: 6, runSpacing: 6, children: [
-                  _addBtn('Text',    Icons.text_fields,            () => _addTextSection()),
-                  _addBtn('Line',    Icons.horizontal_rule,        () => _addShape(CanvasItemType.line)),
-                  _addBtn('Rect',    Icons.rectangle_outlined,     () => _addShape(CanvasItemType.rectangle)),
-                  _addBtn('Circle',  Icons.circle_outlined,        () => _addShape(CanvasItemType.circle)),
-                  _addBtn('Image',   Icons.image_outlined,         () => _addShape(CanvasItemType.imageBox)),
-                  _addBtn('Icon',    Icons.emoji_emotions_outlined, () => _addShape(CanvasItemType.icon)),
-                  _addBtn('Triangle',Icons.change_history,         () => _addShape(CanvasItemType.triangle)),
-                  _addBtn('Star',    Icons.star_outline,           () => _addShape(CanvasItemType.star)),
-                  _addBtn('Arrow',   Icons.arrow_forward,          () => _addShape(CanvasItemType.arrow)),
-                  _addBtn('Diamond', Icons.diamond_outlined,       () => _addShape(CanvasItemType.diamond)),
-                  _addBtn('Hexagon', Icons.hexagon_outlined,       () => _addShape(CanvasItemType.hexagon)),
-                  _addBtn('Skewed',  Icons.rectangle_outlined,     () => _addShape(CanvasItemType.skewedRectangle)),
+                  _addBtn('Text',     Icons.text_fields,             () => _addTextSection()),
+                  _addBtn('Line',     Icons.horizontal_rule,         () => _addShape(CanvasItemType.line)),
+                  _addBtn('Rect',     Icons.rectangle_outlined,      () => _addShape(CanvasItemType.rectangle)),
+                  _addBtn('Circle',   Icons.circle_outlined,         () => _addShape(CanvasItemType.circle)),
+                  _addBtn('Image',    Icons.image_outlined,          () => _addShape(CanvasItemType.imageBox)),
+                  _addBtn('Icon',     Icons.emoji_emotions_outlined,  () => _addShape(CanvasItemType.icon)),
+                  _addBtn('Triangle', Icons.change_history,          () => _addShape(CanvasItemType.triangle)),
+                  _addBtn('Star',     Icons.star_outline,            () => _addShape(CanvasItemType.star)),
+                  _addBtn('Arrow',    Icons.arrow_forward,           () => _addShape(CanvasItemType.arrow)),
+                  _addBtn('Diamond',  Icons.diamond_outlined,        () => _addShape(CanvasItemType.diamond)),
+                  _addBtn('Hexagon',  Icons.hexagon_outlined,        () => _addShape(CanvasItemType.hexagon)),
+                  _addBtn('Skewed',   Icons.rectangle_outlined,      () => _addShape(CanvasItemType.skewedRectangle)),
                 ]),
               ),
 
@@ -708,7 +863,7 @@ class _TestCanvasPageState extends State<TestCanvasPage> {
                   ),
                 ],
 
-                // Flip — only for non-text, single select
+                // Flip
                 if (!isMulti && selected != null && !selected.isText) ...[
                   _panelHeader('Flip'),
                   Padding(
@@ -743,7 +898,7 @@ class _TestCanvasPageState extends State<TestCanvasPage> {
                     selected.borderColor, () => _showColorPicker(isBorder: true),
                   ),
 
-                // AFTER — covers all shapes that have a border
+                // Border width slider
                 if (!isMulti && selected != null &&
                     !selected.isText &&
                     selected.type != CanvasItemType.imageBox &&
@@ -754,7 +909,7 @@ class _TestCanvasPageState extends State<TestCanvasPage> {
                         (v) => setState(() => selected.borderWidth = v),
                   ),
 
-                // Rotation with angle number display
+                // Rotation
                 if (!isMulti && selected != null && !selected.isText) ...[
                   _panelHeader('Rotation'),
                   Padding(
@@ -767,8 +922,7 @@ class _TestCanvasPageState extends State<TestCanvasPage> {
                         onChanged: (v) => setState(() => selected.rotation = v * (math.pi / 180)),
                         onChangeEnd: (_) => _saveSnapshot(),
                       )),
-                      Container(
-                        width: 40, alignment: Alignment.center,
+                      Container(width: 40, alignment: Alignment.center,
                         child: Text(
                           '${((selected.rotation * (180 / math.pi)) % 360).toStringAsFixed(0)}°',
                           style: const TextStyle(fontSize: 12,
@@ -792,7 +946,7 @@ class _TestCanvasPageState extends State<TestCanvasPage> {
                     ),
                   ),
 
-                // Icon picker + color
+                // Icon picker
                 if (!isMulti && selected?.type == CanvasItemType.icon) ...[
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -878,7 +1032,7 @@ class _TestCanvasPageState extends State<TestCanvasPage> {
           ),
         ),
 
-        // ── RIGHT PANEL ───────────────────────────
+        // ── CANVAS ────────────────────────────────
         Expanded(
           child: Container(
             color: Colors.grey.shade400,
@@ -894,7 +1048,7 @@ class _TestCanvasPageState extends State<TestCanvasPage> {
                       child: Stack(
                         clipBehavior: Clip.none,
                         children: [
-                          // A4 white background + marquee gestures
+                          // A4 background + marquee gestures
                           Positioned.fill(
                             child: GestureDetector(
                               onTapDown: (_) => setState(() {
@@ -910,7 +1064,8 @@ class _TestCanvasPageState extends State<TestCanvasPage> {
                               },
                               onPanEnd: (_) { if (_isMarqueeActive) _onMarqueeEnd(); },
                               child: Container(decoration: BoxDecoration(
-                                color: Colors.white,
+                                // Canvas background is now controlled by the template
+                                color: _canvasBackground,
                                 boxShadow: [BoxShadow(
                                     color: Colors.black.withOpacity(0.2),
                                     blurRadius: 16, offset: const Offset(0, 4))],
@@ -1155,7 +1310,6 @@ class _CanvasItemWidgetState extends State<_CanvasItemWidget> {
   Widget _buildBody() {
     if (widget.item.isText) {
       return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // Drag handle with move cursor
         MouseRegion(
           cursor: SystemMouseCursors.move,
           child: GestureDetector(
@@ -1190,7 +1344,6 @@ class _CanvasItemWidgetState extends State<_CanvasItemWidget> {
             ),
           ),
         ),
-        // Quill editor body
         Expanded(child: Container(
           color: Colors.white, padding: const EdgeInsets.all(4),
           child: QuillEditor(
@@ -1213,7 +1366,6 @@ class _CanvasItemWidgetState extends State<_CanvasItemWidget> {
       ]);
     }
 
-    // All non-text shapes — move cursor on entire body
     return MouseRegion(
       cursor: SystemMouseCursors.move,
       child: GestureDetector(
@@ -1241,7 +1393,7 @@ class _CanvasItemWidgetState extends State<_CanvasItemWidget> {
   Widget _buildShapeBody() {
     final vertices = _shapeVertices(widget.item.type);
     if (vertices.isNotEmpty) {
-      return SizedBox.expand(  // ← forces CustomPaint to fill parent
+      return SizedBox.expand(
         child: CustomPaint(
           painter: _ShapePainter(
             vertices: vertices,
@@ -1288,8 +1440,6 @@ class _CanvasItemWidgetState extends State<_CanvasItemWidget> {
         return const SizedBox();
     }
   }
-
-  // ── Resize handles ────────────────────────────
 
   List<Widget> _buildResizeHandles() {
     const hit = 24.0, vis = 10.0, h = hit / 2;

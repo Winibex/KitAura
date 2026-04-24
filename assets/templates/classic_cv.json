@@ -1,0 +1,117 @@
+{
+  "canvasBackground": "#FFFFFF",
+  "items": [
+    {
+      "type": "rectangle",
+      "title": "Header BG",
+      "x": 0, "y": 0, "w": 595, "h": 110,
+      "color": "#1A1A2E", "borderColor": "#1A1A2E", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false
+    },
+    {
+      "type": "rectangle",
+      "title": "Accent Line",
+      "x": 0, "y": 110, "w": 595, "h": 4,
+      "color": "#4F8EF7", "borderColor": "#4F8EF7", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Full Name",
+      "x": 40, "y": 18, "w": 515, "h": 44,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Job Title",
+      "x": 40, "y": 64, "w": 515, "h": 32,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Contact Info",
+      "x": 40, "y": 122, "w": 515, "h": 30,
+      "color": "#FFFFFF", "borderColor": "#F0F0F0", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false
+    },
+    {
+      "type": "line",
+      "title": "Divider",
+      "x": 40, "y": 166, "w": 515, "h": 4,
+      "color": "#E0E0E0", "borderColor": "#E0E0E0", "borderWidth": 1,
+      "rotation": 0, "flipX": false, "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "PROFESSIONAL SUMMARY",
+      "x": 40, "y": 178, "w": 515, "h": 90,
+      "color": "#FFFFFF", "borderColor": "#F0F0F0", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false
+    },
+    {
+      "type": "line",
+      "title": "Divider",
+      "x": 40, "y": 278, "w": 515, "h": 4,
+      "color": "#E0E0E0", "borderColor": "#E0E0E0", "borderWidth": 1,
+      "rotation": 0, "flipX": false, "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "WORK EXPERIENCE",
+      "x": 40, "y": 290, "w": 515, "h": 150,
+      "color": "#FFFFFF", "borderColor": "#F0F0F0", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false
+    },
+    {
+      "type": "line",
+      "title": "Divider",
+      "x": 40, "y": 450, "w": 515, "h": 4,
+      "color": "#E0E0E0", "borderColor": "#E0E0E0", "borderWidth": 1,
+      "rotation": 0, "flipX": false, "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "EDUCATION",
+      "x": 40, "y": 462, "w": 515, "h": 110,
+      "color": "#FFFFFF", "borderColor": "#F0F0F0", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false
+    },
+    {
+      "type": "line",
+      "title": "Divider",
+      "x": 40, "y": 582, "w": 515, "h": 4,
+      "color": "#E0E0E0", "borderColor": "#E0E0E0", "borderWidth": 1,
+      "rotation": 0, "flipX": false, "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "SKILLS",
+      "x": 40, "y": 594, "w": 515, "h": 100,
+      "color": "#FFFFFF", "borderColor": "#F0F0F0", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false
+    },
+    {
+      "type": "line",
+      "title": "Divider",
+      "x": 40, "y": 704, "w": 515, "h": 4,
+      "color": "#E0E0E0", "borderColor": "#E0E0E0", "borderWidth": 1,
+      "rotation": 0, "flipX": false, "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "REFERENCES",
+      "x": 40, "y": 716, "w": 515, "h": 80,
+      "color": "#FFFFFF", "borderColor": "#F0F0F0", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false
+    },
+    {
+      "type": "rectangle",
+      "title": "Footer Bar",
+      "x": 0, "y": 820, "w": 595, "h": 22,
+      "color": "#1A1A2E", "borderColor": "#1A1A2E", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false
+    }
+  ]
+}
