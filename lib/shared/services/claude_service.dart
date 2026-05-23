@@ -14,12 +14,11 @@ class ClaudeConfig {
   ClaudeConfig._();
 
   static const String apiUrl = 'https://api.anthropic.com/v1/messages';
-  static const String model = 'claude-sonnet-4-20250514';
+  static const String model = 'claude-haiku-4-5-20251001';
   static const String apiVersion = '2023-06-01';
   static const int maxTokens = 1024;
 
-  /// Loaded from --dart-define=ANTHROPIC_KEY=sk-ant-xxx
-  static String get apiKey => dotenv.env['ANTHROPIC_KEY'] ?? '';
+  static String get apiKey => (dotenv.env['ANTHROPIC_KEY'] ?? '').trim();
 }
 
 // ─── RESPONSE TYPES ──────────────────────────────────────────────────────
@@ -29,11 +28,7 @@ class ClaudeStreamEvent {
   final bool isDone;
   final String? error;
 
-  const ClaudeStreamEvent({
-    this.text = '',
-    this.isDone = false,
-    this.error,
-  });
+  const ClaudeStreamEvent({this.text = '', this.isDone = false, this.error});
 }
 
 // ─── SPELLCHECK MODEL ───────────────────────────────────────────────────
@@ -61,15 +56,98 @@ class SpellCorrection {
   }
 }
 
+// ─── DEBUG HELPERS ───────────────────────────────────────────────────────
+
+/// Pretty-prints a JSON string. Falls back to raw string if not valid JSON.
+String _prettyJson(dynamic value) {
+  try {
+    final parsed = value is String ? jsonDecode(value) : value;
+    const encoder = JsonEncoder.withIndent('  ');
+    return encoder.convert(parsed);
+  } catch (_) {
+    return value.toString();
+  }
+}
+
+/// Prints a block with a title banner and content.
+void _logBlock(String title, String content) {
+  final line = '━' * 42;
+  debugPrint('\n$line');
+  debugPrint('  $title');
+  debugPrint(line);
+  debugPrint(content);
+  debugPrint('$line\n');
+}
+
 // ─── SERVICE ─────────────────────────────────────────────────────────────
 
 class ClaudeService {
   ClaudeService._();
 
-  static final Dio _dio = Dio(BaseOptions(
-    connectTimeout: const Duration(seconds: 30),
-    receiveTimeout: const Duration(seconds: 120),
-  ));
+  static final Dio _dio = _buildDio();
+
+  static Dio _buildDio() {
+    final dio = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 120),
+      ),
+    );
+
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          // Build masked headers string
+          final headersStr = options.headers.entries.map((e) {
+            final val = e.key == 'x-api-key'
+                ? '${(e.value as String).substring(0, 12)}••••'
+                : e.value;
+            return '  ${e.key}: $val';
+          }).join('\n');
+
+          // Pretty-print body
+          final bodyStr = _prettyJson(options.data);
+
+          _logBlock(
+            '📤 REQUEST  ${options.method}  ${options.uri}',
+            'HEADERS:\n$headersStr\n\nBODY:\n$bodyStr',
+          );
+
+          handler.next(options);
+        },
+
+        onResponse: (response, handler) {
+          final bodyStr = _prettyJson(response.data);
+
+          _logBlock(
+            '📥 RESPONSE  ${response.statusCode}  ${response.realUri}',
+            'BODY:\n$bodyStr',
+          );
+
+          handler.next(response);
+        },
+
+        onError: (DioException e, handler) {
+          // Pretty-print error body — Anthropic always sends JSON with the reason
+          final bodyStr = _prettyJson(e.response?.data);
+
+          // Flatten headers into readable lines
+          final headersStr = e.response?.headers.map.entries
+              .map((h) => '  ${h.key}: ${h.value.join(', ')}')
+              .join('\n') ?? '  (none)';
+
+          _logBlock(
+            '❌ ERROR  ${e.response?.statusCode ?? e.type}  ${e.requestOptions.uri}',
+            'HEADERS:\n$headersStr\n\nBODY:\n$bodyStr',
+          );
+
+          handler.next(e);
+        },
+      ),
+    );
+
+    return dio;
+  }
 
   // ── STREAMING (for AI Fill) ───────────────────────────────────────
 
@@ -80,7 +158,7 @@ class ClaudeService {
       }) async* {
     if (ClaudeConfig.apiKey.isEmpty) {
       yield const ClaudeStreamEvent(
-        error: 'API key not configured. Run with --dart-define=ANTHROPIC_KEY=sk-ant-xxx',
+        error: 'API key not configured. Add ANTHROPIC_KEY to your .env file.',
         isDone: true,
       );
       return;
@@ -136,9 +214,7 @@ class ClaudeService {
               final delta = json['delta'] as Map<String, dynamic>?;
               if (delta != null && delta['type'] == 'text_delta') {
                 final text = delta['text'] as String? ?? '';
-                if (text.isNotEmpty) {
-                  yield ClaudeStreamEvent(text: text);
-                }
+                if (text.isNotEmpty) yield ClaudeStreamEvent(text: text);
               }
             } else if (type == 'message_stop') {
               yield const ClaudeStreamEvent(isDone: true);
@@ -159,7 +235,7 @@ class ClaudeService {
     } on DioException catch (e) {
       yield ClaudeStreamEvent(error: _mapDioError(e), isDone: true);
     } catch (e) {
-      debugPrint('ClaudeService error: $e');
+      debugPrint('ClaudeService stream error: $e');
       yield ClaudeStreamEvent(
         error: 'Something went wrong. Please try again.',
         isDone: true,
@@ -207,10 +283,6 @@ class ClaudeService {
 
   // ── AI SPELLCHECK ─────────────────────────────────────────────────
 
-  /// Sends all text sections to Claude for spellcheck.
-  /// Returns a list of corrections with section names, wrong words, and fixes.
-  ///
-  /// [sections] is a map of { sectionTitle: plainText }
   static Future<List<SpellCorrection>> spellcheckCV(
       Map<String, String> sections,
       ) async {
@@ -220,12 +292,12 @@ class ClaudeService {
 
     if (sections.isEmpty) return [];
 
-    // Build the content block for Claude
     final sectionsText = sections.entries
         .map((e) => '--- ${e.key} ---\n${e.value}')
         .join('\n\n');
 
-    const systemPrompt = '''You are a spelling and grammar checker for a CV/resume.
+    const systemPrompt =
+    '''You are a spelling and grammar checker for a CV/resume.
 Check ONLY for spelling mistakes — do NOT change meaning, tone, or style.
 Skip proper nouns, company names, and technical terms.
 
@@ -248,7 +320,6 @@ Return ONLY the JSON array, no markdown, no explanation.''';
         maxTokens: 1024,
       );
 
-      // Parse JSON response
       final cleaned = response
           .replaceAll('```json', '')
           .replaceAll('```', '')
@@ -265,12 +336,10 @@ Return ONLY the JSON array, no markdown, no explanation.''';
     }
   }
 
-  // ── Error mapping ────────────────────────────────────────────────────
+  // ── Error mapping ─────────────────────────────────────────────────
 
   static String _mapDioError(DioException e) {
-    if (e.type == DioExceptionType.cancel) {
-      return 'AI generation was cancelled.';
-    }
+    if (e.type == DioExceptionType.cancel) return 'AI generation was cancelled.';
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout) {
       return 'Connection timed out. Please check your internet and try again.';
@@ -289,7 +358,7 @@ Return ONLY the JSON array, no markdown, no explanation.''';
       case 502:
       case 503: return 'AI service is temporarily unavailable. Please try again shortly.';
       case 529: return 'AI service is overloaded. Please try again in a moment.';
-      default: return 'AI request failed (${statusCode ?? 'unknown'}). Please try again.';
+      default:  return 'AI request failed (${statusCode ?? 'unknown'}). Please try again.';
     }
   }
 }
