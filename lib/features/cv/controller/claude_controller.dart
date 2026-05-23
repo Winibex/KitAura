@@ -1,31 +1,31 @@
 // lib/features/cv/controller/claude_controller.dart
 //
-// Riverpod controller for AI text generation in the canvas cv.
+// Riverpod controller for AI Fill on canvas text sections.
 //
 // FLOW:
-//   1. User clicks "AI Fill" on a textSection canvas item
-//   2. Controller checks paywall (aiUsageCount < 10 for free plan)
-//   3. Loads AI profile from Firestore (cached after first load)
-//   4. Builds prompt based on the section's title (matchSection)
-//   5. Streams Claude response → inserts into QuillController live
-//   6. Increments aiUsageCount in Firestore on success
+//   1. User clicks "AI Fill" on a textSection
+//   2. Paywall check (aiUsageCount < 10 for free)
+//   3. Load AI profile from Firestore (cached)
+//   4. Call Cloud Function → returns Quill Delta JSON (formatted)
+//   5. REPLACE the section's document with that delta (clean, formatted)
+//   6. Track usage
+//
+// No streaming — the function returns a complete, formatted delta which we
+// apply as a whole document. This fixes the unformatted/overflow/duplicate bugs.
 
-import 'dart:async';
-import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-
 import 'package:flutter_riverpod/legacy.dart';
 import '../../../shared/models/ai_profile_model.dart';
+import '../../../shared/models/section_type.dart';
 import '../../../shared/models/subscription_model.dart';
 import '../../../shared/services/claude_service.dart';
-import '../../../shared/services/ai_prompts.dart';
 import '../../../shared/services/firebase_service.dart';
 
 // ─── STATE ───────────────────────────────────────────────────────────────
 
-enum AiFillStatus { idle, loading, streaming, done, error, paywalled }
+enum AiFillStatus { idle, loading, done, error, paywalled }
 
 class ClaudeState {
   final AiFillStatus status;
@@ -40,8 +40,7 @@ class ClaudeState {
     this.streamedChars = 0,
   });
 
-  bool get isActive =>
-      status == AiFillStatus.loading || status == AiFillStatus.streaming;
+  bool get isActive => status == AiFillStatus.loading;
 
   ClaudeState copyWith({
     AiFillStatus? status,
@@ -63,16 +62,15 @@ class ClaudeState {
 class ClaudeController extends StateNotifier<ClaudeState> {
   ClaudeController() : super(const ClaudeState());
 
-  CancelToken? _cancelToken;
   AiProfileModel? _cachedProfile;
   SubscriptionModel? _cachedSubscription;
 
-  /// Fills a text section with AI-generated content.
+  /// Fill a text section with AI-generated, formatted content.
   Future<void> fillSection({
     required String itemId,
+    required SectionType sectionType,
     required String sectionTitle,
     required QuillController controller,
-    bool clearExisting = true,
     String? cvId,
   }) async {
     if (state.isActive) return;
@@ -89,7 +87,6 @@ class ClaudeController extends StateNotifier<ClaudeState> {
     state = ClaudeState(status: AiFillStatus.loading, activeItemId: itemId);
 
     // ── Paywall check ────────────────────────────────────────────────
-
     try {
       _cachedSubscription ??= await _loadSubscription(uid);
       if (_cachedSubscription != null && !_cachedSubscription!.canUseAI) {
@@ -97,7 +94,7 @@ class ClaudeController extends StateNotifier<ClaudeState> {
           status: AiFillStatus.paywalled,
           activeItemId: itemId,
           error:
-          'You\'ve used all 10 free AI fills this month. Upgrade to Pro for unlimited.',
+          "You've used all 10 free AI fills this month. Upgrade to Pro for unlimited.",
         );
         return;
       }
@@ -106,120 +103,71 @@ class ClaudeController extends StateNotifier<ClaudeState> {
     }
 
     // ── Load AI profile ──────────────────────────────────────────────
-
     try {
       _cachedProfile ??= await _loadAiProfile(uid);
     } catch (e) {
       debugPrint('AI profile load failed: $e');
     }
-
     final profile = _cachedProfile ?? const AiProfileModel();
 
-    // ── Build prompt ─────────────────────────────────────────────────
-
-    final userPrompt = AiPrompts.matchSection(
-      sectionTitle: sectionTitle,
-      jobTitle: profile.jobTitle ?? profile.fullName,
-      experienceLevel: profile.experienceLevel,
-      tone: profile.tone,
-      skills: profile.skills,
-      industry: profile.industry.isNotEmpty ? profile.industry : null,
-      experiences: profile.experiences.map((e) => e.toJson()).toList(),
-      education: profile.education.map((e) => e.toJson()).toList(),
-      certifications: profile.certifications,
-      languages: profile.languages.map((e) => e.toJson()).toList(),
-      fullName: profile.fullName,
-      email: profile.email,
-      phone: profile.phone,
-      location: profile.location,
-      linkedIn: profile.linkedIn,
-      website: profile.website,
-    );
-
-    final systemPrompt = AiPrompts.system(
-      tone: profile.tone,
-      experienceLevel: profile.experienceLevel,
-    );
-
-    // ── Clear existing content ───────────────────────────────────────
-
-    if (clearExisting) {
-      final length = controller.document.length;
-      if (length > 1) {
-        controller.replaceText(0, length - 1, '', null);
-      }
-    }
-
-    // ── Stream into QuillController ──────────────────────────────────
-
-    _cancelToken = CancelToken();
-    state = state.copyWith(status: AiFillStatus.streaming, streamedChars: 0);
-
-    int insertOffset = clearExisting ? 0 : controller.document.length - 1;
-    int totalChars = 0;
-    bool hadError = false;
-
+    // ── Call Cloud Function → get formatted Quill Delta ──────────────
     try {
-      await for (final event in ClaudeService.streamMessage(
-        userPrompt,
-        systemPrompt: systemPrompt,
-        cancelToken: _cancelToken,
-      )) {
-        if (!mounted) return;
+      final delta = await ClaudeService.aiFillSection(
+        sectionType: sectionType.key,
+        tone: profile.tone,
+        experienceLevel: profile.experienceLevel,
+        profile: _sanitizeProfile(profile.toJson()),
+      );
 
-        if (event.error != null) {
-          state = ClaudeState(
-            status: AiFillStatus.error,
-            activeItemId: itemId,
-            error: event.error,
-          );
-          hadError = true;
-          break;
-        }
+      if (!mounted) return;
 
-        if (event.isDone) break;
-
-        if (event.text.isNotEmpty) {
-          controller.document.insert(insertOffset, event.text);
-          insertOffset += event.text.length;
-          totalChars += event.text.length;
-          state = state.copyWith(streamedChars: totalChars);
-        }
-      }
-    } catch (e) {
-      if (e is! DioException || e.type != DioExceptionType.cancel) {
+      if (delta.isEmpty) {
         state = ClaudeState(
           status: AiFillStatus.error,
           activeItemId: itemId,
-          error: 'AI generation failed. Please try again.',
+          error: 'AI returned no content. Add more profile data and retry.',
         );
-        hadError = true;
+        return;
       }
-    }
 
-    _cancelToken = null;
+      // REPLACE the whole document with the formatted delta.
+      try {
+        controller.document = Document.fromJson(delta);
+      } catch (e) {
+        debugPrint('Delta apply failed: $e');
+        state = ClaudeState(
+          status: AiFillStatus.error,
+          activeItemId: itemId,
+          error: 'Could not apply AI content. Please try again.',
+        );
+        return;
+      }
 
-    // ── Track usage ──────────────────────────────────────────────────
-
-    if (!hadError && totalChars > 0 && state.status != AiFillStatus.error) {
+      // Count chars for the toast
+      final chars = controller.document.toPlainText().length;
       state = ClaudeState(
         status: AiFillStatus.done,
         activeItemId: itemId,
-        streamedChars: totalChars,
+        streamedChars: chars,
       );
 
-      // Fire-and-forget
+      // Fire-and-forget usage tracking
       try {
         FirebaseService.trackAiFill(uid, cvId ?? 'current', sectionTitle);
       } catch (_) {}
-
       _cachedSubscription = null; // re-check next time
+    } catch (e) {
+      if (!mounted) return;
+      state = ClaudeState(
+        status: AiFillStatus.error,
+        activeItemId: itemId,
+        error: e.toString(),
+      );
     }
   }
 
   void cancel() {
-    _cancelToken?.cancel('User cancelled');
-    _cancelToken = null;
+    // Non-streaming now — just reset state.
     state = const ClaudeState();
   }
 
@@ -243,10 +191,13 @@ class ClaudeController extends StateNotifier<ClaudeState> {
     return null;
   }
 
-  @override
-  void dispose() {
-    _cancelToken?.cancel('Controller disposed');
-    super.dispose();
+  /// Cloud Functions callables only accept JSON primitives. Strip out
+  /// Firestore types (Timestamp) and anything non-serializable.
+  Map<String, dynamic> _sanitizeProfile(Map<String, dynamic> raw) {
+    final clean = Map<String, dynamic>.from(raw);
+    // updatedAt is a Firestore Timestamp — the function doesn't need it
+    clean.remove('updatedAt');
+    return clean;
   }
 }
 

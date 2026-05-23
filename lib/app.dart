@@ -73,7 +73,7 @@ class KitAuraApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp.router(
-      title: 'KitAura',
+      title: 'V-1',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       routerConfig: _router,

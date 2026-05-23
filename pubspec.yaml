@@ -27,6 +27,7 @@ dependencies:
   firebase_auth: ^6.4.0
   cloud_firestore: ^6.3.0
   firebase_storage: ^13.3.0
+  cloud_functions: ^6.3.1
 
 
   # HTTP
@@ -75,7 +76,6 @@ dependencies:
   url_launcher: ^6.3.2
   web: ^1.1.1
   vector_math: ^2.1.4
-  flutter_dotenv: ^5.2.1
 
 dev_dependencies:
   flutter_test:
@@ -89,7 +89,6 @@ flutter:
   uses-material-design: true
 
   assets:
-    - .env
     - assets/fonts/Arial.ttf
     - assets/fonts/OpenSans.ttf
     - assets/fonts/Poppins.ttf

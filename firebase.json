@@ -1,1 +1,38 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"kitaura-app","appId":"1:230575893042:android:7f2e5fe135b61be806aa2b","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"kitaura-app","configurations":{"android":"1:230575893042:android:7f2e5fe135b61be806aa2b","ios":"1:230575893042:ios:64773c9d25914cf106aa2b","web":"1:230575893042:web:3a96ee2dd3277f4206aa2b","windows":"1:230575893042:web:a06289d4eec1c30c06aa2b"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "kitaura-app",
+          "appId": "1:230575893042:android:7f2e5fe135b61be806aa2b",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "kitaura-app",
+          "configurations": {
+            "android": "1:230575893042:android:7f2e5fe135b61be806aa2b",
+            "ios": "1:230575893042:ios:64773c9d25914cf106aa2b",
+            "web": "1:230575893042:web:3a96ee2dd3277f4206aa2b",
+            "windows": "1:230575893042:web:a06289d4eec1c30c06aa2b"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "disallowLegacyRuntimeConfig": true,
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ]
+}

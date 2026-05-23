@@ -434,11 +434,13 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
                 : () => ref
                 .read(claudeControllerProvider.notifier)
                 .fillSection(
-              itemId: item.id,
-              sectionTitle: item.title,
-              controller: item.controller!,
-              cvId: widget.docId,
-            ),
+                  itemId: item.id,
+                  sectionType: item.sectionType,
+                  sectionTitle: item.title,
+                  controller: item.controller!,
+                  cvId: widget.docId,
+                )
+            ,
             icon: isActive
                 ? const SizedBox(
               width: 14,

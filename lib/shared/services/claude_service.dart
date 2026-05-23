@@ -1,43 +1,24 @@
 // lib/shared/services/claude_service.dart
 //
-// Anthropic Messages API — streaming + single-shot + AI spellcheck.
+// Thin client over the KitAura Cloud Functions proxy.
+// The Anthropic API key lives ONLY on the server — never in this app.
+//
+// Two calls:
+//   - aiFillSection() → returns Quill Delta ops (List) for a CV section
+//   - spellcheckCV()  → returns List<SpellCorrection>
+//
+// PUBSPEC: cloud_functions: ^5.x  (matches your firebase_core 4.x)
 
-import 'dart:async';
-import 'dart:convert';
-import 'package:dio/dio.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-// ─── CONFIG ──────────────────────────────────────────────────────────────
-
-class ClaudeConfig {
-  ClaudeConfig._();
-
-  static const String apiUrl = 'https://api.anthropic.com/v1/messages';
-  static const String model = 'claude-haiku-4-5-20251001';
-  static const String apiVersion = '2023-06-01';
-  static const int maxTokens = 1024;
-
-  static String get apiKey => (dotenv.env['ANTHROPIC_KEY'] ?? '').trim();
-}
-
-// ─── RESPONSE TYPES ──────────────────────────────────────────────────────
-
-class ClaudeStreamEvent {
-  final String text;
-  final bool isDone;
-  final String? error;
-
-  const ClaudeStreamEvent({this.text = '', this.isDone = false, this.error});
-}
-
-// ─── SPELLCHECK MODEL ───────────────────────────────────────────────────
+// ─── MODELS ──────────────────────────────────────────────────────────────
 
 class SpellCorrection {
   final String sectionTitle;
   final String wrong;
   final String correct;
-  final int offset; // char offset within that section's plain text
+  final int offset;
 
   const SpellCorrection({
     required this.sectionTitle,
@@ -51,32 +32,9 @@ class SpellCorrection {
       sectionTitle: json['section'] as String? ?? '',
       wrong: json['wrong'] as String? ?? '',
       correct: json['correct'] as String? ?? '',
-      offset: json['offset'] as int? ?? 0,
+      offset: (json['offset'] as num?)?.toInt() ?? 0,
     );
   }
-}
-
-// ─── DEBUG HELPERS ───────────────────────────────────────────────────────
-
-/// Pretty-prints a JSON string. Falls back to raw string if not valid JSON.
-String _prettyJson(dynamic value) {
-  try {
-    final parsed = value is String ? jsonDecode(value) : value;
-    const encoder = JsonEncoder.withIndent('  ');
-    return encoder.convert(parsed);
-  } catch (_) {
-    return value.toString();
-  }
-}
-
-/// Prints a block with a title banner and content.
-void _logBlock(String title, String content) {
-  final line = '━' * 42;
-  debugPrint('\n$line');
-  debugPrint('  $title');
-  debugPrint(line);
-  debugPrint(content);
-  debugPrint('$line\n');
 }
 
 // ─── SERVICE ─────────────────────────────────────────────────────────────
@@ -84,281 +42,83 @@ void _logBlock(String title, String content) {
 class ClaudeService {
   ClaudeService._();
 
-  static final Dio _dio = _buildDio();
+  static final FirebaseFunctions _functions =
+  FirebaseFunctions.instanceFor(region: 'us-central1');
 
-  static Dio _buildDio() {
-    final dio = Dio(
-      BaseOptions(
-        connectTimeout: const Duration(seconds: 30),
-        receiveTimeout: const Duration(seconds: 120),
-      ),
-    );
-
-    dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) {
-          // Build masked headers string
-          final headersStr = options.headers.entries.map((e) {
-            final val = e.key == 'x-api-key'
-                ? '${(e.value as String).substring(0, 12)}••••'
-                : e.value;
-            return '  ${e.key}: $val';
-          }).join('\n');
-
-          // Pretty-print body
-          final bodyStr = _prettyJson(options.data);
-
-          _logBlock(
-            '📤 REQUEST  ${options.method}  ${options.uri}',
-            'HEADERS:\n$headersStr\n\nBODY:\n$bodyStr',
-          );
-
-          handler.next(options);
-        },
-
-        onResponse: (response, handler) {
-          final bodyStr = _prettyJson(response.data);
-
-          _logBlock(
-            '📥 RESPONSE  ${response.statusCode}  ${response.realUri}',
-            'BODY:\n$bodyStr',
-          );
-
-          handler.next(response);
-        },
-
-        onError: (DioException e, handler) {
-          // Pretty-print error body — Anthropic always sends JSON with the reason
-          final bodyStr = _prettyJson(e.response?.data);
-
-          // Flatten headers into readable lines
-          final headersStr = e.response?.headers.map.entries
-              .map((h) => '  ${h.key}: ${h.value.join(', ')}')
-              .join('\n') ?? '  (none)';
-
-          _logBlock(
-            '❌ ERROR  ${e.response?.statusCode ?? e.type}  ${e.requestOptions.uri}',
-            'HEADERS:\n$headersStr\n\nBODY:\n$bodyStr',
-          );
-
-          handler.next(e);
-        },
-      ),
-    );
-
-    return dio;
-  }
-
-  // ── STREAMING (for AI Fill) ───────────────────────────────────────
-
-  static Stream<ClaudeStreamEvent> streamMessage(
-      String prompt, {
-        String? systemPrompt,
-        CancelToken? cancelToken,
-      }) async* {
-    if (ClaudeConfig.apiKey.isEmpty) {
-      yield const ClaudeStreamEvent(
-        error: 'API key not configured. Add ANTHROPIC_KEY to your .env file.',
-        isDone: true,
-      );
-      return;
-    }
-
+  /// AI Fill — generate polished Quill Delta ops for a CV section.
+  ///
+  /// [sectionType] is the SectionType.key (e.g. "experience").
+  /// [profile] is the AiProfileModel.toJson() map.
+  /// Returns a list of Quill delta op maps ready for Document.fromJson().
+  static Future<List<Map<String, dynamic>>> aiFillSection({
+    required String sectionType,
+    required String tone,
+    required String experienceLevel,
+    required Map<String, dynamic> profile,
+  }) async {
     try {
-      final response = await _dio.post<ResponseBody>(
-        ClaudeConfig.apiUrl,
-        cancelToken: cancelToken,
-        options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': ClaudeConfig.apiKey,
-            'anthropic-version': ClaudeConfig.apiVersion,
-            'anthropic-dangerous-direct-browser-access': 'true',
-          },
-          responseType: ResponseType.stream,
-        ),
-        data: jsonEncode({
-          'model': ClaudeConfig.model,
-          'max_tokens': ClaudeConfig.maxTokens,
-          'stream': true,
-          'system': ?systemPrompt,
-          'messages': [
-            {'role': 'user', 'content': prompt},
-          ],
-        }),
-      );
+      final callable = _functions.httpsCallable('aiFill');
+      final result = await callable.call<Map<String, dynamic>>({
+        'sectionType': sectionType,
+        'tone': tone,
+        'experienceLevel': experienceLevel,
+        'profile': profile,
+      });
 
-      String buffer = '';
-
-      await for (final chunk in response.data!.stream) {
-        buffer += utf8.decode(chunk, allowMalformed: true);
-
-        while (buffer.contains('\n')) {
-          final lineEnd = buffer.indexOf('\n');
-          final line = buffer.substring(0, lineEnd).trim();
-          buffer = buffer.substring(lineEnd + 1);
-
-          if (line.isEmpty || !line.startsWith('data:')) continue;
-
-          final jsonStr = line.substring(5).trim();
-          if (jsonStr == '[DONE]') {
-            yield const ClaudeStreamEvent(isDone: true);
-            return;
-          }
-
-          try {
-            final json = jsonDecode(jsonStr) as Map<String, dynamic>;
-            final type = json['type'] as String?;
-
-            if (type == 'content_block_delta') {
-              final delta = json['delta'] as Map<String, dynamic>?;
-              if (delta != null && delta['type'] == 'text_delta') {
-                final text = delta['text'] as String? ?? '';
-                if (text.isNotEmpty) yield ClaudeStreamEvent(text: text);
-              }
-            } else if (type == 'message_stop') {
-              yield const ClaudeStreamEvent(isDone: true);
-              return;
-            } else if (type == 'error') {
-              final error = json['error'] as Map<String, dynamic>?;
-              yield ClaudeStreamEvent(
-                error: error?['message'] as String? ?? 'Unknown API error',
-                isDone: true,
-              );
-              return;
-            }
-          } catch (_) {}
-        }
-      }
-
-      yield const ClaudeStreamEvent(isDone: true);
-    } on DioException catch (e) {
-      yield ClaudeStreamEvent(error: _mapDioError(e), isDone: true);
+      final data = result.data;
+      final delta = data['delta'] as List<dynamic>? ?? [];
+      return delta
+          .map((op) => Map<String, dynamic>.from(op as Map))
+          .toList();
+    } on FirebaseFunctionsException catch (e) {
+      debugPrint('aiFill error: ${e.code} ${e.message}');
+      throw _mapFunctionsError(e);
     } catch (e) {
-      debugPrint('ClaudeService stream error: $e');
-      yield ClaudeStreamEvent(
-        error: 'Something went wrong. Please try again.',
-        isDone: true,
-      );
+      debugPrint('aiFill unexpected: $e');
+      throw 'AI generation failed. Please try again.';
     }
   }
 
-  // ── SINGLE SHOT (for short tasks) ─────────────────────────────────
-
-  static Future<String> sendMessage(
-      String prompt, {
-        String? systemPrompt,
-        int maxTokens = 256,
-      }) async {
-    if (ClaudeConfig.apiKey.isEmpty) {
-      throw Exception('API key not configured');
-    }
-
-    final response = await _dio.post<Map<String, dynamic>>(
-      ClaudeConfig.apiUrl,
-      options: Options(
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': ClaudeConfig.apiKey,
-          'anthropic-version': ClaudeConfig.apiVersion,
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-      ),
-      data: jsonEncode({
-        'model': ClaudeConfig.model,
-        'max_tokens': maxTokens,
-        'system': ?systemPrompt,
-        'messages': [
-          {'role': 'user', 'content': prompt},
-        ],
-      }),
-    );
-
-    final content = response.data?['content'] as List?;
-    if (content != null && content.isNotEmpty) {
-      return content.first['text'] as String? ?? '';
-    }
-    return '';
-  }
-
-  // ── AI SPELLCHECK ─────────────────────────────────────────────────
-
+  /// Spellcheck — returns corrections across all sections.
+  ///
+  /// [sections] is a map of { sectionTitle: plainText }.
   static Future<List<SpellCorrection>> spellcheckCV(
       Map<String, String> sections,
       ) async {
-    if (ClaudeConfig.apiKey.isEmpty) {
-      throw Exception('API key not configured');
-    }
-
     if (sections.isEmpty) return [];
 
-    final sectionsText = sections.entries
-        .map((e) => '--- ${e.key} ---\n${e.value}')
-        .join('\n\n');
-
-    const systemPrompt =
-    '''You are a spelling and grammar checker for a CV/resume.
-Check ONLY for spelling mistakes — do NOT change meaning, tone, or style.
-Skip proper nouns, company names, and technical terms.
-
-Return ONLY a JSON array. Each element has:
-- "section": the section title exactly as given
-- "wrong": the misspelled word exactly as it appears
-- "correct": the corrected spelling
-- "offset": character position of the wrong word within that section's text (0-indexed)
-
-If there are no spelling errors, return an empty array: []
-
-Return ONLY the JSON array, no markdown, no explanation.''';
-
-    final prompt = 'Check this CV for spelling errors:\n\n$sectionsText';
-
     try {
-      final response = await sendMessage(
-        prompt,
-        systemPrompt: systemPrompt,
-        maxTokens: 1024,
-      );
+      final callable = _functions.httpsCallable('spellcheck');
+      final result = await callable.call<Map<String, dynamic>>({
+        'sections': sections,
+      });
 
-      final cleaned = response
-          .replaceAll('```json', '')
-          .replaceAll('```', '')
-          .trim();
-
-      final list = jsonDecode(cleaned) as List<dynamic>;
+      final list = result.data['corrections'] as List<dynamic>? ?? [];
       return list
-          .map((e) => SpellCorrection.fromJson(e as Map<String, dynamic>))
+          .map((e) => SpellCorrection.fromJson(Map<String, dynamic>.from(e as Map)))
           .where((c) => c.wrong.isNotEmpty && c.correct.isNotEmpty)
           .toList();
+    } on FirebaseFunctionsException catch (e) {
+      debugPrint('spellcheck error: ${e.code} ${e.message}');
+      throw _mapFunctionsError(e);
     } catch (e) {
-      debugPrint('Spellcheck error: $e');
-      rethrow;
+      debugPrint('spellcheck unexpected: $e');
+      throw 'Spellcheck failed. Please try again.';
     }
   }
 
-  // ── Error mapping ─────────────────────────────────────────────────
+  // ── Error mapping ────────────────────────────────────────────────────
 
-  static String _mapDioError(DioException e) {
-    if (e.type == DioExceptionType.cancel) return 'AI generation was cancelled.';
-    if (e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.receiveTimeout) {
-      return 'Connection timed out. Please check your internet and try again.';
-    }
-    if (e.type == DioExceptionType.connectionError) {
-      return 'No internet connection. Please check your network.';
-    }
-
-    final statusCode = e.response?.statusCode;
-    switch (statusCode) {
-      case 400: return 'Invalid request. Please try again.';
-      case 401: return 'Invalid API key. Please check configuration.';
-      case 403: return 'API access denied. Please check your API key permissions.';
-      case 429: return 'Too many requests. Please wait a moment and try again.';
-      case 500:
-      case 502:
-      case 503: return 'AI service is temporarily unavailable. Please try again shortly.';
-      case 529: return 'AI service is overloaded. Please try again in a moment.';
-      default:  return 'AI request failed (${statusCode ?? 'unknown'}). Please try again.';
+  static String _mapFunctionsError(FirebaseFunctionsException e) {
+    switch (e.code) {
+      case 'unauthenticated':
+        return 'Please sign in to use AI features.';
+      case 'resource-exhausted':
+        return 'Too many requests. Please wait a moment.';
+      case 'deadline-exceeded':
+        return 'Request timed out. Please try again.';
+      default:
+        return e.message ?? 'Something went wrong. Please try again.';
     }
   }
 }
