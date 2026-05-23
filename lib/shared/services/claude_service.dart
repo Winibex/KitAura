@@ -1,13 +1,11 @@
 // lib/shared/services/claude_service.dart
 //
-// Thin client over the KitAura Cloud Functions proxy.
-// The Anthropic API key lives ONLY on the server — never in this app.
+// Thin client over KitAura Cloud Functions proxy.
+// Anthropic API key lives ONLY on the server.
 //
-// Two calls:
-//   - aiFillSection() → returns Quill Delta ops (List) for a CV section
-//   - spellcheckCV()  → returns List<SpellCorrection>
-//
-// PUBSPEC: cloud_functions: ^5.x  (matches your firebase_core 4.x)
+// aiFillSection → returns structured text (heading + entries).
+//                 The controller applies template styles to it.
+// spellcheckCV  → returns List<SpellCorrection>.
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
@@ -45,17 +43,25 @@ class ClaudeService {
   static final FirebaseFunctions _functions =
   FirebaseFunctions.instanceFor(region: 'us-central1');
 
-  /// AI Fill — generate polished Quill Delta ops for a CV section.
+  /// AI Fill — returns structured text content for a CV section.
   ///
-  /// [sectionType] is the SectionType.key (e.g. "experience").
-  /// [profile] is the AiProfileModel.toJson() map.
-  /// Returns a list of Quill delta op maps ready for Document.fromJson().
-  static Future<List<Map<String, dynamic>>> aiFillSection({
+  /// Returns a Map like:
+  /// {
+  ///   "heading": "EXPERIENCE",
+  ///   "entries": [
+  ///     { "title": "CTO — Winibex | 2025-Present", "lines": ["• Led...", ...] }
+  ///   ]
+  /// }
+  ///
+  /// The controller applies template formatting (colors, sizes, fonts)
+  /// to this text. Returns null if no content was generated.
+  static Future<Map<String, dynamic>?> aiFillSection({
     required String sectionType,
     required String tone,
     required String experienceLevel,
     required Map<String, dynamic> profile,
-  }) async {
+  }) async
+  {
     try {
       final callable = _functions.httpsCallable('aiFill');
       final result = await callable.call<Map<String, dynamic>>({
@@ -66,10 +72,10 @@ class ClaudeService {
       });
 
       final data = result.data;
-      final delta = data['delta'] as List<dynamic>? ?? [];
-      return delta
-          .map((op) => Map<String, dynamic>.from(op as Map))
-          .toList();
+      final content = data['content'];
+      if (content == null) return null;
+
+      return Map<String, dynamic>.from(content as Map);
     } on FirebaseFunctionsException catch (e) {
       debugPrint('aiFill error: ${e.code} ${e.message}');
       throw _mapFunctionsError(e);
@@ -79,12 +85,11 @@ class ClaudeService {
     }
   }
 
-  /// Spellcheck — returns corrections across all sections.
-  ///
-  /// [sections] is a map of { sectionTitle: plainText }.
+  /// Spellcheck — returns corrections across all CV sections.
   static Future<List<SpellCorrection>> spellcheckCV(
       Map<String, String> sections,
-      ) async {
+      ) async
+  {
     if (sections.isEmpty) return [];
 
     try {
@@ -95,7 +100,8 @@ class ClaudeService {
 
       final list = result.data['corrections'] as List<dynamic>? ?? [];
       return list
-          .map((e) => SpellCorrection.fromJson(Map<String, dynamic>.from(e as Map)))
+          .map((e) =>
+          SpellCorrection.fromJson(Map<String, dynamic>.from(e as Map)))
           .where((c) => c.wrong.isNotEmpty && c.correct.isNotEmpty)
           .toList();
     } on FirebaseFunctionsException catch (e) {
@@ -106,8 +112,6 @@ class ClaudeService {
       throw 'Spellcheck failed. Please try again.';
     }
   }
-
-  // ── Error mapping ────────────────────────────────────────────────────
 
   static String _mapFunctionsError(FirebaseFunctionsException e) {
     switch (e.code) {

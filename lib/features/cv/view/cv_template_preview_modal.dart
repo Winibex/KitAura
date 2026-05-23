@@ -8,8 +8,8 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_fonts.dart';
 import '../../../shared/widgets/template_thumbnail.dart';
-import '../data/cv_template_data.dart';
 import '../../../shared/models/template_model.dart';
+import '../data/cv_template_data.dart';
 
 class CVTemplatePreviewModal extends StatefulWidget {
   final TemplateModel template;

@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kitaura/features/cv_templates/view/cv_template_preview_modal.dart';
+import 'package:kitaura/features/cv/view/cv_template_preview_modal.dart';
 import 'package:kitaura/shared/widgets/app_top_bar.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/constants/app_colors.dart';

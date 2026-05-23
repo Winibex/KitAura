@@ -7,8 +7,8 @@ import 'core/theme/app_theme.dart';
 import 'features/auth/view/auth_screen.dart';
 import 'features/cv/view/cv_editor_screen.dart';
 import 'features/cv/view/cv_dashboard_screen.dart';
+import 'features/cv/view/cv_template_picker_screen.dart';
 import 'features/dashboard/view/dashboard_screen.dart';
-import 'features/cv_templates/view/cv_template_picker_screen.dart';
 import 'features/settings/view/settings_screen.dart';
 import 'features/auth/view/verify_email_screen.dart';
 import 'features/auth/view/reset_password_screen.dart';
@@ -73,7 +73,7 @@ class KitAuraApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp.router(
-      title: 'V-1',
+      title: 'Kitaura',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       routerConfig: _router,

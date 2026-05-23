@@ -192,7 +192,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   Widget _buildFormCard() {
     return Container(
       constraints: const BoxConstraints(maxWidth: 440),
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.only(left: 32, right: 32, bottom: 22, top: 32),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
@@ -223,6 +223,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             ),
             child: _isSignIn ? _buildSignInForm() : _buildSignUpForm(),
           ),
+            Text(
+              AppStrings.appVersion,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.slateGrey,
+                fontSize: 13,
+                fontFamily: AppFonts.poppins,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
         ],
       ),
     );

@@ -5,9 +5,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../../core/constants/app_assets.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_fonts.dart';
+import '../../../core/constants/app_assets.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_fonts.dart';
 
 /// Action button data for the right side of the app bar.
 class EditorAppBarAction {

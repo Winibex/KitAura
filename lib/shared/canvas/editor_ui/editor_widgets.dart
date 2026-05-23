@@ -4,8 +4,8 @@
 // Used by: editor_left_panel, editor_right_panel, cv_editor_screen, proposal_editor_screen.
 
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_fonts.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_fonts.dart';
 
 /// Section label (e.g. "ADD ELEMENTS", "LAYERS", "ROTATION")
 class EditorSectionLabel extends StatelessWidget {

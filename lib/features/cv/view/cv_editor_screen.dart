@@ -14,21 +14,24 @@ import 'package:printing/printing.dart';
 import 'package:toastification/toastification.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_fonts.dart';
-import '../../../shared/canvas/editor_app_bar.dart';
-import '../../../shared/canvas/editor_left_panel.dart';
-import '../../../shared/canvas/editor_right_panel.dart';
-import '../../../shared/canvas/editor_widgets.dart';
+import '../../../shared/canvas/editor_ui/editor_app_bar.dart';
+import '../../../shared/canvas/editor_ui/editor_left_panel.dart';
+import '../../../shared/canvas/editor_ui/editor_right_panel.dart';
+import '../../../shared/canvas/editor_ui/editor_widgets.dart';
+import '../../../shared/canvas/engine/canvas_item_widget.dart';
+import '../../../shared/canvas/engine/shape_painter.dart';
+import '../../../shared/canvas/engine/snap_guide.dart';
 import '../../../shared/services/firebase_service.dart';
-import '../../../shared/canvas/canvas_controller.dart';
-import '../../cv_templates/data/cv_template_data.dart';
+import '../../../shared/canvas/engine/canvas_controller.dart';
 import '../controller/claude_controller.dart';
 import '../../../shared/models/canvas_item.dart';
-
-import '../../../shared/canvas/canvas_item_widget.dart';
-import '../../../shared/canvas/shape_painter.dart';
 import 'package:web/web.dart' as web;
 
 import '../controller/spellcheck_controller.dart';
+
+import '../controller/section_autofill.dart';
+import '../../../shared/models/ai_profile_model.dart';
+import '../data/cv_template_data.dart';
 
 // ──────────────────────────────────────────────────────────────────────────
 // CHANGED: StatefulWidget → ConsumerStatefulWidget for Riverpod access
@@ -60,6 +63,8 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
 
   bool _showSpellcheckPanel = false;
 
+  List<GuideLine> _snapGuides = [];
+
   @override
   void initState() {
     super.initState();
@@ -86,16 +91,18 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
     if (widget.docId == 'blank') {
       _ctrl.init();
     } else if (CvTemplateData.isTemplateId(widget.docId)) {
-      // Load from JSON asset via CvTemplateData
       final json = await CvTemplateData.loadTemplateJson(widget.docId);
       _ctrl.applyTemplateJson(json);
     } else {
-      // It's a Firestore document ID — load saved CV
       await _loadFromFirestore(widget.docId);
     }
 
-    // Wire focus listeners for all text items loaded
     _wireFocusListeners();
+
+    // ── NEW: Autofill from saved profile ────────────────────────────
+    // If the user has a saved AI profile, fill matching sections
+    // with their real data instead of keeping template dummy text.
+    await _tryAutofillFromProfile();
 
     await _ctrl.preloadFonts();
     if (mounted) setState(() {});
@@ -113,6 +120,31 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
           }
         });
       }
+    }
+  }
+
+  Future<void> _tryAutofillFromProfile() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    try {
+      final doc = await FirebaseService.getAiProfile(uid);
+      if (!doc.exists) return; // no saved profile → keep dummy data
+
+      final profile = AiProfileModel.fromJson(
+        doc.data() as Map<String, dynamic>,
+      );
+
+      // Only autofill if the profile has meaningful data
+      if (profile.fullName.isEmpty && profile.experiences.isEmpty) return;
+
+      final filled = SectionAutofill.fillAll(_ctrl.items, profile);
+      if (filled > 0) {
+        debugPrint('Autofilled $filled sections from saved profile');
+      }
+    } catch (e) {
+      debugPrint('Profile autofill failed (non-critical): $e');
+      // Not critical — user keeps the template dummy text
     }
   }
 
@@ -431,15 +463,18 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
           child: ElevatedButton.icon(
             onPressed: isActive
                 ? () => ref.read(claudeControllerProvider.notifier).cancel()
-                : () => ref
-                .read(claudeControllerProvider.notifier)
-                .fillSection(
-                  itemId: item.id,
-                  sectionType: item.sectionType,
-                  sectionTitle: item.title,
-                  controller: item.controller!,
-                  cvId: widget.docId,
-                )
+                : () {
+              _ctrl.saveSnapshot();
+              ref
+                  .read(claudeControllerProvider.notifier)
+                  .fillSection(
+                itemId: item.id,
+                sectionType: item.sectionType,
+                sectionTitle: item.title,
+                controller: item.controller!,
+                cvId: widget.docId,
+              );
+            }
             ,
             icon: isActive
                 ? const SizedBox(
@@ -672,13 +707,9 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
                             key: ValueKey(item.id),
                             item: item,
                             isSelected: item.id == _ctrl.selectedId,
-                            isMultiSelected: _ctrl.multiSelected.contains(
-                              item.id,
-                            ),
+                            isMultiSelected: _ctrl.multiSelected.contains(item.id),
                             canvasW: CanvasController.canvasW,
-                            canvasH:
-                            _ctrl.totalCanvasHeight +
-                                ((_ctrl.totalPages - 1) * 24),
+                            canvasH: _ctrl.totalCanvasHeight + ((_ctrl.totalPages - 1) * 24),
                             onSelect: () {
                               _ctrl.select(item.id);
                               if (item.isText) {
@@ -689,7 +720,15 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
                             _ctrl.multiSelected.contains(item.id)
                                 ? _ctrl.multiMoveUpdate
                                 : null,
+                            onMultiMoveEnd:
+                            _ctrl.multiSelected.contains(item.id)
+                                ? _ctrl.multiMoveEnd
+                                : null,
                             onSaveSnapshot: _ctrl.saveSnapshot,
+                            allItems: _ctrl.items,                          // ← ADD THIS
+                            onSnapGuidesChanged: (guides) {                 // ← ADD THIS
+                              setState(() => _snapGuides = guides);
+                            },
                           ),
                         ),
 
@@ -704,6 +743,16 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
                                   _marqueeStart!,
                                   _marqueeEnd!,
                                 ),
+                              ),
+                            ),
+                          ),
+
+                        // ← ADD THIS: Snap guide overlay
+                        if (_snapGuides.isNotEmpty)
+                          Positioned.fill(
+                            child: IgnorePointer(
+                              child: CustomPaint(
+                                painter: SnapGuidePainter(_snapGuides),
                               ),
                             ),
                           ),

@@ -8,12 +8,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:file_picker/file_picker.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_fonts.dart';
-import '../models/canvas_item.dart';
-import '../models/canvas_item_type.dart';
-import '../models/section_type.dart';
-import 'canvas_controller.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_fonts.dart';
+import '../../models/canvas_item.dart';
+import '../../models/canvas_item_type.dart';
+import '../../models/section_type.dart';
+import '../engine/canvas_controller.dart';
 import 'editor_dialogs.dart';
 import 'editor_widgets.dart';
 

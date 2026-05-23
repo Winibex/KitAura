@@ -5,9 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import '../models/canvas_item.dart';
-import '../models/canvas_item_type.dart';
-import '../models/section_type.dart';
+import '../../models/canvas_item.dart';
+import '../../models/canvas_item_type.dart';
+import '../../models/section_type.dart';
 
 class CanvasController extends ChangeNotifier {
   static const double canvasW = 595;
@@ -326,6 +326,9 @@ class CanvasController extends ChangeNotifier {
         (item.position.dy + delta.dy).clamp(0, canvasH - item.height),
       );
     }
+  }
+
+  void multiMoveEnd() {
     notifyListeners();
   }
 

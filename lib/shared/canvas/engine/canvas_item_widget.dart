@@ -4,17 +4,24 @@
 // NO header bar — text renders at content height (matches picker).
 //
 // TEXT INTERACTION MODEL:
-//   - Single tap  → select the item (drag mode). Quill is NOT focused.
-//   - Double tap  → enter edit mode (Quill focused, can type).
-//   - When selected & not editing → drag the body to move.
-//   - Click elsewhere → deselect / exit edit mode.
+//   - Single tap  → select (drag mode). Quill NOT focused.
+//   - Double tap  → edit mode (Quill focused, can type).
+//   - Drag body   → move item (single or multi-select).
+//   - Click away  → deselect / exit edit.
+//
+// MULTI-SELECT MOVE:
+//   Controller.multiMoveUpdate() updates all selected items' model positions
+//   WITHOUT calling notifyListeners (to avoid killing the drag gesture).
+//   The dragged item reads _pos from its model each frame via a manual
+//   setState. On pan end, controller.notifyListeners() fires once to sync.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import '../../core/constants/app_colors.dart';
-import '../models/canvas_item_type.dart';
-import '../models/canvas_item.dart';
-import 'shape_painter.dart';
+import 'package:kitaura/shared/canvas/engine/shape_painter.dart';
+import 'package:kitaura/shared/canvas/engine/snap_guide.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../models/canvas_item_type.dart';
+import '../../models/canvas_item.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
 
 class CanvasItemWidget extends StatefulWidget {
@@ -22,8 +29,20 @@ class CanvasItemWidget extends StatefulWidget {
   final bool isSelected, isMultiSelected;
   final double canvasW, canvasH;
   final VoidCallback onSelect;
+
+  /// Called during multi-select drag with per-frame delta.
   final void Function(Offset delta)? onMultiMoveUpdate;
+
+  /// Called on pan END of multi-select drag.
+  final VoidCallback? onMultiMoveEnd;
+
   final VoidCallback onSaveSnapshot;
+
+  /// All items on the canvas — needed for snap guide calculations.
+  final List<CanvasItem> allItems;
+
+  /// Called with guide lines during drag (or empty list when drag ends).
+  final void Function(List<GuideLine>)? onSnapGuidesChanged;
 
   const CanvasItemWidget({
     super.key,
@@ -34,7 +53,10 @@ class CanvasItemWidget extends StatefulWidget {
     required this.canvasH,
     required this.onSelect,
     required this.onSaveSnapshot,
+    required this.allItems,
     this.onMultiMoveUpdate,
+    this.onMultiMoveEnd,
+    this.onSnapGuidesChanged,
   });
 
   @override
@@ -49,8 +71,8 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
   Offset _resizeOrigin = Offset.zero;
   ResizeHandle? _activeHandle;
 
-  // Edit mode: only true after double-tap on a text item.
   bool _editMode = false;
+  bool _isDraggingSolo = false;
 
   @override
   void initState() {
@@ -63,17 +85,17 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
   @override
   void didUpdateWidget(CanvasItemWidget old) {
     super.didUpdateWidget(old);
-    if (widget.item.position != _pos) _pos = widget.item.position;
-    _w = widget.item.width;
-    _h = widget.item.height;
-    // Exit edit mode if this item got deselected
+    // Always sync from model unless mid-solo-drag
+    if (!_isDraggingSolo) {
+      _pos = widget.item.position;
+      _w = widget.item.width;
+      _h = widget.item.height;
+    }
     if (!widget.isSelected && _editMode) {
       _editMode = false;
       widget.item.focusNode?.unfocus();
     }
   }
-
-  // ── Layout helpers ────────────────────────────────────────────────
 
   void _commit() {
     widget.item.position = _pos;
@@ -81,19 +103,59 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
     widget.item.height = _h;
   }
 
-  void _handleDragUpdate(DragUpdateDetails d) {
+  // ── DRAG ──────────────────────────────────────────────────────────
+
+  void _onDragStart(DragStartDetails d) {
+    widget.onSelect();
+    widget.onSaveSnapshot();
+    _dragStart = d.globalPosition;
+    _posAtDragStart = _pos;
+  }
+
+  void _onDragUpdate(DragUpdateDetails d) {
     if (widget.onMultiMoveUpdate != null) {
+      // MULTI-SELECT: controller updates ALL items silently.
       widget.onMultiMoveUpdate!(d.delta);
+      setState(() { _pos = widget.item.position; });
       return;
     }
+
+    // SOLO DRAG with snap guides
+    _isDraggingSolo = true;
     final delta = d.globalPosition - _dragStart;
-    setState(() {
-      _pos = Offset(
-        (_posAtDragStart.dx + delta.dx).clamp(0, widget.canvasW - _w),
-        (_posAtDragStart.dy + delta.dy).clamp(0, widget.canvasH - _h),
-      );
-    });
+    final rawPos = Offset(
+      (_posAtDragStart.dx + delta.dx).clamp(0, widget.canvasW - _w),
+      (_posAtDragStart.dy + delta.dy).clamp(0, widget.canvasH - _h),
+    );
+
+    // Calculate snap
+    final snap = SnapGuide.calculate(
+      dragPos: rawPos,
+      dragW: _w,
+      dragH: _h,
+      dragId: widget.item.id,
+      allItems: widget.allItems,
+      canvasW: widget.canvasW,
+      canvasH: widget.canvasH,
+    );
+
+    setState(() { _pos = snap.snappedPosition; });
+    widget.onSnapGuidesChanged?.call(snap.guides);
   }
+
+  void _onDragEnd(DragEndDetails _) {
+    // Clear snap guides
+    widget.onSnapGuidesChanged?.call([]);
+
+    if (widget.onMultiMoveUpdate != null) {
+      widget.onMultiMoveEnd?.call();
+    } else {
+      _isDraggingSolo = false;
+      _commit();
+    }
+  }
+
+  // ── RESIZE ────────────────────────────────────────────────────────
 
   void _onResizeUpdate(ResizeHandle handle, Offset delta) {
     double l = _posAtDragStart.dx, t = _posAtDragStart.dy;
@@ -154,8 +216,6 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
           )),
         child: Stack(clipBehavior: Clip.none, children: [
           _buildBody(),
-
-          // Selection border
           if (widget.isSelected || widget.isMultiSelected)
             Positioned.fill(
               child: IgnorePointer(
@@ -173,7 +233,6 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
                 ),
               ),
             ),
-
           if (widget.isSelected && !_editMode) ..._buildResizeHandles(),
         ]),
       ),
@@ -182,7 +241,6 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
 
   Widget _buildBody() {
     if (widget.item.isText) {
-      // EDIT MODE: Quill is interactive, can type.
       if (_editMode) {
         return Container(
           color: Colors.transparent,
@@ -191,26 +249,19 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
             focusNode: widget.item.focusNode!,
             scrollController: widget.item.scrollController!,
             config: QuillEditorConfig(
-              scrollable: false,
-              expands: false,
-              autoFocus: true,
-              padding: EdgeInsets.zero,
-              placeholder: widget.item.title,
+              scrollable: false, expands: false, autoFocus: true,
+              padding: EdgeInsets.zero, placeholder: widget.item.title,
               customStyleBuilder: _styleBuilder,
             ),
           ),
         );
       }
 
-      // VIEW MODE: tap selects + drag, double-tap enters edit.
-      // Quill is shown but wrapped so it doesn't grab the tap.
       return MouseRegion(
         cursor: SystemMouseCursors.move,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: () {
-            if (!widget.isSelected) widget.onSelect();
-          },
+          onTap: () { if (!widget.isSelected) widget.onSelect(); },
           onDoubleTap: () {
             widget.onSelect();
             setState(() => _editMode = true);
@@ -218,28 +269,17 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
               widget.item.focusNode?.requestFocus();
             });
           },
-          onPanStart: (d) {
-            widget.onSelect();
-            widget.onSaveSnapshot(); // snapshot BEFORE the move
-            _dragStart = d.globalPosition;
-            _posAtDragStart = _pos;
-          },
-          onPanUpdate: _handleDragUpdate,
-          onPanEnd: (_) {
-            _commit();
-          },
+          onPanStart: _onDragStart,
+          onPanUpdate: _onDragUpdate,
+          onPanEnd: _onDragEnd,
           child: AbsorbPointer(
-            // AbsorbPointer stops Quill from eating the tap/drag
             child: QuillEditor(
               controller: widget.item.controller!,
               focusNode: widget.item.focusNode!,
               scrollController: widget.item.scrollController!,
               config: QuillEditorConfig(
-                scrollable: false,
-                expands: false,
-                autoFocus: false,
-                padding: EdgeInsets.zero,
-                placeholder: widget.item.title,
+                scrollable: false, expands: false, autoFocus: false,
+                padding: EdgeInsets.zero, placeholder: widget.item.title,
                 customStyleBuilder: _styleBuilder,
               ),
             ),
@@ -248,22 +288,15 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
       );
     }
 
-    // ── Non-text items — drag from body directly ────────────────────
+    // Non-text items
     return MouseRegion(
       cursor: SystemMouseCursors.move,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: widget.onSelect,
-        onPanStart: (d) {
-          widget.onSelect();
-          widget.onSaveSnapshot(); // snapshot BEFORE the move
-          _dragStart = d.globalPosition;
-          _posAtDragStart = _pos;
-        },
-        onPanUpdate: _handleDragUpdate,
-        onPanEnd: (_) {
-          _commit();
-        },
+        onPanStart: _onDragStart,
+        onPanUpdate: _onDragUpdate,
+        onPanEnd: _onDragEnd,
         child: _buildShapeBody(),
       ),
     );
@@ -291,7 +324,6 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
         ),
       );
     }
-
     switch (widget.item.type) {
       case CanvasItemType.line:
         return Container(
@@ -302,21 +334,14 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
         return Container(
           decoration: BoxDecoration(
             color: widget.item.color,
-            border: Border.all(
-              color: widget.item.borderColor,
-              width: widget.item.borderWidth,
-            ),
+            border: Border.all(color: widget.item.borderColor, width: widget.item.borderWidth),
           ),
         );
       case CanvasItemType.circle:
         return Container(
           decoration: BoxDecoration(
-            color: widget.item.color,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: widget.item.borderColor,
-              width: widget.item.borderWidth,
-            ),
+            color: widget.item.color, shape: BoxShape.circle,
+            border: Border.all(color: widget.item.borderColor, width: widget.item.borderWidth),
           ),
         );
       case CanvasItemType.imageBox:
@@ -330,22 +355,15 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
               : Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.image_outlined,
-                  size: 32, color: Colors.grey.shade400),
+              Icon(Icons.image_outlined, size: 32, color: Colors.grey.shade400),
               const SizedBox(height: 4),
-              Text('Upload Image',
-                  style: TextStyle(
-                      fontSize: 10, color: Colors.grey.shade500)),
+              Text('Upload Image', style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
             ],
           ),
         );
       case CanvasItemType.icon:
         return Center(
-          child: Icon(
-            widget.item.iconData ?? Icons.star,
-            size: _w * 0.7,
-            color: widget.item.borderColor,
-          ),
+          child: Icon(widget.item.iconData ?? Icons.star, size: _w * 0.7, color: widget.item.borderColor),
         );
       default:
         return const SizedBox();
@@ -384,7 +402,7 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
           child: GestureDetector(
             onPanStart: (d) {
               _activeHandle = handle;
-              widget.onSaveSnapshot(); // snapshot BEFORE resize
+              widget.onSaveSnapshot();
               _resizeOrigin = d.globalPosition;
               _posAtDragStart = _pos;
               _wAtResize = _w;
@@ -399,16 +417,13 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
               _commit();
             },
             child: SizedBox(
-              width: hit,
-              height: hit,
+              width: hit, height: hit,
               child: Center(
                 child: Container(
-                  width: vis,
-                  height: vis,
+                  width: vis, height: vis,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    border: Border.all(
-                        color: AppColors.darkRaspberry, width: 1.5),
+                    border: Border.all(color: AppColors.darkRaspberry, width: 1.5),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),

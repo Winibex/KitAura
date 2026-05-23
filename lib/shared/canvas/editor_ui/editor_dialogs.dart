@@ -6,8 +6,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_fonts.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_fonts.dart';
 
 class EditorDialogs {
   EditorDialogs._();
