@@ -1,0 +1,89 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'core/constants/app_routes.dart';
+import 'core/theme/app_theme.dart';
+import 'features/auth/view/auth_screen.dart';
+import 'features/cv/view/cv_editor_screen.dart';
+import 'features/cv/view/cv_dashboard_screen.dart';
+import 'features/dashboard/view/dashboard_screen.dart';
+import 'features/cv_templates/view/cv_template_picker_screen.dart';
+import 'features/settings/view/settings_screen.dart';
+import 'features/auth/view/verify_email_screen.dart';
+import 'features/auth/view/reset_password_screen.dart';
+import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+
+final _router = GoRouter(
+  initialLocation: AppRoutes.dashboard,
+  routes: [
+    GoRoute(path: AppRoutes.auth, builder: (_, _) => const AuthScreen()),
+    GoRoute(
+      path: AppRoutes.dashboard,
+      builder: (_, _) => const DashboardScreen(),
+    ),
+    GoRoute(path: AppRoutes.cvDashboard, builder: (_, _) => const CVDashboardScreen()),
+    GoRoute(
+      path: AppRoutes.cvTemplates,
+      builder: (_, _) => const CVTemplatePickerScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.cvEditor,
+      builder: (_, state) =>
+          CvEditorScreen(docId: state.pathParameters['docId'] ?? 'blank'),
+    ),
+    GoRoute(
+      path: AppRoutes.settings,
+      builder: (_, _) => const SettingsScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.verifyEmail,
+      builder: (_, _) => const VerifyEmailScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.resetPassword,
+      builder: (_, _) => const ResetPasswordScreen(),
+    ),
+  ],
+  redirect: (context, state) {
+    final user = FirebaseAuth.instance.currentUser;
+    final isLoggedIn = user != null;
+    final isAuthRoute =
+        state.matchedLocation == AppRoutes.auth ||
+        state.matchedLocation == AppRoutes.resetPassword;
+    final isVerify = state.matchedLocation == AppRoutes.verifyEmail;
+
+    if (isLoggedIn && isAuthRoute) {
+      return user.emailVerified ? AppRoutes.dashboard : AppRoutes.verifyEmail;
+    }
+    if (!isLoggedIn && !isAuthRoute) {
+      return AppRoutes.auth;
+    }
+    if (isLoggedIn && !user.emailVerified && !isVerify && !isAuthRoute) {
+      return AppRoutes.verifyEmail;
+    }
+    return null;
+  },
+);
+
+class KitAuraApp extends ConsumerWidget {
+  const KitAuraApp({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return MaterialApp.router(
+      title: 'KitAura',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light,
+      routerConfig: _router,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        FlutterQuillLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('en')],
+    );
+  }
+}

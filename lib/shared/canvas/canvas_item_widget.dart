@@ -1,0 +1,422 @@
+// lib/shared/canvas/canvas_item_widget.dart
+//
+// Individual canvas item: drag, resize, rotate, flip, text editing.
+// NO header bar — text renders at content height (matches picker).
+//
+// TEXT INTERACTION MODEL:
+//   - Single tap  → select the item (drag mode). Quill is NOT focused.
+//   - Double tap  → enter edit mode (Quill focused, can type).
+//   - When selected & not editing → drag the body to move.
+//   - Click elsewhere → deselect / exit edit mode.
+
+import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart';
+import '../../core/constants/app_colors.dart';
+import '../models/canvas_item_type.dart';
+import '../models/canvas_item.dart';
+import 'shape_painter.dart';
+import 'package:vector_math/vector_math_64.dart' show Vector3;
+
+class CanvasItemWidget extends StatefulWidget {
+  final CanvasItem item;
+  final bool isSelected, isMultiSelected;
+  final double canvasW, canvasH;
+  final VoidCallback onSelect;
+  final void Function(Offset delta)? onMultiMoveUpdate;
+  final VoidCallback onSaveSnapshot;
+
+  const CanvasItemWidget({
+    super.key,
+    required this.item,
+    required this.isSelected,
+    required this.isMultiSelected,
+    required this.canvasW,
+    required this.canvasH,
+    required this.onSelect,
+    required this.onSaveSnapshot,
+    this.onMultiMoveUpdate,
+  });
+
+  @override
+  State<CanvasItemWidget> createState() => _CanvasItemWidgetState();
+}
+
+class _CanvasItemWidgetState extends State<CanvasItemWidget> {
+  late Offset _pos;
+  late double _w, _h;
+  Offset _dragStart = Offset.zero, _posAtDragStart = Offset.zero;
+  double _wAtResize = 0, _hAtResize = 0;
+  Offset _resizeOrigin = Offset.zero;
+  ResizeHandle? _activeHandle;
+
+  // Edit mode: only true after double-tap on a text item.
+  bool _editMode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _pos = widget.item.position;
+    _w = widget.item.width;
+    _h = widget.item.height;
+  }
+
+  @override
+  void didUpdateWidget(CanvasItemWidget old) {
+    super.didUpdateWidget(old);
+    if (widget.item.position != _pos) _pos = widget.item.position;
+    _w = widget.item.width;
+    _h = widget.item.height;
+    // Exit edit mode if this item got deselected
+    if (!widget.isSelected && _editMode) {
+      _editMode = false;
+      widget.item.focusNode?.unfocus();
+    }
+  }
+
+  // ── Layout helpers ────────────────────────────────────────────────
+
+  void _commit() {
+    widget.item.position = _pos;
+    widget.item.width = _w;
+    widget.item.height = _h;
+  }
+
+  void _handleDragUpdate(DragUpdateDetails d) {
+    if (widget.onMultiMoveUpdate != null) {
+      widget.onMultiMoveUpdate!(d.delta);
+      return;
+    }
+    final delta = d.globalPosition - _dragStart;
+    setState(() {
+      _pos = Offset(
+        (_posAtDragStart.dx + delta.dx).clamp(0, widget.canvasW - _w),
+        (_posAtDragStart.dy + delta.dy).clamp(0, widget.canvasH - _h),
+      );
+    });
+  }
+
+  void _onResizeUpdate(ResizeHandle handle, Offset delta) {
+    double l = _posAtDragStart.dx, t = _posAtDragStart.dy;
+    double r = l + _wAtResize, b = t + _hAtResize;
+    final dx = delta.dx, dy = delta.dy;
+    switch (handle) {
+      case ResizeHandle.topLeft:     l += dx; t += dy;
+      case ResizeHandle.top:         t += dy;
+      case ResizeHandle.topRight:    r += dx; t += dy;
+      case ResizeHandle.right:       r += dx;
+      case ResizeHandle.bottomRight: r += dx; b += dy;
+      case ResizeHandle.bottom:      b += dy;
+      case ResizeHandle.bottomLeft:  l += dx; b += dy;
+      case ResizeHandle.left:        l += dx;
+    }
+    const minW = 40.0, minH = 20.0;
+    if (r - l < minW) {
+      if (handle.name.contains('Left')) {
+        l = r - minW;
+      } else {
+        r = l + minW;
+      }
+    }
+    if (b - t < minH) {
+      if (handle.name.contains('top')) {
+        t = b - minH;
+      } else {
+        b = t + minH;
+      }
+    }
+    setState(() {
+      _pos = Offset(
+        l.clamp(0, widget.canvasW - minW),
+        t.clamp(0, widget.canvasH - minH),
+      );
+      _w = (r - l).clamp(minW, widget.canvasW - _pos.dx);
+      _h = (b - t).clamp(minH, widget.canvasH - _pos.dy);
+    });
+  }
+
+  // ── BUILD ─────────────────────────────────────────────────────────
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: _pos.dx,
+      top: _pos.dy,
+      width: _w,
+      height: _h,
+      child: Transform(
+        alignment: Alignment.center,
+        transform: Matrix4.identity()
+          ..rotateZ(widget.item.rotation)
+          ..scaleByVector3(Vector3(
+            widget.item.flipX ? -1.0 : 1.0,
+            widget.item.flipY ? -1.0 : 1.0,
+            1.0,
+          )),
+        child: Stack(clipBehavior: Clip.none, children: [
+          _buildBody(),
+
+          // Selection border
+          if (widget.isSelected || widget.isMultiSelected)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: widget.isMultiSelected
+                          ? Colors.orange
+                          : (_editMode
+                          ? AppColors.magentaBloom
+                          : AppColors.darkRaspberry),
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+          if (widget.isSelected && !_editMode) ..._buildResizeHandles(),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (widget.item.isText) {
+      // EDIT MODE: Quill is interactive, can type.
+      if (_editMode) {
+        return Container(
+          color: Colors.transparent,
+          child: QuillEditor(
+            controller: widget.item.controller!,
+            focusNode: widget.item.focusNode!,
+            scrollController: widget.item.scrollController!,
+            config: QuillEditorConfig(
+              scrollable: false,
+              expands: false,
+              autoFocus: true,
+              padding: EdgeInsets.zero,
+              placeholder: widget.item.title,
+              customStyleBuilder: _styleBuilder,
+            ),
+          ),
+        );
+      }
+
+      // VIEW MODE: tap selects + drag, double-tap enters edit.
+      // Quill is shown but wrapped so it doesn't grab the tap.
+      return MouseRegion(
+        cursor: SystemMouseCursors.move,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            if (!widget.isSelected) widget.onSelect();
+          },
+          onDoubleTap: () {
+            widget.onSelect();
+            setState(() => _editMode = true);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              widget.item.focusNode?.requestFocus();
+            });
+          },
+          onPanStart: (d) {
+            widget.onSelect();
+            widget.onSaveSnapshot(); // snapshot BEFORE the move
+            _dragStart = d.globalPosition;
+            _posAtDragStart = _pos;
+          },
+          onPanUpdate: _handleDragUpdate,
+          onPanEnd: (_) {
+            _commit();
+          },
+          child: AbsorbPointer(
+            // AbsorbPointer stops Quill from eating the tap/drag
+            child: QuillEditor(
+              controller: widget.item.controller!,
+              focusNode: widget.item.focusNode!,
+              scrollController: widget.item.scrollController!,
+              config: QuillEditorConfig(
+                scrollable: false,
+                expands: false,
+                autoFocus: false,
+                padding: EdgeInsets.zero,
+                placeholder: widget.item.title,
+                customStyleBuilder: _styleBuilder,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // ── Non-text items — drag from body directly ────────────────────
+    return MouseRegion(
+      cursor: SystemMouseCursors.move,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onSelect,
+        onPanStart: (d) {
+          widget.onSelect();
+          widget.onSaveSnapshot(); // snapshot BEFORE the move
+          _dragStart = d.globalPosition;
+          _posAtDragStart = _pos;
+        },
+        onPanUpdate: _handleDragUpdate,
+        onPanEnd: (_) {
+          _commit();
+        },
+        child: _buildShapeBody(),
+      ),
+    );
+  }
+
+  TextStyle _styleBuilder(Attribute attribute) {
+    if (attribute.key == Attribute.font.key) {
+      final family = attribute.value as String?;
+      if (family != null) return TextStyle(fontFamily: family);
+    }
+    return const TextStyle();
+  }
+
+  Widget _buildShapeBody() {
+    final vertices = shapeVertices(widget.item.type);
+    if (vertices.isNotEmpty) {
+      return SizedBox.expand(
+        child: CustomPaint(
+          painter: ShapePainter(
+            vertices: vertices,
+            fillColor: widget.item.color,
+            strokeColor: widget.item.borderColor,
+            strokeWidth: widget.item.borderWidth,
+          ),
+        ),
+      );
+    }
+
+    switch (widget.item.type) {
+      case CanvasItemType.line:
+        return Container(
+          height: widget.item.borderWidth.clamp(1, 12),
+          color: widget.item.borderColor,
+        );
+      case CanvasItemType.rectangle:
+        return Container(
+          decoration: BoxDecoration(
+            color: widget.item.color,
+            border: Border.all(
+              color: widget.item.borderColor,
+              width: widget.item.borderWidth,
+            ),
+          ),
+        );
+      case CanvasItemType.circle:
+        return Container(
+          decoration: BoxDecoration(
+            color: widget.item.color,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: widget.item.borderColor,
+              width: widget.item.borderWidth,
+            ),
+          ),
+        );
+      case CanvasItemType.imageBox:
+        return Container(
+          decoration: BoxDecoration(
+            color: widget.item.color,
+            border: Border.all(color: widget.item.borderColor),
+          ),
+          child: widget.item.imageBytes != null
+              ? Image.memory(widget.item.imageBytes!, fit: BoxFit.cover)
+              : Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.image_outlined,
+                  size: 32, color: Colors.grey.shade400),
+              const SizedBox(height: 4),
+              Text('Upload Image',
+                  style: TextStyle(
+                      fontSize: 10, color: Colors.grey.shade500)),
+            ],
+          ),
+        );
+      case CanvasItemType.icon:
+        return Center(
+          child: Icon(
+            widget.item.iconData ?? Icons.star,
+            size: _w * 0.7,
+            color: widget.item.borderColor,
+          ),
+        );
+      default:
+        return const SizedBox();
+    }
+  }
+
+  List<Widget> _buildResizeHandles() {
+    const hit = 24.0, vis = 10.0, h = hit / 2;
+    final handles = {
+      ResizeHandle.topLeft: Offset(-h, -h),
+      ResizeHandle.top: Offset(_w / 2 - h, -h),
+      ResizeHandle.topRight: Offset(_w - h, -h),
+      ResizeHandle.right: Offset(_w - h, _h / 2 - h),
+      ResizeHandle.bottomRight: Offset(_w - h, _h - h),
+      ResizeHandle.bottom: Offset(_w / 2 - h, _h - h),
+      ResizeHandle.bottomLeft: Offset(-h, _h - h),
+      ResizeHandle.left: Offset(-h, _h / 2 - h),
+    };
+    final cursors = {
+      ResizeHandle.topLeft: SystemMouseCursors.resizeUpLeft,
+      ResizeHandle.top: SystemMouseCursors.resizeUp,
+      ResizeHandle.topRight: SystemMouseCursors.resizeUpRight,
+      ResizeHandle.right: SystemMouseCursors.resizeRight,
+      ResizeHandle.bottomRight: SystemMouseCursors.resizeDownRight,
+      ResizeHandle.bottom: SystemMouseCursors.resizeDown,
+      ResizeHandle.bottomLeft: SystemMouseCursors.resizeDownLeft,
+      ResizeHandle.left: SystemMouseCursors.resizeLeft,
+    };
+    return handles.entries.map((e) {
+      final handle = e.key;
+      return Positioned(
+        left: e.value.dx,
+        top: e.value.dy,
+        child: MouseRegion(
+          cursor: cursors[handle]!,
+          child: GestureDetector(
+            onPanStart: (d) {
+              _activeHandle = handle;
+              widget.onSaveSnapshot(); // snapshot BEFORE resize
+              _resizeOrigin = d.globalPosition;
+              _posAtDragStart = _pos;
+              _wAtResize = _w;
+              _hAtResize = _h;
+            },
+            onPanUpdate: (d) {
+              if (_activeHandle != handle) return;
+              _onResizeUpdate(handle, d.globalPosition - _resizeOrigin);
+            },
+            onPanEnd: (_) {
+              _activeHandle = null;
+              _commit();
+            },
+            child: SizedBox(
+              width: hit,
+              height: hit,
+              child: Center(
+                child: Container(
+                  width: vis,
+                  height: vis,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(
+                        color: AppColors.darkRaspberry, width: 1.5),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }).toList();
+  }
+}

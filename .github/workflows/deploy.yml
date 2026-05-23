@@ -1,0 +1,52 @@
+name: Build and Deploy Flutter Web to Hostinger
+
+on:
+  push:
+    branches: [ main ]   # change if your default branch is different
+  workflow_dispatch:      # allows manual trigger
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.9'
+          channel: 'stable'
+          cache: true
+
+      - name: Flutter version
+        run: flutter --version
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze code
+        run: flutter analyze
+        continue-on-error: true
+
+      - name: Build Flutter Web (optimized release)
+        run: |
+          flutter build web \
+            --release \
+            --base-href "/" \
+            --tree-shake-icons \
+            --source-maps
+
+      - name: Deploy to Hostinger via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ${{ secrets.FTP_SERVER_DIR }}
+          protocol: ftps
+          port: 21
+          local-dir: ./build/web/
+          dangerous-clean-slate: false
+          timeout: 60000

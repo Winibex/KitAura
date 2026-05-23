@@ -1,0 +1,306 @@
+{
+  "canvasBackground": "#16213E",
+  "items": [
+    {
+      "type": "rectangle",
+      "title": "Gold Bar Top",
+      "x": 0,
+      "y": 0,
+      "w": 595,
+      "h": 5,
+      "color": "#D4AF37",
+      "borderColor": "#D4AF37",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Full Name",
+      "x": 40,
+      "y": 32,
+      "w": 515,
+      "h": 40,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Your Full Name\n",
+          "attributes": {
+            "bold": true,
+            "size": "28",
+            "color": "#D4AF37"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Job Title",
+      "x": 40,
+      "y": 80,
+      "w": 515,
+      "h": 26,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Chief Technology Officer\n",
+          "attributes": {
+            "size": "14",
+            "color": "#C8CDD8"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Contact",
+      "x": 40,
+      "y": 116,
+      "w": 515,
+      "h": 24,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "email@example.com  |  +1 234 567 890  |  San Francisco, CA\n",
+          "attributes": {
+            "size": "10",
+            "color": "#8A92A6"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "Gold Divider 1",
+      "x": 40,
+      "y": 154,
+      "w": 515,
+      "h": 2,
+      "color": "#D4AF37",
+      "borderColor": "#D4AF37",
+      "borderWidth": 2,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Executive Summary",
+      "x": 40,
+      "y": 172,
+      "w": 515,
+      "h": 90,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "EXECUTIVE SUMMARY\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#D4AF37"
+          }
+        },
+        {
+          "insert": "Visionary technology leader with 15+ years driving digital transformation at Fortune 500 companies. Proven ability to scale engineering organizations from 20 to 200+ while maintaining velocity and quality.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Experience",
+      "x": 40,
+      "y": 280,
+      "w": 515,
+      "h": 210,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "LEADERSHIP EXPERIENCE\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#D4AF37"
+          }
+        },
+        {
+          "insert": "CTO  \u2014  Enterprise Corp  |  2020 \u2013 Present\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#FFFFFF"
+          }
+        },
+        {
+          "insert": "\u2022 Scaled engineering team from 40 to 180 across 5 offices\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        },
+        {
+          "insert": "\u2022 Led cloud migration saving $2.4M annually\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        },
+        {
+          "insert": "\u2022 Established engineering culture and technical standards\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        },
+        {
+          "insert": "VP Engineering  \u2014  Growth Startup  |  2015 \u2013 2020\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#FFFFFF"
+          }
+        },
+        {
+          "insert": "\u2022 Built platform processing $500M+ in transactions\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        },
+        {
+          "insert": "\u2022 Achieved 99.99% uptime across all production services\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "Gold Divider 2",
+      "x": 40,
+      "y": 506,
+      "w": 515,
+      "h": 2,
+      "color": "#D4AF37",
+      "borderColor": "#D4AF37",
+      "borderWidth": 2,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Education",
+      "x": 40,
+      "y": 522,
+      "w": 515,
+      "h": 60,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "EDUCATION\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#D4AF37"
+          }
+        },
+        {
+          "insert": "MBA \u2014 Stanford GSB  |  MS Computer Science \u2014 MIT\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Board & Advisory",
+      "x": 40,
+      "y": 600,
+      "w": 515,
+      "h": 60,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "BOARD & ADVISORY\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#D4AF37"
+          }
+        },
+        {
+          "insert": "Board Member, TechNonprofit  \u2022  Advisor, 3 Series-A startups  \u2022  IEEE Member\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "rectangle",
+      "title": "Gold Bar Bottom",
+      "x": 0,
+      "y": 837,
+      "w": 595,
+      "h": 5,
+      "color": "#D4AF37",
+      "borderColor": "#D4AF37",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    }
+  ]
+}

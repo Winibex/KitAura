@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "230575893042",
+    "project_id": "kitaura-app",
+    "storage_bucket": "kitaura-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:230575893042:android:7f2e5fe135b61be806aa2b",
+        "android_client_info": {
+          "package_name": "kitaura.winibex.com.kitaura"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "230575893042-h5vlefq8ei1k2k89ej0o0ra0npqqjbcd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQA502Y5bz2c_A1zADeyGabH_NHFRnlGM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "230575893042-h5vlefq8ei1k2k89ej0o0ra0npqqjbcd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

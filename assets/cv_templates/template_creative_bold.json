@@ -1,0 +1,359 @@
+{
+  "canvasBackground": "#FFFFFF",
+  "items": [
+    {
+      "type": "rectangle",
+      "title": "Sidebar BG",
+      "x": 0,
+      "y": 0,
+      "w": 195,
+      "h": 842,
+      "color": "#E91E63",
+      "borderColor": "#E91E63",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Full Name",
+      "x": 18,
+      "y": 35,
+      "w": 160,
+      "h": 50,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Your Full Name\n",
+          "attributes": {
+            "bold": true,
+            "size": "20",
+            "color": "#FFFFFF"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Job Title",
+      "x": 18,
+      "y": 92,
+      "w": 160,
+      "h": 24,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Creative Director\n",
+          "attributes": {
+            "size": "12",
+            "color": "#FFD9E6"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Contact",
+      "x": 18,
+      "y": 135,
+      "w": 160,
+      "h": 90,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "CONTACT\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#FFFFFF"
+          }
+        },
+        {
+          "insert": "hello@example.com\n",
+          "attributes": {
+            "size": "9",
+            "color": "#FFD9E6"
+          }
+        },
+        {
+          "insert": "+1 234 567 890\n",
+          "attributes": {
+            "size": "9",
+            "color": "#FFD9E6"
+          }
+        },
+        {
+          "insert": "Los Angeles, CA\n",
+          "attributes": {
+            "size": "9",
+            "color": "#FFD9E6"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Skills",
+      "x": 18,
+      "y": 245,
+      "w": 160,
+      "h": 150,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "SKILLS\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#FFFFFF"
+          }
+        },
+        {
+          "insert": "Brand Strategy\n",
+          "attributes": {
+            "size": "10",
+            "color": "#FFD9E6"
+          }
+        },
+        {
+          "insert": "Art Direction\n",
+          "attributes": {
+            "size": "10",
+            "color": "#FFD9E6"
+          }
+        },
+        {
+          "insert": "Motion Graphics\n",
+          "attributes": {
+            "size": "10",
+            "color": "#FFD9E6"
+          }
+        },
+        {
+          "insert": "Typography\n",
+          "attributes": {
+            "size": "10",
+            "color": "#FFD9E6"
+          }
+        },
+        {
+          "insert": "Adobe Creative Suite\n",
+          "attributes": {
+            "size": "10",
+            "color": "#FFD9E6"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "About",
+      "x": 220,
+      "y": 35,
+      "w": 345,
+      "h": 90,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "ABOUT ME\n",
+          "attributes": {
+            "bold": true,
+            "size": "15",
+            "color": "#E91E63"
+          }
+        },
+        {
+          "insert": "Award-winning creative director with 10+ years shaping brand identities for global companies. Passionate about bold design that tells compelling stories.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Experience",
+      "x": 220,
+      "y": 140,
+      "w": 345,
+      "h": 210,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "CAREER\n",
+          "attributes": {
+            "bold": true,
+            "size": "15",
+            "color": "#E91E63"
+          }
+        },
+        {
+          "insert": "Creative Director  \u2014  Design Agency  |  2020 \u2013 Present\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "\u2022 Led rebranding campaigns for 5 Fortune 500 clients\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\u2022 Grew team from 8 to 25 designers\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\u2022 Won 3 industry awards for campaign design\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "Senior Designer  \u2014  Creative Studio  |  2016 \u2013 2020\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "\u2022 Designed brand identities for 30+ startups\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\u2022 Created motion graphics for national TV campaigns\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Education",
+      "x": 220,
+      "y": 366,
+      "w": 345,
+      "h": 60,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "EDUCATION\n",
+          "attributes": {
+            "bold": true,
+            "size": "15",
+            "color": "#E91E63"
+          }
+        },
+        {
+          "insert": "BFA Visual Communication  \u2014  Art College  |  2012 \u2013 2016\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Awards",
+      "x": 220,
+      "y": 444,
+      "w": 345,
+      "h": 100,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "AWARDS\n",
+          "attributes": {
+            "bold": true,
+            "size": "15",
+            "color": "#E91E63"
+          }
+        },
+        {
+          "insert": "\u2022 Awwwards Site of the Day (2023)\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\u2022 D&AD Pencil for Brand Identity (2022)\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\u2022 Communication Arts Excellence (2021)\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    }
+  ]
+}

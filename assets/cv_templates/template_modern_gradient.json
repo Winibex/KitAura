@@ -1,0 +1,308 @@
+{
+  "canvasBackground": "#FFFFFF",
+  "items": [
+    {
+      "type": "rectangle",
+      "title": "Header Left",
+      "x": 0,
+      "y": 0,
+      "w": 300,
+      "h": 125,
+      "color": "#6C3CB4",
+      "borderColor": "#6C3CB4",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "rectangle",
+      "title": "Header Right",
+      "x": 300,
+      "y": 0,
+      "w": 295,
+      "h": 125,
+      "color": "#3B82C4",
+      "borderColor": "#3B82C4",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Full Name",
+      "x": 30,
+      "y": 28,
+      "w": 535,
+      "h": 40,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Your Full Name\n",
+          "attributes": {
+            "bold": true,
+            "size": "26",
+            "color": "#FFFFFF"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Job Title",
+      "x": 30,
+      "y": 74,
+      "w": 535,
+      "h": 24,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "UX Designer  |  email@example.com  |  City, Country\n",
+          "attributes": {
+            "size": "11",
+            "color": "#EAEAEA"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Profile",
+      "x": 30,
+      "y": 142,
+      "w": 535,
+      "h": 80,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "PROFILE\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#6C3CB4"
+          }
+        },
+        {
+          "insert": "Creative UX designer passionate about building beautiful, functional interfaces. Combines user research with visual design to craft experiences that delight and convert.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Experience",
+      "x": 30,
+      "y": 240,
+      "w": 535,
+      "h": 200,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "EXPERIENCE\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#6C3CB4"
+          }
+        },
+        {
+          "insert": "Senior UX Designer  \u2014  DesignCo  |  2021 \u2013 Present\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "\u2022 Designed mobile app used by 2M+ monthly active users\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\u2022 Increased conversion rate by 28% through A/B testing\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\u2022 Created and maintained comprehensive design system\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "UX Designer  \u2014  Agency Studio  |  2018 \u2013 2021\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "\u2022 Delivered 20+ client projects across fintech, healthcare, e-commerce\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\u2022 Established user research practice and testing protocols\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Education",
+      "x": 30,
+      "y": 456,
+      "w": 535,
+      "h": 60,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "EDUCATION\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#6C3CB4"
+          }
+        },
+        {
+          "insert": "BA Graphic Design  \u2014  Art Institute  |  2014 \u2013 2018\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Skills",
+      "x": 30,
+      "y": 534,
+      "w": 250,
+      "h": 95,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "SKILLS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#3B82C4"
+          }
+        },
+        {
+          "insert": "Figma \u2022 Sketch \u2022 Adobe XD\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "Prototyping \u2022 User Research\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "HTML/CSS \u2022 React basics\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Certifications",
+      "x": 310,
+      "y": 534,
+      "w": 250,
+      "h": 95,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "CERTIFICATIONS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#3B82C4"
+          }
+        },
+        {
+          "insert": "Google UX Design Certificate\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "Nielsen Norman UX Certification\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    }
+  ]
+}
