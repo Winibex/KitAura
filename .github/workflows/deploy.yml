@@ -50,19 +50,3 @@ jobs:
           local-dir: ./build/web/
           dangerous-clean-slate: false
           timeout: 60000
-
-      - name: Flush Hostinger CDN Cache
-        run: |
-          HTTP_STATUS=$(curl -s -o /tmp/cdn_response.txt -w "%{http_code}" \
-            -X POST "https://api.hostinger.com/v1/cdn/flush" \
-            -H "Authorization: Bearer ${{ secrets.HOSTINGER_API_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d '{"domain": "kitaura.winibex.com"}')
-          echo "CDN Flush HTTP Status: $HTTP_STATUS"
-          cat /tmp/cdn_response.txt
-          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
-            echo "✅ CDN cache flushed successfully"
-          else
-            echo "⚠️  CDN flush returned status $HTTP_STATUS — check token or endpoint"
-            exit 1
-          fi
