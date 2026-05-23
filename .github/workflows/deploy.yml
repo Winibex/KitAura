@@ -16,7 +16,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.44.0'
+          flutter-version: '3.41.9'
           channel: 'stable'
           cache: true
 
@@ -51,9 +51,6 @@ jobs:
           dangerous-clean-slate: false
           timeout: 60000
 
-      # ── FLUSH HOSTINGER CDN CACHE AFTER DEPLOY ────────────────────────────────
-      # This ensures every deployment is immediately visible across all browsers
-      # and CDN edge nodes — no more stale version mismatches.
       - name: Flush Hostinger CDN Cache
         run: |
           HTTP_STATUS=$(curl -s -o /tmp/cdn_response.txt -w "%{http_code}" \
