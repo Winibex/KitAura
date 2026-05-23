@@ -16,7 +16,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.41.9'
+          flutter-version: '3.41.0'
           channel: 'stable'
           cache: true
 
@@ -35,6 +35,7 @@ jobs:
           flutter build web \
             --release \
             --base-href "/" \
+            --pwa-strategy none \
             --tree-shake-icons \
             --source-maps
 
@@ -50,3 +51,22 @@ jobs:
           local-dir: ./build/web/
           dangerous-clean-slate: false
           timeout: 60000
+
+      # ── FLUSH HOSTINGER CDN CACHE AFTER DEPLOY ────────────────────────────────
+      # This ensures every deployment is immediately visible across all browsers
+      # and CDN edge nodes — no more stale version mismatches.
+      - name: Flush Hostinger CDN Cache
+        run: |
+          HTTP_STATUS=$(curl -s -o /tmp/cdn_response.txt -w "%{http_code}" \
+            -X POST "https://api.hostinger.com/v1/cdn/flush" \
+            -H "Authorization: Bearer ${{ secrets.HOSTINGER_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"domain": "kitaura.winibex.com"}')
+          echo "CDN Flush HTTP Status: $HTTP_STATUS"
+          cat /tmp/cdn_response.txt
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "✅ CDN cache flushed successfully"
+          else
+            echo "⚠️  CDN flush returned status $HTTP_STATUS — check token or endpoint"
+            exit 1
+          fi
