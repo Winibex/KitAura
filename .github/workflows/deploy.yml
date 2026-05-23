@@ -35,7 +35,6 @@ jobs:
           flutter build web \
             --release \
             --base-href "/" \
-            --pwa-strategy none \
             --tree-shake-icons \
             --source-maps
 
