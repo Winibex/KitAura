@@ -223,6 +223,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             ),
             child: _isSignIn ? _buildSignInForm() : _buildSignUpForm(),
           ),
+            SizedBox(height: 15),
             Text(
               AppStrings.appVersion,
               textAlign: TextAlign.center,

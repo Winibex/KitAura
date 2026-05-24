@@ -501,16 +501,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   style: TextStyle(fontSize: 13, color: AppColors.slateGrey),
                 ),
                 const SizedBox(height: 20),
-                ElevatedButton.icon(
-                  onPressed: () => context.push(AppRoutes.cvTemplates),
-                  icon: const Icon(LucideIcons.plus, size: 16),
-                  label: const Text('Create CV'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.darkRaspberry,
-                    foregroundColor: AppColors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                SizedBox(
+                  width: 150,
+                  child: ElevatedButton.icon(
+                    onPressed: () => context.push(AppRoutes.cvTemplates),
+                    icon: const Icon(LucideIcons.plus, size: 16),
+                    label: const Text('Create CV'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.darkRaspberry,
+                      foregroundColor: AppColors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
                   ),
                 ),
               ],
@@ -688,7 +691,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Unlimited exports · Unlimited AI · No watermark · All cv_templates',
+                  'Unlimited exports · Unlimited AI · No watermark · All CV templates',
                   style: TextStyle(fontSize: 13, color: Color(0xAAFFFFFF)),
                 ),
               ],

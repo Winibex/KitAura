@@ -103,7 +103,6 @@ class DashboardController extends StateNotifier<DashboardState> {
   Future<void> deleteCV(String cvId) async {
     try {
       await FirebaseService.deleteCV(_uid!, cvId);
-      await FirebaseService.decrementCvCount(_uid!);
       final updated = state.cvs.where((cv) => cv.id != cvId).toList();
       state = state.copyWith(cvs: updated);
     } catch (e) {

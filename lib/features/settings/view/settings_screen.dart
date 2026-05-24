@@ -721,7 +721,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: 24),
             _usageBar('PDF Exports', LucideIcons.download, sub.exportCount, sub.isPro ? -1 : 3, AppColors.magentaBloom),
             const SizedBox(height: 16),
-            _usageBar('AI Fills', LucideIcons.sparkles, sub.aiUsageCount, sub.isPro ? -1 : 10, AppColors.dustyMauve),
+            _usageBar('AI Fills', LucideIcons.sparkles, sub.aiFillCount, sub.isPro ? -1 : 15, AppColors.dustyMauve),
             const SizedBox(height: 16),
             _usageBar('Saved CVs', LucideIcons.fileText, sub.cvCount, sub.isPro ? -1 : 10, AppColors.dustyRose),
           ],

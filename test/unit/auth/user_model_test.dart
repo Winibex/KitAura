@@ -114,16 +114,20 @@ void main() {
   group('SubscriptionModel', () {
     test('default values are free plan with zero counts', () {
       const model = SubscriptionModel();
-
       expect(model.plan, 'free');
       expect(model.exportCount, 0);
-      expect(model.aiUsageCount, 0);
+      expect(model.aiFillCount, 0);
       expect(model.cvCount, 0);
       expect(model.isPro, false);
     });
 
     test('isPro returns true when plan is pro', () {
       const model = SubscriptionModel(plan: 'pro');
+      expect(model.isPro, true);
+    });
+
+    test('isPro returns true when trial is active', () {
+      const model = SubscriptionModel(plan: 'trial', trialActive: true);
       expect(model.isPro, true);
     });
 
@@ -143,39 +147,27 @@ void main() {
     });
 
     test('canUseAI returns false when at free limit', () {
-      const model = SubscriptionModel(aiUsageCount: 10);
+      const model = SubscriptionModel(aiFillCount: 15);
       expect(model.canUseAI, false);
     });
 
     test('canCreateCV returns false when at free limit', () {
-      const model = SubscriptionModel(cvCount: 10);
+      const model = SubscriptionModel(cvCount: 3);
       expect(model.canCreateCV, false);
-    });
-
-    test('exportsRemaining calculates correctly', () {
-      const model = SubscriptionModel(exportCount: 1);
-      expect(model.exportsRemaining, 2);
-    });
-
-    test('exportsRemaining returns -1 for pro', () {
-      const model = SubscriptionModel(plan: 'pro');
-      expect(model.exportsRemaining, -1);
     });
 
     test('fromJson → toJson round-trip preserves data', () {
       const original = SubscriptionModel(
         plan: 'pro',
         exportCount: 5,
-        aiUsageCount: 3,
+        aiFillCount: 3,
         cvCount: 7,
       );
-
       final json = original.toJson();
       final restored = SubscriptionModel.fromJson(json);
-
       expect(restored.plan, 'pro');
       expect(restored.exportCount, 5);
-      expect(restored.aiUsageCount, 3);
+      expect(restored.aiFillCount, 3);
       expect(restored.cvCount, 7);
     });
 

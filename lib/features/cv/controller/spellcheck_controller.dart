@@ -69,10 +69,10 @@ class SpellcheckController extends StateNotifier<SpellcheckState> {
     state = state.copyWith(status: SpellcheckStatus.checking, error: null);
 
     try {
-      final results = await ClaudeService.spellcheckCV(sections);
+      final result = await ClaudeService.spellcheckCV(sections);
       state = state.copyWith(
         status: SpellcheckStatus.done,
-        corrections: results,
+        corrections: result.corrections,
       );
     } catch (e) {
       state = state.copyWith(

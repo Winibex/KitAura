@@ -62,7 +62,8 @@ class FirebaseService {
   static Future<UserCredential> signInWithEmail(
       String email,
       String password,
-      ) async {
+      ) async
+  {
     return await _auth.signInWithEmailAndPassword(
       email:    email,
       password: password,
@@ -74,7 +75,8 @@ class FirebaseService {
   static Future<UserCredential> signUpWithEmail(
       String email,
       String password,
-      ) async {
+      ) async
+  {
     return await _auth.createUserWithEmailAndPassword(
       email:    email,
       password: password,
@@ -121,7 +123,8 @@ class FirebaseService {
     required String displayName,
     String? photoUrl,
     required String signupSource, // 'email' | 'google' | etc.
-  }) async {
+  }) async
+  {
     final batch = _db.batch();
     final now   = Timestamp.fromDate(DateTime.now());
 
@@ -134,21 +137,44 @@ class FirebaseService {
       'phone':       null,
       'location':    null,
       'bio':         null,
+      'hasUsedTrial': false,
       'createdAt':   now,
       'updatedAt':   now,
     });
 
-    // 2. ── Subscription — free tier defaults ─────────────────────────────────
+    // 2. ── Subscription — free tier with per-user billing cycle ──────
+    final cycleEnd = DateTime.now().add(const Duration(days: 30));
     batch.set(_subscriptionDoc(uid), {
-      'plan':                  'free',
-      'exportCount':           0,
-      'aiUsageCount':          0,
-      'cvCount':               0,
-      'exportResetDate':       null,
-      'stripeCustomerId':      null,
-      'stripeSubscriptionId':  null,
+      'plan': 'free',
+
+      // Trial
+      'trialStartDate': null,
+      'trialEndDate': null,
+      'trialActive': false,
+      'trialUsed': false,
+
+      // Billing cycle (30 days from signup)
+      'cycleStartDate': now,
+      'cycleEndDate': Timestamp.fromDate(cycleEnd),
+      'lastResetDate': now,
+
+      // Usage counters (reset each cycle)
+      'aiFillCount': 0,
+      'aiRewriteCount': 0,
+      'aiDesignCount': 0,
+      'exportCount': 0,
+      'spellcheckCount': 0,
+
+      // Document counts (lifetime)
+      'cvCount': 0,
+      'coverLetterCount': 0,
+      'proposalCount': 0,
+
+      // Stripe
+      'stripeCustomerId': null,
+      'stripeSubscriptionId': null,
       'subscriptionStartDate': null,
-      'subscriptionEndDate':   null,
+      'subscriptionEndDate': null,
     });
 
     // 3. ── Analytics summary — seed with the sign-up login ───────────────────
@@ -257,39 +283,6 @@ class FirebaseService {
       ) async =>
       await _subscriptionDoc(uid).set(data, SetOptions(merge: true));
 
-  // ---------------------------------------------------------------------------
-  // Atomic counter increments
-  // Using [FieldValue.increment] instead of a read-modify-write cycle avoids
-  // race conditions when multiple events fire in quick succession.
-  // ---------------------------------------------------------------------------
-
-  /// Increments the export counter by 1. Called on every PDF export.
-  static Future<void> incrementExportCount(String uid) async {
-    await _subscriptionDoc(uid).update({
-      'exportCount': FieldValue.increment(1),
-    });
-  }
-
-  /// Increments the AI usage counter by 1. Called on every AI fill request.
-  static Future<void> incrementAiUsageCount(String uid) async {
-    await _subscriptionDoc(uid).update({
-      'aiUsageCount': FieldValue.increment(1),
-    });
-  }
-
-  /// Increments the CV count by 1. Called when a new CV is created.
-  static Future<void> incrementCvCount(String uid) async {
-    await _subscriptionDoc(uid).update({
-      'cvCount': FieldValue.increment(1),
-    });
-  }
-
-  /// Decrements the CV count by 1. Called when a CV is deleted.
-  static Future<void> decrementCvCount(String uid) async {
-    await _subscriptionDoc(uid).update({
-      'cvCount': FieldValue.increment(-1),
-    });
-  }
 
   // ===========================================================================
   // AI PROFILE  —  users/{uid}/data/aiProfile
@@ -402,179 +395,6 @@ class FirebaseService {
       ) async =>
       await _monthlyAnalyticsDoc(uid, month).get();
 
-  // ---------------------------------------------------------------------------
-  // trackExport
-  //
-  // Atomically:
-  //   • Increments the subscription export counter.
-  //   • Increments the lifetime export total.
-  //   • Increments this month's export count and appends the CV ID to the
-  //     exported IDs list (using arrayUnion to avoid duplicates).
-  //   • Appends a transaction log entry for the audit trail.
-  // ---------------------------------------------------------------------------
-
-  static Future<void> trackExport(String uid, String cvId) async {
-    final batch = _db.batch();
-    final now   = Timestamp.fromDate(DateTime.now());
-
-    // Subscription counter — enforces free-tier export limits.
-    batch.update(_subscriptionDoc(uid), {
-      'exportCount': FieldValue.increment(1),
-    });
-
-    // Lifetime summary.
-    batch.set(
-      _analyticsSummaryDoc(uid),
-      {
-        'totalExports': FieldValue.increment(1),
-        'lastActiveAt': now,
-      },
-      SetOptions(merge: true),
-    );
-
-    // Monthly breakdown — arrayUnion ensures the CV ID is only listed once
-    // even if the same CV is exported multiple times in the same month.
-    batch.set(
-      _monthlyAnalyticsDoc(uid, _currentMonth),
-      {
-        'month':          _currentMonth,
-        'exports':        FieldValue.increment(1),
-        'exportedCvIds':  FieldValue.arrayUnion([cvId]),
-        'updatedAt':      now,
-      },
-      SetOptions(merge: true),
-    );
-
-    // Transaction log — auto-generated doc ID via .doc() with no argument.
-    final txRef = _userDoc(uid).collection('transactions').doc();
-    batch.set(txRef, {
-      'id':        txRef.id,
-      'type':      'export',
-      'cvId':      cvId,
-      'createdAt': now,
-    });
-
-    await batch.commit();
-  }
-
-  // ---------------------------------------------------------------------------
-  // trackAiFill
-  //
-  // Atomically:
-  //   • Increments the subscription AI usage counter.
-  //   • Increments the lifetime AI fill total.
-  //   • Increments this month's AI fill count.
-  //   • Logs the event with the [section] that was filled (e.g. "summary",
-  //     "experience") stored in metadata for fine-grained analytics.
-  // ---------------------------------------------------------------------------
-
-  static Future<void> trackAiFill(
-      String uid,
-      String cvId,
-      String section, // the CV section filled by AI, e.g. "summary", "skills"
-      ) async {
-    final batch = _db.batch();
-    final now   = Timestamp.fromDate(DateTime.now());
-
-    // Subscription counter — enforces free-tier AI usage limits.
-    batch.update(_subscriptionDoc(uid), {
-      'aiUsageCount': FieldValue.increment(1),
-    });
-
-    // Lifetime summary.
-    batch.set(
-      _analyticsSummaryDoc(uid),
-      {
-        'totalAiFills': FieldValue.increment(1),
-        'lastActiveAt': now,
-      },
-      SetOptions(merge: true),
-    );
-
-    // Monthly breakdown.
-    batch.set(
-      _monthlyAnalyticsDoc(uid, _currentMonth),
-      {
-        'month':     _currentMonth,
-        'aiFills':   FieldValue.increment(1),
-        'updatedAt': now,
-      },
-      SetOptions(merge: true),
-    );
-
-    // Transaction log — metadata captures which section was AI-filled.
-    final txRef = _userDoc(uid).collection('transactions').doc();
-    batch.set(txRef, {
-      'id':        txRef.id,
-      'type':      'aiFill',
-      'cvId':      cvId,
-      'metadata':  {'section': section},
-      'createdAt': now,
-    });
-
-    await batch.commit();
-  }
-
-  // ---------------------------------------------------------------------------
-  // trackCvCreated
-  //
-  // Atomically:
-  //   • Increments the subscription CV count (enforces the free-tier CV limit).
-  //   • Increments the lifetime CV creation total.
-  //   • Increments this month's CV creation count.
-  //   • Logs the event with the CV title snapshot (useful if the title is later
-  //     changed or the CV is deleted).
-  // ---------------------------------------------------------------------------
-
-  static Future<void> trackCvCreated(
-      String uid,
-      String cvId,
-      String title, // snapshot of the CV title at creation time
-      ) async
-  {
-    final batch = _db.batch();
-    final now   = Timestamp.fromDate(DateTime.now());
-
-    // Subscription counter — enforces free-tier CV limits.
-    batch.update(_subscriptionDoc(uid), {
-      'cvCount': FieldValue.increment(1),
-    });
-
-    // Lifetime summary.
-    batch.set(
-      _analyticsSummaryDoc(uid),
-      {
-        'totalCvsCreated': FieldValue.increment(1),
-        'lastActiveAt':    now,
-      },
-      SetOptions(merge: true),
-    );
-
-    // Monthly breakdown.
-    batch.set(
-      _monthlyAnalyticsDoc(uid, _currentMonth),
-      {
-        'month':      _currentMonth,
-        'cvsCreated': FieldValue.increment(1),
-        'updatedAt':  now,
-      },
-      SetOptions(merge: true),
-    );
-
-    // Transaction log — title is stored as a snapshot so it's accurate
-    // even if the user renames or deletes the CV later.
-    final txRef = _userDoc(uid).collection('transactions').doc();
-    batch.set(txRef, {
-      'id':        txRef.id,
-      'type':      'cvCreated',
-      'cvId':      cvId,
-      'cvTitle':   title,
-      'createdAt': now,
-    });
-
-    await batch.commit();
-  }
-
   // ===========================================================================
   // CVs  —  users/{uid}/cvs/{cvId}
   // ===========================================================================
@@ -622,6 +442,71 @@ class FirebaseService {
   }
 
   // ===========================================================================
+  // COVER LETTERS — users/{uid}/coverLetters/{clId}
+  // ===========================================================================
+
+  static CollectionReference _coverLettersCollection(String uid) =>
+      _userDoc(uid).collection('coverLetters');
+
+  static Future<DocumentReference> createCoverLetter(
+      String uid, Map<String, dynamic> data) async =>
+      await _coverLettersCollection(uid).add(data);
+
+  static Future<void> updateCoverLetter(
+      String uid, String clId, Map<String, dynamic> data) async =>
+      await _coverLettersCollection(uid).doc(clId).update(data);
+
+  static Future<void> deleteCoverLetter(String uid, String clId) async =>
+      await _coverLettersCollection(uid).doc(clId).delete();
+
+  static Future<DocumentSnapshot> getCoverLetter(String uid, String clId) async =>
+      await _coverLettersCollection(uid).doc(clId).get();
+
+  static Future<QuerySnapshot> getUserCoverLetters(String uid) async =>
+      await _coverLettersCollection(uid).orderBy('updatedAt', descending: true).get();
+
+  // ===========================================================================
+  // PROPOSALS — users/{uid}/proposals/{propId}
+  // ===========================================================================
+
+  static CollectionReference _proposalsCollection(String uid) =>
+      _userDoc(uid).collection('proposals');
+
+  static Future<DocumentReference> createProposal(
+      String uid, Map<String, dynamic> data) async =>
+      await _proposalsCollection(uid).add(data);
+
+  static Future<void> updateProposal(
+      String uid, String propId, Map<String, dynamic> data) async =>
+      await _proposalsCollection(uid).doc(propId).update(data);
+
+  static Future<void> deleteProposal(String uid, String propId) async =>
+      await _proposalsCollection(uid).doc(propId).delete();
+
+  static Future<DocumentSnapshot> getProposal(String uid, String propId) async =>
+      await _proposalsCollection(uid).doc(propId).get();
+
+  static Future<QuerySnapshot> getUserProposals(String uid) async =>
+      await _proposalsCollection(uid).orderBy('updatedAt', descending: true).get();
+
+  // ===========================================================================
+  // AI ACTIVITY — users/{uid}/aiActivity/{id} (READ ONLY from frontend)
+  // ===========================================================================
+
+  static Future<QuerySnapshot> getAiActivity(String uid, {int limit = 50}) async =>
+      await _userDoc(uid).collection('aiActivity')
+          .orderBy('createdAt', descending: true)
+          .limit(limit)
+          .get();
+
+  static Future<QuerySnapshot> getAiActivityByTool(String uid, String tool, {int limit = 50}) async =>
+      await _userDoc(uid).collection('aiActivity')
+          .where('tool', isEqualTo: tool)
+          .orderBy('createdAt', descending: true)
+          .limit(limit)
+          .get();
+
+  // ===========================================================================
   // TRANSACTIONS  —  users/{uid}/transactions/{txId}
   //
   // Append-only event log. Documents are never updated or deleted.
@@ -632,7 +517,8 @@ class FirebaseService {
   static Future<QuerySnapshot> getTransactions(
       String uid, {
         int limit = 50,
-      }) async {
+      }) async
+  {
     return await _userDoc(uid)
         .collection('transactions')
         .orderBy('createdAt', descending: true)
@@ -646,7 +532,8 @@ class FirebaseService {
   static Future<QuerySnapshot> getTransactionsByType(
       String uid,
       String type,
-      ) async {
+      ) async
+  {
     return await _userDoc(uid)
         .collection('transactions')
         .where('type', isEqualTo: type)

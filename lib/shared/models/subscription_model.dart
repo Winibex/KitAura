@@ -1,94 +1,146 @@
-// =============================================================================
-// SUBSCRIPTION
-// Firestore path: users/{uid}/data/subscription
+// lib/shared/models/subscription_model.dart
 //
-// Tracks the user's plan and metered usage counters.
-// Free-tier limits: 3 exports, 10 AI fills, 10 CVs.
-// Pro users get unlimited access (counters are still tracked for analytics).
-// =============================================================================
+// Mirrors users/{uid}/data/subscription in Firestore.
+// All counters are written server-side by Cloud Functions only.
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SubscriptionModel {
-  final String plan;                     // 'free' | 'pro'
-  final int exportCount;                 // number of PDF exports used
-  final int aiUsageCount;                // number of AI fill-ins used
-  final int cvCount;                     // number of CVs created
-  final DateTime? exportResetDate;       // when the export counter last reset
-  final String? stripeCustomerId;        // Stripe customer record
-  final String? stripeSubscriptionId;    // active Stripe subscription ID
+  final String plan; // 'free' | 'trial' | 'pro'
+
+  // Trial
+  final DateTime? trialStartDate;
+  final DateTime? trialEndDate;
+  final bool trialActive;
+  final bool trialUsed;
+
+  // Billing cycle (per-user)
+  final DateTime? cycleStartDate;
+  final DateTime? cycleEndDate;
+  final DateTime? lastResetDate;
+
+  // Monthly usage counters (reset each cycle)
+  final int aiFillCount;
+  final int aiRewriteCount;
+  final int aiDesignCount;
+  final int exportCount;
+  final int spellcheckCount;
+
+  // Document counts (lifetime)
+  final int cvCount;
+  final int coverLetterCount;
+  final int proposalCount;
+
+  // Stripe
+  final String? stripeCustomerId;
+  final String? stripeSubscriptionId;
   final DateTime? subscriptionStartDate;
   final DateTime? subscriptionEndDate;
 
   const SubscriptionModel({
-    this.plan                  = 'free',
-    this.exportCount           = 0,
-    this.aiUsageCount          = 0,
-    this.cvCount               = 0,
-    this.exportResetDate,
+    this.plan = 'free',
+    this.trialStartDate,
+    this.trialEndDate,
+    this.trialActive = false,
+    this.trialUsed = false,
+    this.cycleStartDate,
+    this.cycleEndDate,
+    this.lastResetDate,
+    this.aiFillCount = 0,
+    this.aiRewriteCount = 0,
+    this.aiDesignCount = 0,
+    this.exportCount = 0,
+    this.spellcheckCount = 0,
+    this.cvCount = 0,
+    this.coverLetterCount = 0,
+    this.proposalCount = 0,
     this.stripeCustomerId,
     this.stripeSubscriptionId,
     this.subscriptionStartDate,
     this.subscriptionEndDate,
   });
 
-  // ---------------------------------------------------------------------------
-  // Computed access gates
-  // ---------------------------------------------------------------------------
+  // ── Computed ───────────────────────────────────────────────────────
 
-  /// True when the user is on a paid plan.
-  bool get isPro => plan == 'pro';
+  bool get isPro => plan == 'pro' || (plan == 'trial' && trialActive);
+  bool get isFree => !isPro;
 
-  /// Free users can export up to 3 times; pro users are always allowed.
+  bool get isTrialExpired =>
+      plan == 'trial' &&
+          trialEndDate != null &&
+          DateTime.now().isAfter(trialEndDate!);
+
+  bool get canStartTrial => plan == 'free' && !trialUsed;
+
+  int? get trialDaysRemaining {
+    if (plan != 'trial' || trialEndDate == null) return null;
+    final days = trialEndDate!.difference(DateTime.now()).inDays;
+    return days.clamp(0, 999);
+  }
+
+  /// Check if cycle has expired (frontend hint — server does the actual reset)
+  bool get isCycleExpired =>
+      cycleEndDate != null && DateTime.now().isAfter(cycleEndDate!);
+
+  // ── Paywall checks (uses hardcoded fallback limits) ────────────────
+  // Ideally read from config/limits, but these are safe client-side checks.
+  // The server enforces the real limits — these just control the UI.
+
+  bool get canUseAI => isPro || aiFillCount < 15;
+  bool get canUseRewrite => isPro || aiRewriteCount < 15;
+  bool get canUseDesign => isPro || aiDesignCount < 5;
   bool get canExport => isPro || exportCount < 3;
+  bool get canCreateCV => isPro || cvCount < 3;
+  bool get canCreateCoverLetter => isPro || coverLetterCount < 3;
+  bool get canCreateProposal => isPro || proposalCount < 3;
 
-  /// Free users get 10 AI fill-ins; pro users are always allowed.
-  bool get canUseAI => isPro || aiUsageCount < 10;
-
-  /// Free users can hold up to 10 CVs; pro users are always allowed.
-  bool get canCreateCV => isPro || cvCount < 10;
-
-  /// Remaining exports for free users; -1 signals "unlimited" for pro.
-  int get exportsRemaining => isPro ? -1 : 3 - exportCount;
-
-  /// Remaining AI fill-ins for free users; -1 signals "unlimited" for pro.
-  int get aiUsageRemaining => isPro ? -1 : 10 - aiUsageCount;
-
-  // ---------------------------------------------------------------------------
-  // Serialization
-  // ---------------------------------------------------------------------------
-
-  /// Converts nullable [DateTime] fields to [Timestamp] only when non-null,
-  /// storing null explicitly so Firestore can distinguish "not set" from "zero".
-  Map<String, dynamic> toJson() => {
-    'plan':         plan,
-    'exportCount':  exportCount,
-    'aiUsageCount': aiUsageCount,
-    'cvCount':      cvCount,
-    'exportResetDate': exportResetDate != null
-        ? Timestamp.fromDate(exportResetDate!)
-        : null,
-    'stripeCustomerId':      stripeCustomerId,
-    'stripeSubscriptionId':  stripeSubscriptionId,
-    'subscriptionStartDate': subscriptionStartDate != null
-        ? Timestamp.fromDate(subscriptionStartDate!)
-        : null,
-    'subscriptionEndDate': subscriptionEndDate != null
-        ? Timestamp.fromDate(subscriptionEndDate!)
-        : null,
-  };
+  // ── Serialization ─────────────────────────────────────────────────
 
   factory SubscriptionModel.fromJson(Map<String, dynamic> json) {
     return SubscriptionModel(
-      plan:         json['plan']         ?? 'free',
-      exportCount:  json['exportCount']  ?? 0,
-      aiUsageCount: json['aiUsageCount'] ?? 0,
-      cvCount:      json['cvCount']      ?? 0,
-      exportResetDate:       (json['exportResetDate']       as Timestamp?)?.toDate(),
-      stripeCustomerId:       json['stripeCustomerId'],
-      stripeSubscriptionId:   json['stripeSubscriptionId'],
+      plan: json['plan'] as String? ?? 'free',
+      trialStartDate: (json['trialStartDate'] as Timestamp?)?.toDate(),
+      trialEndDate: (json['trialEndDate'] as Timestamp?)?.toDate(),
+      trialActive: json['trialActive'] as bool? ?? false,
+      trialUsed: json['trialUsed'] as bool? ?? false,
+      cycleStartDate: (json['cycleStartDate'] as Timestamp?)?.toDate(),
+      cycleEndDate: (json['cycleEndDate'] as Timestamp?)?.toDate(),
+      lastResetDate: (json['lastResetDate'] as Timestamp?)?.toDate(),
+      aiFillCount: json['aiFillCount'] as int? ?? 0,
+      aiRewriteCount: json['aiRewriteCount'] as int? ?? 0,
+      aiDesignCount: json['aiDesignCount'] as int? ?? 0,
+      exportCount: json['exportCount'] as int? ?? 0,
+      spellcheckCount: json['spellcheckCount'] as int? ?? 0,
+      cvCount: json['cvCount'] as int? ?? 0,
+      coverLetterCount: json['coverLetterCount'] as int? ?? 0,
+      proposalCount: json['proposalCount'] as int? ?? 0,
+      stripeCustomerId: json['stripeCustomerId'] as String?,
+      stripeSubscriptionId: json['stripeSubscriptionId'] as String?,
       subscriptionStartDate: (json['subscriptionStartDate'] as Timestamp?)?.toDate(),
-      subscriptionEndDate:   (json['subscriptionEndDate']   as Timestamp?)?.toDate(),
+      subscriptionEndDate: (json['subscriptionEndDate'] as Timestamp?)?.toDate(),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'plan': plan,
+    'trialStartDate': trialStartDate != null ? Timestamp.fromDate(trialStartDate!) : null,
+    'trialEndDate': trialEndDate != null ? Timestamp.fromDate(trialEndDate!) : null,
+    'trialActive': trialActive,
+    'trialUsed': trialUsed,
+    'cycleStartDate': cycleStartDate != null ? Timestamp.fromDate(cycleStartDate!) : null,
+    'cycleEndDate': cycleEndDate != null ? Timestamp.fromDate(cycleEndDate!) : null,
+    'lastResetDate': lastResetDate != null ? Timestamp.fromDate(lastResetDate!) : null,
+    'aiFillCount': aiFillCount,
+    'aiRewriteCount': aiRewriteCount,
+    'aiDesignCount': aiDesignCount,
+    'exportCount': exportCount,
+    'spellcheckCount': spellcheckCount,
+    'cvCount': cvCount,
+    'coverLetterCount': coverLetterCount,
+    'proposalCount': proposalCount,
+    'stripeCustomerId': stripeCustomerId,
+    'stripeSubscriptionId': stripeSubscriptionId,
+    'subscriptionStartDate': subscriptionStartDate != null ? Timestamp.fromDate(subscriptionStartDate!) : null,
+    'subscriptionEndDate': subscriptionEndDate != null ? Timestamp.fromDate(subscriptionEndDate!) : null,
+  };
 }
