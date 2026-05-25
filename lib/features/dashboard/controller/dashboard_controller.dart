@@ -1,7 +1,4 @@
 // lib/features/dashboard/controller/dashboard_controller.dart
-//
-// Loads platform-wide overview data: subscription usage, recent documents
-// across all tools, and analytics summary.
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -13,9 +10,14 @@ class DashboardState {
   final String? error;
   final String displayName;
   final String plan;
+  final bool trialActive;
+  final int? trialDaysRemaining;
   final int exportCount;
-  final int aiUsageCount;
+  final int aiFillCount;
+  final int aiRewriteCount;
   final int cvCount;
+  final int coverLetterCount;
+  final int proposalCount;
   final int totalExports;
   final int totalAiFills;
   final int totalCvsCreated;
@@ -28,9 +30,14 @@ class DashboardState {
     this.error,
     this.displayName = '',
     this.plan = 'free',
+    this.trialActive = false,
+    this.trialDaysRemaining,
     this.exportCount = 0,
-    this.aiUsageCount = 0,
+    this.aiFillCount = 0,
+    this.aiRewriteCount = 0,
     this.cvCount = 0,
+    this.coverLetterCount = 0,
+    this.proposalCount = 0,
     this.totalExports = 0,
     this.totalAiFills = 0,
     this.totalCvsCreated = 0,
@@ -39,16 +46,24 @@ class DashboardState {
     this.recentItems = const [],
   });
 
-  bool get isPro => plan == 'pro';
+  bool get isPro => plan == 'pro' || (plan == 'trial' && trialActive);
+
+  /// Total documents across all tools
+  int get totalDocuments => cvCount + coverLetterCount + proposalCount;
 
   DashboardState copyWith({
     bool? isLoading,
     String? error,
     String? displayName,
     String? plan,
+    bool? trialActive,
+    int? trialDaysRemaining,
     int? exportCount,
-    int? aiUsageCount,
+    int? aiFillCount,
+    int? aiRewriteCount,
     int? cvCount,
+    int? coverLetterCount,
+    int? proposalCount,
     int? totalExports,
     int? totalAiFills,
     int? totalCvsCreated,
@@ -61,9 +76,14 @@ class DashboardState {
       error: error,
       displayName: displayName ?? this.displayName,
       plan: plan ?? this.plan,
+      trialActive: trialActive ?? this.trialActive,
+      trialDaysRemaining: trialDaysRemaining ?? this.trialDaysRemaining,
       exportCount: exportCount ?? this.exportCount,
-      aiUsageCount: aiUsageCount ?? this.aiUsageCount,
+      aiFillCount: aiFillCount ?? this.aiFillCount,
+      aiRewriteCount: aiRewriteCount ?? this.aiRewriteCount,
       cvCount: cvCount ?? this.cvCount,
+      coverLetterCount: coverLetterCount ?? this.coverLetterCount,
+      proposalCount: proposalCount ?? this.proposalCount,
       totalExports: totalExports ?? this.totalExports,
       totalAiFills: totalAiFills ?? this.totalAiFills,
       totalCvsCreated: totalCvsCreated ?? this.totalCvsCreated,
@@ -77,7 +97,7 @@ class DashboardState {
 class RecentItem {
   final String id;
   final String title;
-  final String type; // 'cv', 'proposal', 'coverLetter', 'linkedin'
+  final String type;
   final String templateId;
   final DateTime updatedAt;
 
@@ -100,11 +120,11 @@ class RecentItem {
 
   String get typeLabel {
     switch (type) {
-      case 'cv': return 'CV';
-      case 'proposal': return 'Proposal';
+      case 'cv':          return 'CV';
+      case 'proposal':    return 'Proposal';
       case 'coverLetter': return 'Cover Letter';
-      case 'linkedin': return 'LinkedIn';
-      default: return 'Document';
+      case 'linkedin':    return 'LinkedIn';
+      default:            return 'Document';
     }
   }
 }
@@ -122,19 +142,32 @@ class DashboardController extends StateNotifier<DashboardState> {
       final user = FirebaseAuth.instance.currentUser;
       final name = user?.displayName ?? user?.email?.split('@').first ?? 'User';
 
-      // Load subscription
+      // ── Load subscription (new field names) ─────────────────────────
       final subDoc = await FirebaseService.getSubscription(_uid!);
       if (subDoc.exists) {
         final data = subDoc.data() as Map<String, dynamic>;
+
+        // Trial days remaining
+        int? trialDays;
+        if (data['plan'] == 'trial' && data['trialEndDate'] != null) {
+          final endDate = (data['trialEndDate'] as dynamic).toDate() as DateTime;
+          trialDays = endDate.difference(DateTime.now()).inDays.clamp(0, 999);
+        }
+
         state = state.copyWith(
           plan: data['plan'] ?? 'free',
+          trialActive: data['trialActive'] ?? false,
+          trialDaysRemaining: trialDays,
           exportCount: data['exportCount'] ?? 0,
-          aiUsageCount: data['aiUsageCount'] ?? 0,
+          aiFillCount: data['aiFillCount'] ?? 0,
+          aiRewriteCount: data['aiRewriteCount'] ?? 0,
           cvCount: data['cvCount'] ?? 0,
+          coverLetterCount: data['coverLetterCount'] ?? 0,
+          proposalCount: data['proposalCount'] ?? 0,
         );
       }
 
-      // Load analytics summary
+      // ── Load analytics summary ──────────────────────────────────────
       final analyticsDoc = await FirebaseService.getAnalyticsSummary(_uid!);
       if (analyticsDoc.exists) {
         final data = analyticsDoc.data() as Map<String, dynamic>;
@@ -146,7 +179,7 @@ class DashboardController extends StateNotifier<DashboardState> {
         );
       }
 
-      // Load recent CVs (limit 4)
+      // ── Load recent CVs ─────────────────────────────────────────────
       final recentItems = <RecentItem>[];
       try {
         final cvsSnapshot = await FirebaseService.getUserCVs(_uid!);

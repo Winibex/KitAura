@@ -130,7 +130,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           _StatCardData(
             icon: LucideIcons.fileText,
             label: 'Documents',
-            value: '${state.cvCount}',
+            value: '${state.totalDocuments}',
             subtitle: '${state.totalCvsCreated} total created',
             color: AppColors.magentaBloom,
           ),
@@ -145,10 +145,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           _StatCardData(
             icon: LucideIcons.sparkles,
             label: 'AI Fills',
-            value: state.isPro ? '∞' : '${state.aiUsageCount} / 10',
-            subtitle: state.isPro ? 'Unlimited' : '${10 - state.aiUsageCount} remaining',
+            value: state.isPro ? '∞' : '${state.aiFillCount} / 15',
+            subtitle: state.isPro ? 'Unlimited' : '${15 - state.aiFillCount} remaining',
             color: AppColors.dustyMauve,
-            progress: state.isPro ? null : state.aiUsageCount / 10,
+            progress: state.isPro ? null : state.aiFillCount / 15,
           ),
           _StatCardData(
             icon: LucideIcons.logIn,

@@ -326,51 +326,6 @@
     },
     {
       "type": "textSection",
-      "title": "Soft Skills",
-      "x": 310,
-      "y": 612,
-      "w": 255,
-      "h": 90,
-      "color": "#FFFFFF",
-      "borderColor": "#E0E0E0",
-      "borderWidth": 0,
-      "rotation": 0,
-      "flipX": false,
-      "flipY": false,
-      "delta": [
-        {
-          "insert": "SOFT SKILLS\n",
-          "attributes": {
-            "bold": true,
-            "size": "13",
-            "color": "#1B2A4A"
-          }
-        },
-        {
-          "insert": "Team Leadership \u2022 Problem Solving\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
-        },
-        {
-          "insert": "Communication \u2022 Agile/Scrum\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
-        },
-        {
-          "insert": "Project Management \u2022 Mentoring\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
-        }
-      ]
-    },
-    {
-      "type": "textSection",
       "title": "Certifications",
       "x": 30,
       "y": 716,

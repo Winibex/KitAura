@@ -162,7 +162,6 @@ class ClaudeController extends StateNotifier<ClaudeState> {
     bool fH = false, fT = false, fB = false;
 
     for (final op in ops) {
-      if (op is! Map) continue;
       final insert = op['insert'];
       if (insert is! String || insert.trim().isEmpty) continue;
       final attrs = Map<String, dynamic>.from((op['attributes'] as Map?) ?? {});
@@ -227,7 +226,9 @@ class ClaudeController extends StateNotifier<ClaudeState> {
       if (entry is! Map) continue;
       final t = entry['title'] as String? ?? '';
       if (t.isNotEmpty) buf.writeln(t);
-      for (final l in (entry['lines'] as List? ?? [])) buf.writeln(l);
+      for (final l in (entry['lines'] as List? ?? [])) {
+        buf.writeln(l);
+      }
       buf.writeln();
     }
     final len = controller.document.length;

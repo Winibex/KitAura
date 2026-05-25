@@ -11,6 +11,7 @@ import '../../../shared/widgets/add_button.dart';
 import '../../../shared/widgets/chip_input.dart';
 import '../../../shared/widgets/pill_selector.dart';
 import '../controller/ai_setup_controller.dart';
+import '../../../shared/models/certification_entry.dart';
 
 enum AiToolType { cv, proposal, coverLetter, linkedinSummary }
 
@@ -498,8 +499,7 @@ class _AiSetupPanelState extends ConsumerState<AiSetupPanel> {
     );
   }
 
-  Widget _buildEducationCard(
-      int index, EducationEntry edu, AiSetupController ctrl) {
+  Widget _buildEducationCard(int index, EducationEntry edu, AiSetupController ctrl) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -555,9 +555,65 @@ class _AiSetupPanelState extends ConsumerState<AiSetupPanel> {
               ),
             ],
           ),
-          _buildCardField('GPA', edu.gpa ?? '', (v) {
-            ctrl.updateEducation(index, edu.copyWith(gpa: v));
-          }, hint: '3.8 / 4.0'),
+          // Grade type dropdown + value
+          Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Grade Type',
+                        style: TextStyle(color: AppColors.slateGrey,
+                            fontSize: 11, fontFamily: AppFonts.poppins,
+                            fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 4),
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppColors.almondSilk),
+                        borderRadius: BorderRadius.circular(8),
+                        color: AppColors.white,
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: edu.gradeType,
+                          isExpanded: true,
+                          hint: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 12),
+                            child: Text('Select', style: TextStyle(fontSize: 12, color: AppColors.almondSilk)),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          borderRadius: BorderRadius.circular(8),
+                          items: EducationEntry.gradeTypes.map((t) => DropdownMenuItem(
+                            value: t,
+                            child: Text(EducationEntry.gradeTypeLabel(t), style: const TextStyle(fontSize: 13)),
+                          )).toList(),
+                          onChanged: (v) {
+                            ctrl.updateEducation(index, edu.copyWith(gradeType: v ?? ''));
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 3,
+                child: _buildCardField(
+                  edu.gradeType != null ? EducationEntry.gradeTypeLabel(edu.gradeType) : 'Grade Value',
+                  edu.gradeValue ?? '',
+                      (v) => ctrl.updateEducation(index, edu.copyWith(gradeValue: v)),
+                  hint: edu.gradeType == 'gpa' ? '3.8 / 4.0'
+                      : edu.gradeType == 'marks' ? '919 / 1100'
+                      : edu.gradeType == 'percentage' ? '85%'
+                      : edu.gradeType == 'cgpa' ? '3.5 / 4.0'
+                      : edu.gradeType == 'grade' ? 'A+'
+                      : 'Enter value',
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -710,20 +766,73 @@ class _AiSetupPanelState extends ConsumerState<AiSetupPanel> {
         ),
         const SizedBox(height: 28),
 
-        // Certifications
+        // Certifications (structured)
         _buildLabel('Certifications', false),
         const SizedBox(height: 8),
-        chipInput(
-          controller: _certCtrl,
-          hint: 'Type a certification and press Enter',
-          items: state.profile.certifications,
-          onAdd: () {
-            ctrl.addCertification(_certCtrl.text);
-            _certCtrl.clear();
-          },
-          onRemove: (s) => ctrl.removeCertification(s),
-        ),
+        ...state.profile.certifications.asMap().entries.map((entry) {
+          return _buildCertificationCard(entry.key, entry.value, ctrl);
+        }),
+        const SizedBox(height: 8),
+        addItemButton('Add Certification', () => ctrl.addCertification()),
       ],
+    );
+  }
+
+  Widget _buildCertificationCard(
+      int index, CertificationEntry cert, AiSetupController ctrl) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.lavenderBlush,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.petalFrost),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Certification ${index + 1}',
+                style: const TextStyle(
+                  color: AppColors.prussianBlue, fontSize: 13,
+                  fontFamily: AppFonts.poppins, fontWeight: FontWeight.w600,
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => ctrl.removeCertification(index),
+                child: const Icon(LucideIcons.trash2, color: AppColors.error, size: 16),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildCardField('Certification Name', cert.name, (v) {
+            ctrl.updateCertification(index, cert.copyWith(name: v));
+          }, hint: 'AWS Solutions Architect'),
+          _buildCardField('Issuing Organization', cert.institute ?? '', (v) {
+            ctrl.updateCertification(index, cert.copyWith(institute: v));
+          }, hint: 'Amazon Web Services'),
+          Row(
+            children: [
+              Expanded(child: _buildCardField('Issue Date', cert.issueDate ?? '', (v) {
+                ctrl.updateCertification(index, cert.copyWith(issueDate: v));
+              }, hint: 'Jan 2024')),
+              const SizedBox(width: 12),
+              Expanded(child: _buildCardField('Expiry Date', cert.expiryDate ?? '', (v) {
+                ctrl.updateCertification(index, cert.copyWith(expiryDate: v));
+              }, hint: 'Jan 2027 (or leave empty)')),
+            ],
+          ),
+          _buildCardField('Credential ID', cert.credentialId ?? '', (v) {
+            ctrl.updateCertification(index, cert.copyWith(credentialId: v));
+          }, hint: 'ABC-123-XYZ'),
+          _buildCardField('Credential URL', cert.credentialUrl ?? '', (v) {
+            ctrl.updateCertification(index, cert.copyWith(credentialUrl: v));
+          }, hint: 'https://verify.example.com/...'),
+        ],
+      ),
     );
   }
 
@@ -954,10 +1063,58 @@ class _AiSetupPanelState extends ConsumerState<AiSetupPanel> {
               style: TextStyle(color: AppColors.slateGrey, fontSize: 13),
             ),
           ),
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: () => _confirmDeleteProfile(),
+            icon: const Icon(LucideIcons.trash2, size: 14, color: AppColors.error),
+            label: const Text(
+              'Delete Profile',
+              style: TextStyle(color: AppColors.error, fontSize: 12),
+            ),
+          ),
         ],
       ),
     );
   }
+
+  void _confirmDeleteProfile() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Delete Profile?',
+            style: TextStyle(fontFamily: AppFonts.poppins,
+                fontWeight: FontWeight.bold, color: AppColors.prussianBlue)),
+        content: const Text(
+          'This will permanently delete all your saved profile data '
+              '(experiences, education, skills, etc.). This cannot be undone.',
+          style: TextStyle(fontFamily: AppFonts.openSans, color: AppColors.slateGrey),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.slateGrey)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await ref.read(aiSetupControllerProvider.notifier).deleteProfile();
+              if (mounted) {
+                _syncControllersFromProfile();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Profile deleted'),
+                      backgroundColor: AppColors.success),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   // ─── REUSABLE WIDGETS ──────────────────────────────────────────────────
 

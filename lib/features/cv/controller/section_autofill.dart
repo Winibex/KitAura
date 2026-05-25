@@ -92,8 +92,7 @@ class SectionAutofill {
         final lead = bits.isEmpty ? 'Professional' : bits.join(' ');
         return [
           _op('SUMMARY\n', bold: true, size: '13'),
-          _op('$lead with a track record of delivering results. '
-              '(Tip: use AI Fill for a tailored summary.)', size: '11'),
+          _op('$lead with a track record of delivering results. ', size: '11'),
         ];
 
       case SectionType.experience:
@@ -156,19 +155,33 @@ class SectionAutofill {
         }
         return ops;
 
+    // In section_autofill.dart, replace the SectionType.skills case:
+
       case SectionType.skills:
         if (p.skills.isEmpty) return null;
-        return [
+        final ops = <Map<String, dynamic>>[
           _op('SKILLS\n', bold: true, size: '13'),
-          _op(p.skills.join(' • '), size: '11'),
         ];
+        for (final skill in p.skills) {
+          ops.add(_op('• $skill', size: '11'));
+        }
+        return ops;
+
+    // And replace SectionType.certifications:
 
       case SectionType.certifications:
         if (p.certifications.isEmpty) return null;
-        return [
+        final ops = <Map<String, dynamic>>[
           _op('CERTIFICATIONS\n', bold: true, size: '13'),
-          _op(p.certifications.join(' • '), size: '11'),
         ];
+        for (final cert in p.certifications) {
+          if (cert.name.isEmpty) continue;
+          final parts = <String>[cert.name];
+          if ((cert.institute ?? '').isNotEmpty) parts.add('— ${cert.institute}');
+          if ((cert.issueDate ?? '').isNotEmpty) parts.add('| ${cert.issueDate}');
+          ops.add(_op('• ${parts.join(' ')}', size: '11'));
+        }
+        return ops;
 
       case SectionType.languages:
         if (p.languages.isEmpty) return null;

@@ -258,21 +258,21 @@ void main() {
       final entry = EducationEntry.fromJson({});
       expect(entry.degree, '');
       expect(entry.school, '');
-      expect(entry.gpa, isNull);
+      expect(entry.gradeValue, isNull);
     });
 
     test('copyWith preserves unchanged fields', () {
       const original = EducationEntry(
         degree: 'BS CS',
         school: 'MIT',
-        gpa: '3.9',
+        gradeValue: '3.9',
       );
 
       final updated = original.copyWith(school: 'Stanford');
 
       expect(updated.degree, 'BS CS');
       expect(updated.school, 'Stanford');
-      expect(updated.gpa, '3.9');
+      expect(updated.gradeValue, '3.9');
     });
   });
 

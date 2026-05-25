@@ -204,6 +204,64 @@ class EditorRightPanel extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
+        // Duplicate button
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: ctrl.duplicateSelected,
+            icon: const Icon(LucideIcons.copy, size: 14, color: AppColors.prussianBlue),
+            label: const Text('Duplicate',
+                style: TextStyle(color: AppColors.prussianBlue, fontSize: 12)),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: AppColors.almondSilk),
+              padding: const EdgeInsets.symmetric(vertical: 6),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: ctrl.copySelectedSection,
+                icon: const Icon(LucideIcons.clipboardCopy, size: 14,
+                    color: AppColors.prussianBlue),
+                label: const Text('Copy',
+                    style: TextStyle(color: AppColors.prussianBlue, fontSize: 11)),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppColors.almondSilk),
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: ctrl.hasCopiedSection ? ctrl.pasteSection : null,
+                icon: Icon(LucideIcons.clipboardPaste, size: 14,
+                    color: ctrl.hasCopiedSection
+                        ? AppColors.prussianBlue
+                        : AppColors.slateGrey),
+                label: Text('Paste',
+                    style: TextStyle(
+                        color: ctrl.hasCopiedSection
+                            ? AppColors.prussianBlue
+                            : AppColors.slateGrey,
+                        fontSize: 11)),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(
+                      color: ctrl.hasCopiedSection
+                          ? AppColors.almondSilk
+                          : AppColors.petalFrost),
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+
         // Delete button
         SizedBox(
           width: double.infinity,

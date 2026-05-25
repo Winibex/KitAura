@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../../../shared/models/ai_profile_model.dart';
+import '../../../shared/models/certification_entry.dart';
 import '../../../shared/models/education_entry.dart';
 import '../../../shared/models/language_entry.dart';
 import '../../../shared/models/work_experience_entry.dart';
@@ -137,6 +138,17 @@ class AiSetupController extends StateNotifier<AiSetupState> {
     }
   }
 
+  Future<void> deleteProfile() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      await FirebaseService.saveAiProfile(uid, const AiProfileModel().toJson());
+      state = state.copyWith(profile: const AiProfileModel());
+    } catch (e) {
+      state = state.copyWith(error: 'Failed to delete profile: $e');
+    }
+  }
+
   // ─── STEP 1: PERSONAL INFO ────────────────────────────────────────────
 
   void updatePersonalInfo({
@@ -260,23 +272,20 @@ class AiSetupController extends StateNotifier<AiSetupState> {
     }
   }
 
-  void addCertification(String cert) {
-    if (cert.trim().isEmpty) return;
-    final list = List<String>.from(state.profile.certifications);
-    if (!list.contains(cert.trim())) {
-      list.add(cert.trim());
-      state = state.copyWith(
-        profile: state.profile.copyWith(certifications: list),
-      );
-    }
+  void addCertification() {
+    final updated = [...state.profile.certifications, const CertificationEntry()];
+    state = state.copyWith(profile: state.profile.copyWith(certifications: updated));
   }
 
-  void removeCertification(String cert) {
-    final list = List<String>.from(state.profile.certifications);
-    list.remove(cert);
-    state = state.copyWith(
-      profile: state.profile.copyWith(certifications: list),
-    );
+  void removeCertification(int index) {
+    final updated = [...state.profile.certifications]..removeAt(index);
+    state = state.copyWith(profile: state.profile.copyWith(certifications: updated));
+  }
+
+  void updateCertification(int index, CertificationEntry cert) {
+    final updated = [...state.profile.certifications];
+    updated[index] = cert;
+    state = state.copyWith(profile: state.profile.copyWith(certifications: updated));
   }
 
   // ─── STEP 5: AI PREFERENCES ───────────────────────────────────────────

@@ -35,6 +35,10 @@ class CanvasController extends ChangeNotifier {
   int currentPage = 0;
   int totalPages = 1;
 
+  List<dynamic>? _copiedDelta;
+  String? _copiedTitle;
+  SectionType? _copiedSectionType;
+
   static const Map<String, String> fontItems = {
     'Arial': 'Arial',
     'Open Sans': 'OpenSans',
@@ -186,8 +190,7 @@ class CanvasController extends ChangeNotifier {
     }
 
     for (final snap in snapshot.items) {
-      if (!existingById.containsKey(snap.id) &&
-          snap.type != CanvasItemType.textSection) {
+      if (!existingById.containsKey(snap.id)) {
         items.add(CanvasItem(
           type: snap.type,
           position: snap.position,
@@ -219,15 +222,17 @@ class CanvasController extends ChangeNotifier {
 
   CanvasItem addTextSection({
     String title = 'New Section',
-    Offset position = const Offset(40, 40),
+    Offset? position,
     double width = 200,
     double height = 60,
-  })
-  {
+  }) {
     saveSnapshot();
+    // Default position: top-left of the CURRENT page
+    final pageOffset = currentPage * canvasH;
+    final pos = position ?? Offset(40, pageOffset + 40);
     final item = CanvasItem(
       type: CanvasItemType.textSection,
-      position: position,
+      position: pos,
       width: width,
       height: height,
       title: title,
@@ -272,6 +277,8 @@ class CanvasController extends ChangeNotifier {
     notifyListeners();
   }
 
+
+
   // ─── DELETE ───────────────────────────────────────────────────────────
 
   void deleteSelected() {
@@ -289,6 +296,43 @@ class CanvasController extends ChangeNotifier {
     multiSelected.clear();
     notifyListeners();
   }
+
+  void duplicateSelected() {
+    if (selected == null) return;
+    saveSnapshot();
+    final src = selected!;
+    final item = CanvasItem(
+      type: src.type,
+      position: Offset(src.position.dx + 20, src.position.dy + 20),
+      width: src.width,
+      height: src.height,
+      color: src.color,
+      borderColor: src.borderColor,
+      borderWidth: src.borderWidth,
+      rotation: src.rotation,
+      title: '${src.title} Copy',
+      flipX: src.flipX,
+      flipY: src.flipY,
+      sectionType: src.sectionType,
+      iconData: src.iconData,
+    );
+    // Copy text content
+    if (src.isText && src.controller != null) {
+      try {
+        final delta = src.controller!.document.toDelta().toJson();
+        item.controller!.document = Document.fromJson(delta);
+      } catch (_) {}
+    }
+    // Copy image
+    if (src.imageBytes != null) {
+      item.imageBytes = Uint8List.fromList(src.imageBytes!);
+    }
+    items.add(item);
+    selectedId = item.id;
+    multiSelected.clear();
+    notifyListeners();
+  }
+
 
   // ─── SELECT ───────────────────────────────────────────────────────────
 
@@ -750,6 +794,14 @@ class CanvasController extends ChangeNotifier {
       redo();
       return true;
     }
+    if (isCtrl && isShift && event.logicalKey == LogicalKeyboardKey.keyC) {
+      copySelectedSection();
+      return true;
+    }
+    if (isCtrl && isShift && event.logicalKey == LogicalKeyboardKey.keyV) {
+      pasteSection();
+      return true;
+    }
     if (event.logicalKey == LogicalKeyboardKey.delete ||
         event.logicalKey == LogicalKeyboardKey.backspace) {
       final textFocused =
@@ -807,4 +859,38 @@ class CanvasController extends ChangeNotifier {
     selected!.sectionType = newType;
     notifyListeners();
   }
+
+  // ─── Copy and Paste Sections ─────────────────────────────────────────────────
+
+  void copySelectedSection() {
+    if (selected == null || !selected!.isText) return;
+    _copiedDelta = selected!.controller!.document.toDelta().toJson();
+    _copiedTitle = selected!.title;
+    _copiedSectionType = selected!.sectionType;
+  }
+
+  void pasteSection() {
+    if (_copiedDelta == null) return;
+    saveSnapshot();
+    final pageOffset = currentPage * canvasH;
+    final item = CanvasItem(
+      type: CanvasItemType.textSection,
+      position: Offset(40, pageOffset + 40),
+      width: selected?.width ?? 400,
+      height: selected?.height ?? 100,
+      title: '${_copiedTitle ?? 'Section'} (Pasted)',
+      color: Colors.white,
+      borderColor: const Color(0xFFE0E0E0),
+      sectionType: _copiedSectionType,
+    );
+    try {
+      item.controller!.document = Document.fromJson(_copiedDelta!);
+    } catch (_) {}
+    items.add(item);
+    selectedId = item.id;
+    multiSelected.clear();
+    notifyListeners();
+  }
+
+  bool get hasCopiedSection => _copiedDelta != null;
 }
