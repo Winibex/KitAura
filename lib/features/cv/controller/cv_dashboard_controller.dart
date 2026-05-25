@@ -54,7 +54,6 @@ class DashboardController extends StateNotifier<DashboardState> {
   String? get _uid => _auth.currentUser?.uid;
 
   Future<void> loadDashboard() async {
-    debugPrint('loadDashboard called');
     if (_uid == null) return;
     state = state.copyWith(isLoading: true, error: null);
     try {

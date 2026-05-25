@@ -17,7 +17,7 @@ import '../engine/canvas_controller.dart';
 import 'editor_dialogs.dart';
 import 'editor_widgets.dart';
 
-class EditorRightPanel extends StatelessWidget {
+class EditorRightPanel extends StatefulWidget {
   final CanvasController ctrl;
   final CanvasItem? selected;
   final bool isMultiSelected;
@@ -31,6 +31,8 @@ class EditorRightPanel extends StatelessWidget {
   final VoidCallback? onSpellcheck;
   final bool isSpellchecking;
 
+  final Future<void> Function(CanvasItem item, String mode, String? customInstruction)? onRewrite;
+
   const EditorRightPanel({
     super.key,
     required this.ctrl,
@@ -41,7 +43,21 @@ class EditorRightPanel extends StatelessWidget {
     this.extraContentBuilder,
     this.onSpellcheck,
     this.isSpellchecking = false,
+    this.onRewrite,  // NEW
   });
+  @override
+  State<EditorRightPanel> createState() => _EditorRightPanelState();
+}
+class _EditorRightPanelState extends State<EditorRightPanel> {
+  String _rewriteMode = 'professional';
+  final _rewriteInstructionCtrl = TextEditingController();
+  bool _isRewriting = false;
+
+  @override
+  void dispose() {
+    _rewriteInstructionCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,10 +81,10 @@ class EditorRightPanel extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (selected != null && !isMultiSelected)
-                    _buildSelectedItemPanel(context, selected!),
-                  if (isMultiSelected) _buildMultiSelectPanel(),
-                  if (selected == null && !isMultiSelected)
+                  if (widget.selected != null && !widget.isMultiSelected)
+                    _buildSelectedItemPanel(context, widget.selected!),
+                  if (widget.isMultiSelected) _buildMultiSelectPanel(),
+                  if (widget.selected == null && !widget.isMultiSelected)
                     _buildPageSettings(context),
                 ],
               ),
@@ -98,7 +114,7 @@ class EditorRightPanel extends StatelessWidget {
           ),
           const Spacer(),
           GestureDetector(
-            onTap: onClose,
+            onTap: widget.onClose,
             child: const Icon(LucideIcons.panelRightClose,
                 size: 16, color: AppColors.slateGrey),
           ),
@@ -123,7 +139,7 @@ class EditorRightPanel extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: QuillSimpleToolbar(
-              key: toolbarKey,
+              key: widget.toolbarKey,
               controller: item.controller!,
               config: QuillSimpleToolbarConfig(
                 toolbarSize: 36,
@@ -167,7 +183,7 @@ class EditorRightPanel extends StatelessWidget {
                   );
                 }).toList(),
                 onChanged: (t) {
-                  if (t != null) ctrl.updateSectionType(t);
+                  if (t != null) widget.ctrl.updateSectionType(t);
                 },
               ),
             ),
@@ -186,10 +202,146 @@ class EditorRightPanel extends StatelessWidget {
           const SizedBox(height: 12),
 
           // Extra content slot (e.g. AI Fill button for CV)
-          if (extraContentBuilder != null) ...[
-            extraContentBuilder!(item),
+          if (widget.extraContentBuilder != null) ...[
+            widget.extraContentBuilder!(item),
             const SizedBox(height: 12),
           ],
+
+          // ── AI REWRITE SECTION ──────────────────────────────────
+          if (widget.onRewrite != null) ...[
+            const Divider(color: AppColors.almondSilk),
+            const SizedBox(height: 8),
+            const EditorSectionLabel('AI REWRITE'),
+            const SizedBox(height: 6),
+            // Mode dropdown
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.almondSilk),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _rewriteMode,
+                  isExpanded: true,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  borderRadius: BorderRadius.circular(8),
+                  icon: const Icon(LucideIcons.chevronDown,
+                      size: 16, color: AppColors.slateGrey),
+                  items: const [
+                    DropdownMenuItem(value: 'professional', child: Text('Professional', style: TextStyle(fontSize: 12))),
+                    DropdownMenuItem(value: 'concise', child: Text('Concise', style: TextStyle(fontSize: 12))),
+                    DropdownMenuItem(value: 'detailed', child: Text('Detailed', style: TextStyle(fontSize: 12))),
+                    DropdownMenuItem(value: 'creative', child: Text('Creative', style: TextStyle(fontSize: 12))),
+                  ],
+                  onChanged: (v) => setState(() => _rewriteMode = v ?? 'professional'),
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            // Custom instruction
+            TextField(
+              controller: _rewriteInstructionCtrl,
+              maxLines: 2,
+              style: const TextStyle(fontSize: 12, fontFamily: AppFonts.openSans),
+              decoration: InputDecoration(
+                hintText: 'Custom instruction (optional)...\ne.g. "focus on metrics"',
+                hintStyle: const TextStyle(color: AppColors.slateGrey, fontSize: 10),
+                contentPadding: const EdgeInsets.all(8),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppColors.almondSilk),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppColors.almondSilk),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppColors.darkRaspberry),
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            // Rewrite button
+            SizedBox(
+              width: double.infinity,
+              height: 36,
+              child: ElevatedButton.icon(
+                onPressed: _isRewriting ? null : () async {
+                  setState(() => _isRewriting = true);
+                  await widget.onRewrite!(
+                    item,
+                    _rewriteMode,
+                    _rewriteInstructionCtrl.text.trim().isEmpty
+                        ? null
+                        : _rewriteInstructionCtrl.text.trim(),
+                  );
+                  if (mounted) setState(() => _isRewriting = false);
+                },
+                icon: _isRewriting
+                    ? const SizedBox(width: 14, height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white))
+                    : Icon(LucideIcons.pencil, size: 14),
+                label: Text(
+                  _isRewriting ? 'Rewriting...' : 'AI Rewrite — ${item.title}',
+                  style: const TextStyle(fontSize: 11),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _isRewriting ? AppColors.slateGrey : const Color(0xFFA36D90),
+                  foregroundColor: AppColors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          // ── TEXT CLIPBOARD (copy/paste with formatting) ─────────
+          const EditorSectionLabel('TEXT CLIPBOARD'),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    widget.ctrl.copySelectedText();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Text copied with formatting'), duration: Duration(seconds: 1)),
+                    );
+                  },
+                  icon: const Icon(LucideIcons.copy, size: 12, color: AppColors.prussianBlue),
+                  label: const Text('Copy Text', style: TextStyle(color: AppColors.prussianBlue, fontSize: 10)),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.almondSilk),
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: widget.ctrl.hasClipboardDelta
+                      ? () { widget.ctrl.pasteFormattedText(); setState(() {}); }
+                      : null,
+                  icon: Icon(LucideIcons.clipboardPaste, size: 12,
+                      color: widget.ctrl.hasClipboardDelta ? AppColors.prussianBlue : AppColors.slateGrey),
+                  label: Text('Paste Text',
+                      style: TextStyle(
+                          color: widget.ctrl.hasClipboardDelta ? AppColors.prussianBlue : AppColors.slateGrey,
+                          fontSize: 10)),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: widget.ctrl.hasClipboardDelta ? AppColors.almondSilk : AppColors.petalFrost),
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
         ],
 
         // Item title
@@ -208,7 +360,7 @@ class EditorRightPanel extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
-            onPressed: ctrl.duplicateSelected,
+            onPressed: widget.ctrl.duplicateSelected,
             icon: const Icon(LucideIcons.copy, size: 14, color: AppColors.prussianBlue),
             label: const Text('Duplicate',
                 style: TextStyle(color: AppColors.prussianBlue, fontSize: 12)),
@@ -220,55 +372,13 @@ class EditorRightPanel extends StatelessWidget {
         ),
         const SizedBox(height: 8),
 
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: ctrl.copySelectedSection,
-                icon: const Icon(LucideIcons.clipboardCopy, size: 14,
-                    color: AppColors.prussianBlue),
-                label: const Text('Copy',
-                    style: TextStyle(color: AppColors.prussianBlue, fontSize: 11)),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppColors.almondSilk),
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: ctrl.hasCopiedSection ? ctrl.pasteSection : null,
-                icon: Icon(LucideIcons.clipboardPaste, size: 14,
-                    color: ctrl.hasCopiedSection
-                        ? AppColors.prussianBlue
-                        : AppColors.slateGrey),
-                label: Text('Paste',
-                    style: TextStyle(
-                        color: ctrl.hasCopiedSection
-                            ? AppColors.prussianBlue
-                            : AppColors.slateGrey,
-                        fontSize: 11)),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(
-                      color: ctrl.hasCopiedSection
-                          ? AppColors.almondSilk
-                          : AppColors.petalFrost),
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-
         // Delete button
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
             onPressed: () {
-              ctrl.saveSnapshot();
-              ctrl.deleteSelected();
+              widget.ctrl.saveSnapshot();
+              widget.ctrl.deleteSelected();
             },
             icon: const Icon(LucideIcons.trash2,
                 size: 14, color: AppColors.error),
@@ -290,22 +400,22 @@ class EditorRightPanel extends StatelessWidget {
             EditorLayerButton(
                 icon: LucideIcons.arrowUpToLine,
                 tooltip: 'Front',
-                onTap: ctrl.bringToFront),
+                onTap: widget.ctrl.bringToFront),
             const SizedBox(width: 4),
             EditorLayerButton(
                 icon: LucideIcons.arrowUp,
                 tooltip: 'Up',
-                onTap: ctrl.bringForward),
+                onTap: widget.ctrl.bringForward),
             const SizedBox(width: 4),
             EditorLayerButton(
                 icon: LucideIcons.arrowDown,
                 tooltip: 'Down',
-                onTap: ctrl.sendBackward),
+                onTap: widget.ctrl.sendBackward),
             const SizedBox(width: 4),
             EditorLayerButton(
                 icon: LucideIcons.arrowDownToLine,
                 tooltip: 'Back',
-                onTap: ctrl.sendToBack),
+                onTap: widget.ctrl.sendToBack),
           ],
         ),
         const SizedBox(height: 12),
@@ -320,14 +430,14 @@ class EditorRightPanel extends StatelessWidget {
                 child: EditorActionButton(
                     label: 'Horizontal',
                     icon: LucideIcons.flipHorizontal,
-                    onTap: ctrl.flipHorizontal),
+                    onTap: widget.ctrl.flipHorizontal),
               ),
               const SizedBox(width: 4),
               Expanded(
                 child: EditorActionButton(
                     label: 'Vertical',
                     icon: LucideIcons.flipVertical,
-                    onTap: ctrl.flipVertical),
+                    onTap: widget.ctrl.flipVertical),
               ),
             ],
           ),
@@ -347,7 +457,7 @@ class EditorRightPanel extends StatelessWidget {
                 title: 'Fill Color',
                 currentColor: item.color,
               );
-              if (c != null) ctrl.updateColor(c);
+              if (c != null) widget.ctrl.updateColor(c);
             },
           ),
           const SizedBox(height: 8),
@@ -368,7 +478,7 @@ class EditorRightPanel extends StatelessWidget {
                     : 'Border Color',
                 currentColor: item.borderColor,
               );
-              if (c != null) ctrl.updateBorderColor(c);
+              if (c != null) widget.ctrl.updateBorderColor(c);
             },
           ),
           const SizedBox(height: 8),
@@ -383,7 +493,7 @@ class EditorRightPanel extends StatelessWidget {
             value: item.borderWidth,
             min: 1,
             max: 12,
-            onChanged: (v) => ctrl.updateBorderWidth(v),
+            onChanged: (v) => widget.ctrl.updateBorderWidth(v),
           ),
           const SizedBox(height: 8),
         ],
@@ -401,8 +511,8 @@ class EditorRightPanel extends StatelessWidget {
                   max: 360,
                   activeColor: AppColors.darkRaspberry,
                   onChanged: (v) =>
-                      ctrl.updateRotation(v * (math.pi / 180)),
-                  onChangeEnd: (_) => ctrl.saveSnapshot(),
+                      widget.ctrl.updateRotation(v * (math.pi / 180)),
+                  onChangeEnd: (_) => widget.ctrl.saveSnapshot(),
                 ),
               ),
               SizedBox(
@@ -434,7 +544,7 @@ class EditorRightPanel extends StatelessWidget {
                 if (result != null &&
                     result.files.isNotEmpty &&
                     result.files.first.bytes != null) {
-                  ctrl.updateImage(result.files.first.bytes!);
+                  widget.ctrl.updateImage(result.files.first.bytes!);
                 }
               },
               icon: const Icon(LucideIcons.upload, size: 14),
@@ -455,7 +565,7 @@ class EditorRightPanel extends StatelessWidget {
                   context: context,
                   iconColor: item.borderColor,
                 );
-                if (ic != null) ctrl.updateIcon(ic);
+                if (ic != null) widget.ctrl.updateIcon(ic);
               },
               icon: const Icon(LucideIcons.smile, size: 14),
               label:
@@ -471,7 +581,7 @@ class EditorRightPanel extends StatelessWidget {
                 title: 'Icon Color',
                 currentColor: item.borderColor,
               );
-              if (c != null) ctrl.updateBorderColor(c);
+              if (c != null) widget.ctrl.updateBorderColor(c);
             },
           ),
         ],
@@ -487,7 +597,7 @@ class EditorRightPanel extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            '${ctrl.multiSelected.length} items selected',
+            '${widget.ctrl.multiSelected.length} items selected',
             style: const TextStyle(
               color: AppColors.slateGrey,
               fontSize: 13,
@@ -499,8 +609,8 @@ class EditorRightPanel extends StatelessWidget {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () {
-                ctrl.saveSnapshot();
-                ctrl.deleteSelected();
+                widget.ctrl.saveSnapshot();
+                widget.ctrl.deleteSelected();
               },
               icon: const Icon(LucideIcons.trash2,
                   size: 14, color: AppColors.error),
@@ -516,7 +626,7 @@ class EditorRightPanel extends StatelessWidget {
     );
   }
 
-  // ─── PAGE SETTINGS (nothing selected) ─────────────────────────────────
+  // ─── PAGE SETTINGS (nothing widget.selected) ─────────────────────────────────
 
   Widget _buildPageSettings(BuildContext context) {
     return Column(
@@ -563,33 +673,33 @@ class EditorRightPanel extends StatelessWidget {
         const SizedBox(height: 12),
         EditorColorRow(
           label: 'Background',
-          color: ctrl.canvasBackground,
+          color: widget.ctrl.canvasBackground,
           onTap: () async {
             final c = await EditorDialogs.showColorPicker(
               context: context,
               title: 'Canvas Background',
-              currentColor: ctrl.canvasBackground,
+              currentColor: widget.ctrl.canvasBackground,
               enableAlpha: false,
             );
             if (c != null) {
-              ctrl.saveSnapshot();
-              ctrl.canvasBackground = c;
-              ctrl.notify();
+              widget.ctrl.saveSnapshot();
+              widget.ctrl.canvasBackground = c;
+              widget.ctrl.notify();
             }
           },
         ),
         const SizedBox(height: 16),
 
         // ── AI SPELLCHECK BUTTON ────────────────────────────────────
-        if (onSpellcheck != null) ...[
+        if (widget.onSpellcheck != null) ...[
           const EditorSectionLabel('AI TOOLS'),
           const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
             height: 40,
             child: ElevatedButton.icon(
-              onPressed: isSpellchecking ? null : onSpellcheck,
-              icon: isSpellchecking
+              onPressed: widget.isSpellchecking ? null : widget.onSpellcheck,
+              icon: widget.isSpellchecking
                   ? const SizedBox(
                 width: 14,
                 height: 14,
@@ -600,7 +710,7 @@ class EditorRightPanel extends StatelessWidget {
               )
                   : const Icon(LucideIcons.spellCheck, size: 16),
               label: Text(
-                isSpellchecking ? 'Checking...' : 'AI Spellcheck',
+                widget.isSpellchecking ? 'Checking...' : 'AI Spellcheck',
                 style: const TextStyle(fontSize: 12),
               ),
               style: ElevatedButton.styleFrom(

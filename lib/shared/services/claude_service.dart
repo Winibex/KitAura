@@ -3,8 +3,9 @@
 // Thin client over KitAura Cloud Functions.
 // API key lives ONLY on the server. Token tracking happens server-side.
 //
-// aiFillSection → returns structured text (heading + entries)
-// spellcheckCV  → returns corrections + activityId
+// CHANGES FROM PREVIOUS VERSION:
+//   1. Added aiRewriteSection() method for AI Rewrite feature
+//   2. Debug prints on all methods
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
@@ -63,6 +64,7 @@ class ClaudeService {
     String? sectionTitle,
     String beforeText = '',
   }) async {
+    debugPrint('🤖 [ClaudeService] aiFillSection(section=$sectionType, tone=$tone)');
     try {
       final result = await _fn.httpsCallable('aiFill').call<Map<String, dynamic>>({
         'sectionType': sectionType,
@@ -77,14 +79,61 @@ class ClaudeService {
         'beforeText': beforeText,
       });
       final content = result.data['content'];
-      if (content == null) return null;
+      if (content == null) {
+        debugPrint('🤖 [ClaudeService] aiFillSection returned null content');
+        return null;
+      }
+      debugPrint('🤖 [ClaudeService] aiFillSection OK');
       return Map<String, dynamic>.from(content as Map);
     } on FirebaseFunctionsException catch (e) {
-      debugPrint('aiFill error: ${e.code} ${e.message}');
+      debugPrint('🤖 [ClaudeService] aiFillSection FAILED: ${e.code} ${e.message}');
       throw _mapError(e);
     } catch (e) {
-      debugPrint('aiFill unexpected: $e');
+      debugPrint('🤖 [ClaudeService] aiFillSection unexpected: $e');
       throw 'AI generation failed. Please try again.';
+    }
+  }
+
+  /// AI Rewrite — rewrites existing text with a specified mode/tone.
+  ///
+  /// [text] — the current plain text content to rewrite
+  /// [sectionType] — which CV section (experience, summary, etc.)
+  /// [mode] — professional, concise, detailed, creative
+  /// [customInstruction] — optional user instruction for how to rewrite
+  ///
+  /// Returns the rewritten text as a plain string.
+  /// All tracking (tokens, cost, counters) happens server-side.
+  static Future<String?> aiRewriteSection({
+    required String text,
+    required String sectionType,
+    required String mode,
+    String? customInstruction,
+    String tool = 'cv',
+    String? documentId,
+    String? documentTitle,
+    String? templateId,
+  }) async {
+    debugPrint('🤖 [ClaudeService] aiRewriteSection(section=$sectionType, mode=$mode)');
+    try {
+      final result = await _fn.httpsCallable('aiRewrite').call<Map<String, dynamic>>({
+        'text': text,
+        'sectionType': sectionType,
+        'mode': mode,
+        'customInstruction': customInstruction,
+        'tool': tool,
+        'documentId': documentId,
+        'documentTitle': documentTitle,
+        'templateId': templateId,
+      });
+      final content = result.data['content'] as String?;
+      debugPrint('🤖 [ClaudeService] aiRewriteSection OK (${content?.length ?? 0} chars)');
+      return content;
+    } on FirebaseFunctionsException catch (e) {
+      debugPrint('🤖 [ClaudeService] aiRewriteSection FAILED: ${e.code} ${e.message}');
+      throw _mapError(e);
+    } catch (e) {
+      debugPrint('🤖 [ClaudeService] aiRewriteSection unexpected: $e');
+      throw 'AI rewrite failed. Please try again.';
     }
   }
 
@@ -96,6 +145,7 @@ class ClaudeService {
         String? documentTitle,
       }) async {
     if (sections.isEmpty) return const SpellcheckResult(corrections: []);
+    debugPrint('🤖 [ClaudeService] spellcheckCV(${sections.length} sections)');
     try {
       final result = await _fn.httpsCallable('spellcheck').call<Map<String, dynamic>>({
         'sections': sections,
@@ -105,6 +155,7 @@ class ClaudeService {
       });
       final list = result.data['corrections'] as List<dynamic>? ?? [];
       final activityId = result.data['activityId'] as String?;
+      debugPrint('🤖 [ClaudeService] spellcheckCV OK (${list.length} corrections)');
       return SpellcheckResult(
         corrections: list
             .map((e) => SpellCorrection.fromJson(Map<String, dynamic>.from(e as Map)))
@@ -113,21 +164,26 @@ class ClaudeService {
         activityId: activityId,
       );
     } on FirebaseFunctionsException catch (e) {
-      debugPrint('spellcheck error: ${e.code} ${e.message}');
+      debugPrint('🤖 [ClaudeService] spellcheckCV FAILED: ${e.code} ${e.message}');
       throw _mapError(e);
     } catch (e) {
-      debugPrint('spellcheck unexpected: $e');
+      debugPrint('🤖 [ClaudeService] spellcheckCV unexpected: $e');
       throw 'Spellcheck failed. Please try again.';
     }
   }
 
   static String _mapError(FirebaseFunctionsException e) {
     switch (e.code) {
-      case 'unauthenticated': return 'Please sign in to use AI features.';
-      case 'resource-exhausted': return e.message ?? 'Usage limit reached. Upgrade to Pro.';
-      case 'not-found': return 'Account setup incomplete. Please sign out and back in.';
-      case 'deadline-exceeded': return 'Request timed out. Please try again.';
-      default: return e.message ?? 'Something went wrong. Please try again.';
+      case 'unauthenticated':
+        return 'Please sign in to use AI features.';
+      case 'resource-exhausted':
+        return e.message ?? 'Usage limit reached. Upgrade to Pro.';
+      case 'not-found':
+        return 'Account setup incomplete. Please sign out and back in.';
+      case 'deadline-exceeded':
+        return 'Request timed out. Please try again.';
+      default:
+        return e.message ?? 'Something went wrong. Please try again.';
     }
   }
 }

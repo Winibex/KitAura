@@ -1,7 +1,11 @@
 // lib/features/cv/controller/claude_controller.dart
 //
-// AI Fill controller. All tracking happens server-side (Cloud Function).
+// AI Fill + AI Rewrite controller. All tracking happens server-side.
 // Frontend only: load profile, call function, apply returned content.
+//
+// CHANGES FROM PREVIOUS VERSION:
+//   1. Added rewriteSection() method for AI Rewrite feature
+//   2. Debug prints on all operations
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -21,10 +25,12 @@ class ClaudeState {
   final String? activeItemId;
   final String? error;
   final int streamedChars;
+  final String? activeOperation; // 'fill' or 'rewrite'
 
   const ClaudeState({
     this.status = AiFillStatus.idle,
     this.activeItemId,
+    this.activeOperation,
     this.error,
     this.streamedChars = 0,
   });
@@ -34,11 +40,13 @@ class ClaudeState {
   ClaudeState copyWith({
     AiFillStatus? status,
     String? activeItemId,
+    String? activeOperation,
     String? error,
     int? streamedChars,
   }) => ClaudeState(
     status: status ?? this.status,
     activeItemId: activeItemId ?? this.activeItemId,
+    activeOperation: activeOperation ?? this.activeOperation,
     error: error,
     streamedChars: streamedChars ?? this.streamedChars,
   );
@@ -64,6 +72,10 @@ class ClaudeController extends StateNotifier<ClaudeState> {
 
   AiProfileModel? _cachedProfile;
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // AI FILL
+  // ═══════════════════════════════════════════════════════════════════════
+
   /// Fill a text section: extract styles → call function → apply styled content.
   /// All tracking (tokens, cost, counters) happens server-side.
   Future<void> fillSection({
@@ -77,31 +89,29 @@ class ClaudeController extends StateNotifier<ClaudeState> {
     String tool = 'cv',
   }) async {
     if (state.isActive) return;
+    debugPrint('🤖 [ClaudeController] fillSection($sectionTitle, type=${sectionType.key})');
 
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
-      state = const ClaudeState(
-          status: AiFillStatus.error, error: 'Please sign in.');
+      state = const ClaudeState(status: AiFillStatus.error, error: 'Please sign in.');
       return;
     }
 
-    state = ClaudeState(status: AiFillStatus.loading, activeItemId: itemId);
+    state = ClaudeState(status: AiFillStatus.loading, activeItemId: itemId, activeOperation: 'fill');
 
     // Load profile
     try {
       _cachedProfile ??= await _loadAiProfile(uid);
     } catch (e) {
-      debugPrint('Profile load failed: $e');
+      debugPrint('🤖 [ClaudeController] Profile load failed: $e');
     }
     final profile = _cachedProfile ?? const AiProfileModel();
 
     // Extract styles from existing template content
     final styles = _extractStyles(controller.document);
-
-    // Capture before text for server-side storage
     final beforeText = controller.document.toPlainText();
 
-    // Call Cloud Function (tracking happens server-side)
+    // Call Cloud Function
     try {
       final content = await ClaudeService.aiFillSection(
         sectionType: sectionType.key,
@@ -129,10 +139,9 @@ class ClaudeController extends StateNotifier<ClaudeState> {
 
       // Apply old styles + new text
       try {
-        controller.document = Document.fromJson(
-            _buildStyledDelta(content, styles));
+        controller.document = Document.fromJson(_buildStyledDelta(content, styles));
       } catch (e) {
-        debugPrint('Delta apply failed: $e');
+        debugPrint('🤖 [ClaudeController] Delta apply failed: $e');
         _applyPlainFallback(controller, content);
       }
 
@@ -141,11 +150,10 @@ class ClaudeController extends StateNotifier<ClaudeState> {
         activeItemId: itemId,
         streamedChars: controller.document.toPlainText().length,
       );
-      // NO frontend tracking — server already did it
+      debugPrint('🤖 [ClaudeController] fillSection OK');
     } catch (e) {
       if (!mounted) return;
-      final isPaywall = e.toString().contains('limit') ||
-          e.toString().contains('Upgrade');
+      final isPaywall = e.toString().contains('limit') || e.toString().contains('Upgrade');
       state = ClaudeState(
         status: isPaywall ? AiFillStatus.paywalled : AiFillStatus.error,
         activeItemId: itemId,
@@ -154,7 +162,145 @@ class ClaudeController extends StateNotifier<ClaudeState> {
     }
   }
 
-  // ── Style extraction ──────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════
+  // AI REWRITE
+  // ═══════════════════════════════════════════════════════════════════════
+
+  /// Rewrite a text section: extract existing text → call function → apply.
+  /// Preserves template formatting styles.
+  ///
+  /// [mode] — professional, concise, detailed, creative
+  /// [customInstruction] — optional user instruction (e.g. "focus on metrics")
+  Future<void> rewriteSection({
+    required String itemId,
+    required SectionType sectionType,
+    required String sectionTitle,
+    required QuillController controller,
+    required String mode,
+    String? customInstruction,
+    String? cvId,
+    String? cvTitle,
+    String? templateId,
+    String tool = 'cv',
+  }) async {
+    if (state.isActive) return;
+    debugPrint('🤖 [ClaudeController] rewriteSection($sectionTitle, mode=$mode)');
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      state = const ClaudeState(status: AiFillStatus.error, error: 'Please sign in.');
+      return;
+    }
+
+    final currentText = controller.document.toPlainText().trim();
+    if (currentText.isEmpty) {
+      state = ClaudeState(
+        status: AiFillStatus.error,
+        activeItemId: itemId,
+        error: 'Section is empty — nothing to rewrite. Use AI Fill first.',
+      );
+      return;
+    }
+
+    state = ClaudeState(status: AiFillStatus.loading, activeItemId: itemId, activeOperation: 'rewrite');
+
+    // Extract styles from existing template content (to reapply after rewrite)
+    final styles = _extractStyles(controller.document);
+
+    try {
+      final rewritten = await ClaudeService.aiRewriteSection(
+        text: currentText,
+        sectionType: sectionType.key,
+        mode: mode,
+        customInstruction: customInstruction,
+        tool: tool,
+        documentId: cvId,
+        documentTitle: cvTitle,
+        templateId: templateId,
+      );
+
+      if (!mounted) return;
+
+      if (rewritten == null || rewritten.trim().isEmpty) {
+        state = ClaudeState(
+          status: AiFillStatus.error,
+          activeItemId: itemId,
+          error: 'AI returned no content. Please try again.',
+        );
+        return;
+      }
+
+      // Apply rewritten text with existing formatting styles
+      _applyRewrittenText(controller, rewritten, styles);
+
+      state = ClaudeState(
+        status: AiFillStatus.done,
+        activeItemId: itemId,
+        streamedChars: controller.document.toPlainText().length,
+      );
+      debugPrint('🤖 [ClaudeController] rewriteSection OK (${rewritten.length} chars)');
+    } catch (e) {
+      if (!mounted) return;
+      final isPaywall = e.toString().contains('limit') || e.toString().contains('Upgrade');
+      state = ClaudeState(
+        status: isPaywall ? AiFillStatus.paywalled : AiFillStatus.error,
+        activeItemId: itemId,
+        error: e.toString(),
+      );
+    }
+  }
+
+  /// Apply rewritten text while preserving template formatting styles.
+  void _applyRewrittenText(
+      QuillController controller, String newText, _StyleSet styles) {
+    final lines = newText.split('\n');
+    final ops = <Map<String, dynamic>>[];
+
+    bool firstBold = true; // First bold line gets heading style
+
+    for (final line in lines) {
+      if (line.trim().isEmpty) {
+        ops.add({'insert': '\n'});
+        continue;
+      }
+
+      // Detect if line looks like a heading (ALL CAPS, short)
+      final isHeading = line == line.toUpperCase() && line.length < 40;
+      // Detect if line looks like a title/subtitle (contains — or |)
+      final isTitle = line.contains('—') || line.contains('|') ||
+          (line.contains('–') && line.length < 80);
+
+      Map<String, dynamic> attrs;
+      if (isHeading && firstBold) {
+        attrs = Map.from(styles.headingAttrs);
+        if (attrs.isEmpty) attrs = {'bold': true};
+        firstBold = false;
+      } else if (isTitle) {
+        attrs = Map.from(styles.titleAttrs);
+        if (attrs.isEmpty) attrs = {'bold': true};
+      } else {
+        attrs = Map.from(styles.bodyAttrs);
+      }
+
+      final t = '$line\n';
+      ops.add(attrs.isEmpty ? {'insert': t} : {'insert': t, 'attributes': attrs});
+    }
+
+    if (ops.isEmpty) ops.add({'insert': '\n'});
+
+    try {
+      controller.document = Document.fromJson(ops);
+    } catch (e) {
+      debugPrint('🤖 [ClaudeController] Rewrite delta apply failed, using plain: $e');
+      final len = controller.document.length;
+      if (len > 1) controller.replaceText(0, len - 1, '', null);
+      controller.document.insert(0, newText.trimRight());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // STYLE EXTRACTION (shared by Fill + Rewrite)
+  // ═══════════════════════════════════════════════════════════════════════
 
   _StyleSet _extractStyles(Document doc) {
     final ops = doc.toDelta().toJson();
@@ -186,7 +332,9 @@ class ClaudeController extends StateNotifier<ClaudeState> {
   double _parseSize(dynamic s) =>
       s == null ? 11 : double.tryParse(s.toString().replaceAll('pt', '')) ?? 11;
 
-  // ── Build styled delta ────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════
+  // BUILD STYLED DELTA (for AI Fill)
+  // ═══════════════════════════════════════════════════════════════════════
 
   List<Map<String, dynamic>> _buildStyledDelta(
       Map<String, dynamic> content, _StyleSet styles) {
@@ -215,7 +363,9 @@ class ClaudeController extends StateNotifier<ClaudeState> {
 
   Map<String, dynamic> _op(String text, Map<String, dynamic> attrs) {
     final t = text.endsWith('\n') ? text : '$text\n';
-    return attrs.isEmpty ? {'insert': t} : {'insert': t, 'attributes': Map<String, dynamic>.from(attrs)};
+    return attrs.isEmpty
+        ? {'insert': t}
+        : {'insert': t, 'attributes': Map<String, dynamic>.from(attrs)};
   }
 
   void _applyPlainFallback(QuillController controller, Map<String, dynamic> content) {
@@ -236,7 +386,9 @@ class ClaudeController extends StateNotifier<ClaudeState> {
     controller.document.insert(0, buf.toString().trimRight());
   }
 
-  // ── Utilities ─────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════
+  // UTILITIES
+  // ═══════════════════════════════════════════════════════════════════════
 
   Map<String, dynamic> _sanitizeProfile(Map<String, dynamic> raw) {
     final clean = Map<String, dynamic>.from(raw);
@@ -249,6 +401,7 @@ class ClaudeController extends StateNotifier<ClaudeState> {
   void invalidateProfile() => _cachedProfile = null;
 
   Future<AiProfileModel?> _loadAiProfile(String uid) async {
+    debugPrint('🤖 [ClaudeController] Loading AI profile for $uid');
     final doc = await FirebaseService.getAiProfile(uid);
     if (doc.exists) {
       return AiProfileModel.fromJson(doc.data() as Map<String, dynamic>);

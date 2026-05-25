@@ -1,3 +1,10 @@
+// lib/shared/models/canvas_item.dart
+//
+// Canvas item model + snapshot classes for undo/redo.
+// CHANGES FROM PREVIOUS VERSION:
+//   1. ItemSnapshot now stores deltaJson (Quill delta) for text undo/redo
+//   2. imageBytes stored in snapshot for image undo/redo
+
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
@@ -41,7 +48,6 @@ class CanvasItem {
     this.flipY = false,
     SectionType? sectionType,
   })  : id = UniqueKey().toString(),
-  // Auto-detect from title if caller didn't specify
         sectionType = sectionType ??
             (type == CanvasItemType.textSection
                 ? SectionType.detectFromTitle(title)
@@ -63,6 +69,10 @@ class CanvasItem {
 }
 
 // ─── SNAPSHOT (for undo/redo) ────────────────────────────────────────────
+//
+// NOW STORES:
+//   - deltaJson: full Quill delta for text sections (enables text undo)
+//   - imageBytes: image data (enables image undo)
 
 class ItemSnapshot {
   final String id;
@@ -74,6 +84,8 @@ class ItemSnapshot {
   final String title;
   final bool flipX, flipY;
   final SectionType sectionType;
+  final List<dynamic>? deltaJson;   // NEW — Quill delta for text undo
+  final Uint8List? imageBytes;      // NEW — image data for undo
 
   ItemSnapshot({
     required this.id,
@@ -90,6 +102,8 @@ class ItemSnapshot {
     required this.flipX,
     required this.flipY,
     required this.sectionType,
+    this.deltaJson,
+    this.imageBytes,
   });
 
   factory ItemSnapshot.from(CanvasItem item) => ItemSnapshot(
@@ -107,6 +121,14 @@ class ItemSnapshot {
     flipX: item.flipX,
     flipY: item.flipY,
     sectionType: item.sectionType,
+    // Capture text content for undo/redo
+    deltaJson: item.isText && item.controller != null
+        ? item.controller!.document.toDelta().toJson()
+        : null,
+    // Capture image data for undo/redo
+    imageBytes: item.imageBytes != null
+        ? Uint8List.fromList(item.imageBytes!)
+        : null,
   );
 }
 

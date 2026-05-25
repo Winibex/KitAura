@@ -296,7 +296,7 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
         toastification.show(
           context: context,
           type: ToastificationType.success,
-          title: const Text('AI Fill Complete'),
+          title: const Text('AI Complete'),
           description: Text('${next.streamedChars} characters generated'),
           autoCloseDuration: const Duration(seconds: 2),
         );
@@ -392,6 +392,20 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
                         ref.read(spellcheckControllerProvider.notifier).checkAll(_ctrl.items);
                         setState(() => _showSpellcheckPanel = true);
                       },
+                      // NEW: Wire AI Rewrite
+                      onRewrite: (item, mode, customInstruction) async {
+                        _ctrl.saveSnapshot();
+                        await ref.read(claudeControllerProvider.notifier).rewriteSection(
+                          itemId: item.id,
+                          sectionType: item.sectionType,
+                          sectionTitle: item.title,
+                          controller: item.controller!,
+                          mode: mode,
+                          customInstruction: customInstruction,
+                          cvId: _firestoreDocId,
+                          cvTitle: _cvTitle,
+                        );
+                      },
                     ),
                   ),
                 // Panel toggle buttons when panels are closed
@@ -448,7 +462,7 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
   Widget _buildAiFillButton(CanvasItem item) {
     final claudeState = ref.watch(claudeControllerProvider);
     final isThisItem = claudeState.activeItemId == item.id;
-    final isActive = claudeState.isActive && isThisItem;
+    final isActive = claudeState.isActive && isThisItem && claudeState.activeOperation == 'fill';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -645,15 +659,36 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
                             height: CanvasController.canvasH,
                             child: GestureDetector(
                               onTapDown: (_) => _ctrl.deselect(),
-                              onPanStart: (d) => setState(() {
-                                _isMarqueeActive = true;
-                                _marqueeStart = Offset(
-                                  d.localPosition.dx,
-                                  d.localPosition.dy + yOffset,
-                                );
-                                _marqueeEnd = _marqueeStart;
-                              }),
+                              onPanStart: (d) {
+                                final yOffset = pageIdx * (CanvasController.canvasH + 24);
+                                // NEW: If multi-selected, start multi-drag instead of marquee
+                                if (_ctrl.multiSelected.isNotEmpty) {
+                                  _ctrl.startMultiDrag(Offset(
+                                    d.localPosition.dx,
+                                    d.localPosition.dy + yOffset,
+                                  ));
+                                  return;
+                                }
+                                setState(() {
+                                  _isMarqueeActive = true;
+                                  _marqueeStart = Offset(
+                                    d.localPosition.dx,
+                                    d.localPosition.dy + yOffset,
+                                  );
+                                  _marqueeEnd = _marqueeStart;
+                                });
+                              },
                               onPanUpdate: (d) {
+                                final yOffset = pageIdx * (CanvasController.canvasH + 24);
+                                // NEW: Multi-drag update
+                                if (_ctrl.isMultiDragging) {
+                                  _ctrl.updateMultiDrag(Offset(
+                                    d.localPosition.dx,
+                                    d.localPosition.dy + yOffset,
+                                  ));
+                                  setState(() {}); // Force rebuild without notifyListeners
+                                  return;
+                                }
                                 if (_isMarqueeActive) {
                                   setState(() {
                                     _marqueeEnd = Offset(
@@ -664,6 +699,11 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
                                 }
                               },
                               onPanEnd: (_) {
+                                // NEW: End multi-drag
+                                if (_ctrl.isMultiDragging) {
+                                  _ctrl.endMultiDrag();
+                                  return;
+                                }
                                 if (_isMarqueeActive) _onMarqueeEnd();
                               },
                               child: Container(
@@ -716,14 +756,17 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
                                 setState(() => _toolbarKey = UniqueKey());
                               }
                             },
-                            onMultiMoveUpdate:
-                            _ctrl.multiSelected.contains(item.id)
-                                ? _ctrl.multiMoveUpdate
-                                : null,
-                            onMultiMoveEnd:
-                            _ctrl.multiSelected.contains(item.id)
-                                ? _ctrl.multiMoveEnd
-                                : null,
+                                onMultiMoveUpdate:
+                                _ctrl.multiSelected.contains(item.id)
+                                    ? (delta) {
+                                  _ctrl.multiMoveUpdate(delta);
+                                  setState(() {}); // Force parent rebuild
+                                }
+                                    : null,
+                                onMultiMoveEnd:
+                                _ctrl.multiSelected.contains(item.id)
+                                    ? () => _ctrl.multiMoveEnd()
+                                    : null,
                             onSaveSnapshot: _ctrl.saveSnapshot,
                             allItems: _ctrl.items,                          // ← ADD THIS
                             onSnapGuidesChanged: (guides) {                 // ← ADD THIS

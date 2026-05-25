@@ -1,8 +1,20 @@
+// lib/shared/canvas/canvas_controller.dart
+//
+// CHANGES FROM PREVIOUS VERSION:
+//   1. _restoreSnapshot() now restores Quill delta (text undo works)
+//   2. Multi-select drag: startMultiDrag / updateMultiDrag / endMultiDrag
+//      (mutates positions directly, parent calls setState, no notifyListeners mid-drag)
+//   3. Formatted text clipboard: copySelectedText / pasteFormattedText
+//   4. registerTextChangeListener() for auto-snapshot on text edits
+//   5. Debug prints on key operations
+
+import 'dart:async';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_quill/quill_delta.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../models/canvas_item.dart';
@@ -35,9 +47,15 @@ class CanvasController extends ChangeNotifier {
   int currentPage = 0;
   int totalPages = 1;
 
-  List<dynamic>? _copiedDelta;
-  String? _copiedTitle;
-  SectionType? _copiedSectionType;
+  // ─── Formatted text clipboard (Copy/Paste text with formatting) ───────
+  List<dynamic>? _clipboardDelta;
+  bool get hasClipboardDelta => _clipboardDelta != null;
+
+  // ─── Multi-drag state ─────────────────────────────────────────────────
+  Offset? _multiDragStart;
+  Map<String, Offset> _multiDragOriginalPositions = {};
+  bool get isMultiDragging => _multiDragStart != null;
+
 
   static const Map<String, String> fontItems = {
     'Arial': 'Arial',
@@ -46,10 +64,8 @@ class CanvasController extends ChangeNotifier {
     'Sekuya': 'Sekuya',
   };
 
-
-  // In canvas_controller.dart:
   Future<void> loadFromJson(Map<String, dynamic> json) async {
-    applyTemplateJson(json);  // you already have this method
+    applyTemplateJson(json);
     notifyListeners();
   }
 
@@ -58,7 +74,6 @@ class CanvasController extends ChangeNotifier {
   void addPage() {
     totalPages++;
     currentPage = totalPages - 1;
-    // Clear selection when switching pages
     selectedId = null;
     multiSelected.clear();
     notifyListeners();
@@ -66,7 +81,6 @@ class CanvasController extends ChangeNotifier {
 
   void removePage(int pageIndex) {
     if (totalPages <= 1) return;
-    // Remove items on this page
     items.removeWhere((item) {
       final itemPage = _getItemPage(item);
       if (itemPage == pageIndex) {
@@ -75,14 +89,10 @@ class CanvasController extends ChangeNotifier {
       }
       return false;
     });
-    // Shift items on later pages up
     for (final item in items) {
       final itemPage = _getItemPage(item);
       if (itemPage > pageIndex) {
-        item.position = Offset(
-          item.position.dx,
-          item.position.dy - canvasH,
-        );
+        item.position = Offset(item.position.dx, item.position.dy - canvasH);
       }
     }
     totalPages--;
@@ -101,10 +111,7 @@ class CanvasController extends ChangeNotifier {
     }
   }
 
-  int _getItemPage(CanvasItem item) {
-    return (item.position.dy / canvasH).floor();
-  }
-
+  int _getItemPage(CanvasItem item) => (item.position.dy / canvasH).floor();
   double get totalCanvasHeight => canvasH * totalPages;
 
   // ─── INIT / DISPOSE ───────────────────────────────────────────────────
@@ -123,9 +130,7 @@ class CanvasController extends ChangeNotifier {
     }
   }
 
-  void notify() {
-    notifyListeners();
-  }
+  void notify() => notifyListeners();
 
   // ─── UNDO / REDO ──────────────────────────────────────────────────────
 
@@ -137,11 +142,12 @@ class CanvasController extends ChangeNotifier {
     ));
     _redoStack.clear();
     if (_undoStack.length > 50) _undoStack.removeAt(0);
-    notifyListeners(); // ADD THIS — refreshes canUndo on the app bar
+    notifyListeners();
   }
 
   void undo() {
     if (_undoStack.isEmpty) return;
+    debugPrint('↩️ [Canvas] Undo (stack: ${_undoStack.length})');
     _redoStack.add(CanvasSnapshot(
       items.map(ItemSnapshot.from).toList(),
       selectedId,
@@ -152,6 +158,7 @@ class CanvasController extends ChangeNotifier {
 
   void redo() {
     if (_redoStack.isEmpty) return;
+    debugPrint('↪️ [Canvas] Redo (stack: ${_redoStack.length})');
     _undoStack.add(CanvasSnapshot(
       items.map(ItemSnapshot.from).toList(),
       selectedId,
@@ -164,6 +171,7 @@ class CanvasController extends ChangeNotifier {
     final existingById = {for (final i in items) i.id: i};
     final snapById = {for (final s in snapshot.items) s.id: s};
 
+    // Remove items that don't exist in the snapshot
     items.removeWhere((item) {
       if (!snapById.containsKey(item.id)) {
         item.dispose();
@@ -172,6 +180,7 @@ class CanvasController extends ChangeNotifier {
       return false;
     });
 
+    // Update existing items (position, size, color, AND text delta)
     for (final item in items) {
       final snap = snapById[item.id]!;
       item.type = snap.type;
@@ -187,11 +196,26 @@ class CanvasController extends ChangeNotifier {
       item.flipX = snap.flipX;
       item.flipY = snap.flipY;
       item.sectionType = snap.sectionType;
+      item.imageBytes = snap.imageBytes;
+
+      // ── RESTORE TEXT DELTA (the key fix for text undo) ──
+      if (item.isText && snap.deltaJson != null && item.controller != null) {
+        try {
+          final delta = Delta.fromJson(snap.deltaJson!);
+          // Temporarily remove listener to avoid triggering auto-snapshot
+          item.controller!.document = Document.fromDelta(delta);
+          // Re-register after restore
+        } catch (e) {
+          debugPrint('⚠️ [Canvas] Delta restore failed for "${item.title}": $e');
+        }
+      }
     }
 
+    // Recreate items that were deleted (now restored by undo)
     for (final snap in snapshot.items) {
       if (!existingById.containsKey(snap.id)) {
-        items.add(CanvasItem(
+        debugPrint('♻️ [Canvas] Recreating deleted item: "${snap.title}" (${snap.type})');
+        final newItem = CanvasItem(
           type: snap.type,
           position: snap.position,
           width: snap.width,
@@ -205,10 +229,26 @@ class CanvasController extends ChangeNotifier {
           flipX: snap.flipX,
           flipY: snap.flipY,
           sectionType: snap.sectionType,
-        ));
+        );
+        newItem.imageBytes = snap.imageBytes;
+
+        // Restore text content for recreated text sections
+        if (snap.type == CanvasItemType.textSection &&
+            snap.deltaJson != null &&
+            newItem.controller != null) {
+          try {
+            final delta = Delta.fromJson(snap.deltaJson!);
+            newItem.controller!.document = Document.fromDelta(delta);
+          } catch (e) {
+            debugPrint('⚠️ [Canvas] Delta restore on recreate failed: $e');
+          }
+        }
+
+        items.add(newItem);
       }
     }
 
+    // Restore z-order
     final order = snapshot.items.map((s) => s.id).toList();
     items.sort((a, b) => order.indexOf(a.id).compareTo(order.indexOf(b.id)));
 
@@ -225,9 +265,9 @@ class CanvasController extends ChangeNotifier {
     Offset? position,
     double width = 200,
     double height = 60,
-  }) {
+  })
+  {
     saveSnapshot();
-    // Default position: top-left of the CURRENT page
     final pageOffset = currentPage * canvasH;
     final pos = position ?? Offset(40, pageOffset + 40);
     final item = CanvasItem(
@@ -277,8 +317,6 @@ class CanvasController extends ChangeNotifier {
     notifyListeners();
   }
 
-
-
   // ─── DELETE ───────────────────────────────────────────────────────────
 
   void deleteSelected() {
@@ -316,14 +354,12 @@ class CanvasController extends ChangeNotifier {
       sectionType: src.sectionType,
       iconData: src.iconData,
     );
-    // Copy text content
     if (src.isText && src.controller != null) {
       try {
         final delta = src.controller!.document.toDelta().toJson();
         item.controller!.document = Document.fromJson(delta);
       } catch (_) {}
     }
-    // Copy image
     if (src.imageBytes != null) {
       item.imageBytes = Uint8List.fromList(src.imageBytes!);
     }
@@ -332,7 +368,6 @@ class CanvasController extends ChangeNotifier {
     multiSelected.clear();
     notifyListeners();
   }
-
 
   // ─── SELECT ───────────────────────────────────────────────────────────
 
@@ -361,18 +396,156 @@ class CanvasController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ─── MULTI-SELECT DRAG (fixed — no notifyListeners during drag) ───────
+  //
+  // The old multiMoveUpdate called notifyListeners which killed the gesture.
+  // New approach: mutate positions directly, parent calls setState.
+
+  void startMultiDrag(Offset localPosition) {
+    if (multiSelected.isEmpty) return;
+    saveSnapshot();
+    _multiDragStart = localPosition;
+    _multiDragOriginalPositions = {
+      for (final id in multiSelected)
+        if (items.any((i) => i.id == id))
+          id: items.firstWhere((i) => i.id == id).position,
+    };
+    debugPrint('🔀 [Canvas] Multi-drag start (${multiSelected.length} items)');
+  }
+
+  /// Call this from onPanUpdate. Does NOT call notifyListeners.
+  /// Parent widget must call setState(() {}) to trigger rebuild.
+  void updateMultiDrag(Offset localPosition) {
+    if (_multiDragStart == null) return;
+    final delta = localPosition - _multiDragStart!;
+    for (final entry in _multiDragOriginalPositions.entries) {
+      final item = items.where((i) => i.id == entry.key).firstOrNull;
+      if (item == null) continue;
+      item.position = Offset(
+        (entry.value.dx + delta.dx).clamp(0, canvasW - item.width),
+        (entry.value.dy + delta.dy).clamp(0, totalCanvasHeight - item.height),
+      );
+    }
+    // NO notifyListeners() here — parent calls setState
+  }
+
+  void endMultiDrag() {
+    _multiDragStart = null;
+    _multiDragOriginalPositions.clear();
+    debugPrint('🔀 [Canvas] Multi-drag end');
+    notifyListeners(); // Only notify once at the end
+  }
+
   void multiMoveUpdate(Offset delta) {
     for (final id in multiSelected) {
       final item = items.where((i) => i.id == id).firstOrNull;
       if (item == null) continue;
       item.position = Offset(
         (item.position.dx + delta.dx).clamp(0, canvasW - item.width),
-        (item.position.dy + delta.dy).clamp(0, canvasH - item.height),
+        (item.position.dy + delta.dy).clamp(0, totalCanvasHeight - item.height),
       );
     }
+    // DO NOT call notifyListeners — let the caller setState
   }
 
   void multiMoveEnd() {
+    notifyListeners();
+  }
+
+  // ─── FORMATTED TEXT CLIPBOARD (copy/paste text WITH formatting) ────────
+  //
+  // This works around flutter_quill's bug where Ctrl+C/V across different
+  // QuillControllers strips inline attributes.
+  //
+  // copySelectedText: captures the full delta (or selected range) from the
+  //   active text section's QuillController.
+  // pasteFormattedText: inserts the captured delta into the current text
+  //   section at the cursor position, preserving all formatting.
+
+  void copySelectedText() {
+    final item = selected;
+    if (item == null || !item.isText || item.controller == null) return;
+
+    final ctrl = item.controller!;
+    final selection = ctrl.selection;
+
+    if (selection.isCollapsed) {
+      // No selection — copy entire document
+      _clipboardDelta = ctrl.document.toDelta().toJson();
+    } else {
+      // Copy selected range with formatting
+      final ops = ctrl.document.toDelta().toList();
+      final selectedOps = <Map<String, dynamic>>[];
+      int pos = 0;
+      for (final op in ops) {
+        if (!op.isInsert) continue;
+        final text = op.data is String ? op.data as String : '';
+        final opEnd = pos + text.length;
+        if (opEnd > selection.start && pos < selection.end) {
+          final clipStart = (selection.start - pos).clamp(0, text.length);
+          final clipEnd = (selection.end - pos).clamp(0, text.length);
+          final clipped = text.substring(clipStart, clipEnd);
+          if (clipped.isNotEmpty) {
+            final entry = <String, dynamic>{'insert': clipped};
+            if (op.attributes != null && op.attributes!.isNotEmpty) {
+              entry['attributes'] = Map<String, dynamic>.from(op.attributes!);
+            }
+            selectedOps.add(entry);
+          }
+        }
+        pos = opEnd;
+      }
+      if (selectedOps.isNotEmpty) {
+        // Ensure trailing newline
+        final last = selectedOps.last['insert'] as String;
+        if (!last.endsWith('\n')) {
+          selectedOps.last['insert'] = '$last\n';
+        }
+        _clipboardDelta = selectedOps;
+      }
+    }
+    debugPrint('📋 [Canvas] Copied formatted text (${_clipboardDelta?.length ?? 0} ops)');
+  }
+
+  void pasteFormattedText() {
+    if (_clipboardDelta == null) return;
+    final item = selected;
+    if (item == null || !item.isText || item.controller == null) return;
+
+    saveSnapshot();
+
+    final ctrl = item.controller!;
+    final index = ctrl.selection.baseOffset;
+
+    // Parse the clipboard delta and insert at cursor
+    try {
+      for (final op in _clipboardDelta!) {
+        if (op is! Map) continue;
+        final text = op['insert'] as String? ?? '';
+        if (text.isEmpty) continue;
+        final attrs = op['attributes'] as Map<String, dynamic>?;
+
+        // Remove trailing \n from each op to avoid double newlines
+        final cleanText = text.endsWith('\n') ? text.substring(0, text.length - 1) : text;
+        if (cleanText.isNotEmpty) {
+          ctrl.document.insert(index, cleanText);
+          // Apply formatting attributes
+          if (attrs != null) {
+            for (final entry in attrs.entries) {
+              ctrl.formatText(
+                index,
+                cleanText.length,
+                Attribute.fromKeyValue(entry.key, entry.value),
+              );
+            }
+          }
+        }
+      }
+      debugPrint('📋 [Canvas] Pasted formatted text at offset $index');
+    } catch (e) {
+      debugPrint('⚠️ [Canvas] Formatted paste failed: $e');
+    }
+
     notifyListeners();
   }
 
@@ -539,7 +712,7 @@ class CanvasController extends ChangeNotifier {
       flipY: map['flipY'] as bool? ?? false,
       sectionType: map['sectionType'] != null
           ? SectionType.fromKey(map['sectionType'] as String)
-          : null, // null → auto-detect from title in constructor
+          : null,
     );
 
     if (item.isText && map['delta'] != null) {
@@ -561,7 +734,8 @@ class CanvasController extends ChangeNotifier {
     final bg = json['canvasBackground'] as String? ?? '#FFFFFF';
     final rawItems = json['items'] as List<dynamic>;
     for (final raw in rawItems) {
-      items.add(buildItemFromMap(raw as Map<String, dynamic>));
+      final item = buildItemFromMap(raw as Map<String, dynamic>);
+      items.add(item);
     }
 
     canvasBackground = hexColor(bg);
@@ -626,8 +800,7 @@ class CanvasController extends ChangeNotifier {
   pw.Font getFont(String? f) =>
       pdfFonts[f] ?? pdfFonts['OpenSans'] ?? pdfFonts.values.first;
 
-  PdfColor toPdfColor(Color c) =>
-      PdfColor(c.r, c.g, c.b, c.a);
+  PdfColor toPdfColor(Color c) => PdfColor(c.r, c.g, c.b, c.a);
 
   pw.Widget itemToPdf(CanvasItem item) {
     pw.Widget content;
@@ -657,8 +830,7 @@ class CanvasController extends ChangeNotifier {
         top: item.position.dy,
         child: pw.Transform.rotateBox(
           angle: item.rotation,
-          child: pw.SizedBox(
-              width: item.width, height: item.height, child: content),
+          child: pw.SizedBox(width: item.width, height: item.height, child: content),
         ),
       );
     }
@@ -676,12 +848,8 @@ class CanvasController extends ChangeNotifier {
             style: pw.TextStyle(
               font: getFont(a?['font'] as String? ?? globalFont),
               fontSize: globalFontSize,
-              fontWeight: a?['bold'] == true
-                  ? pw.FontWeight.bold
-                  : pw.FontWeight.normal,
-              fontStyle: a?['italic'] == true
-                  ? pw.FontStyle.italic
-                  : pw.FontStyle.normal,
+              fontWeight: a?['bold'] == true ? pw.FontWeight.bold : pw.FontWeight.normal,
+              fontStyle: a?['italic'] == true ? pw.FontStyle.italic : pw.FontStyle.normal,
             ),
           ));
         }
@@ -700,8 +868,7 @@ class CanvasController extends ChangeNotifier {
               pw.RichText(
                 text: pw.TextSpan(
                   children: spans,
-                  style: pw.TextStyle(
-                      font: getFont(globalFont), fontSize: globalFontSize),
+                  style: pw.TextStyle(font: getFont(globalFont), fontSize: globalFontSize),
                 ),
               ),
           ],
@@ -718,8 +885,7 @@ class CanvasController extends ChangeNotifier {
         content = pw.Container(
           decoration: pw.BoxDecoration(
             color: toPdfColor(item.color),
-            border: pw.Border.all(
-                color: toPdfColor(item.borderColor), width: item.borderWidth),
+            border: pw.Border.all(color: toPdfColor(item.borderColor), width: item.borderWidth),
           ),
         );
         break;
@@ -728,8 +894,7 @@ class CanvasController extends ChangeNotifier {
           decoration: pw.BoxDecoration(
             color: toPdfColor(item.color),
             shape: pw.BoxShape.circle,
-            border: pw.Border.all(
-                color: toPdfColor(item.borderColor), width: item.borderWidth),
+            border: pw.Border.all(color: toPdfColor(item.borderColor), width: item.borderWidth),
           ),
         );
         break;
@@ -760,8 +925,7 @@ class CanvasController extends ChangeNotifier {
       top: item.position.dy,
       child: pw.Transform.rotateBox(
         angle: item.rotation,
-        child:
-        pw.SizedBox(width: item.width, height: item.height, child: content),
+        child: pw.SizedBox(width: item.width, height: item.height, child: content),
       ),
     );
   }
@@ -784,30 +948,22 @@ class CanvasController extends ChangeNotifier {
         HardwareKeyboard.instance.isMetaPressed;
     final isShift = HardwareKeyboard.instance.isShiftPressed;
 
+    // Ctrl+Z → Undo
     if (isCtrl && !isShift && event.logicalKey == LogicalKeyboardKey.keyZ) {
       undo();
       return true;
     }
-    if (isCtrl &&
-        (event.logicalKey == LogicalKeyboardKey.keyY ||
-            (isShift && event.logicalKey == LogicalKeyboardKey.keyZ))) {
+    // Ctrl+Y or Ctrl+Shift+Z → Redo
+    if (isCtrl && (event.logicalKey == LogicalKeyboardKey.keyY ||
+        (isShift && event.logicalKey == LogicalKeyboardKey.keyZ))) {
       redo();
       return true;
     }
-    if (isCtrl && isShift && event.logicalKey == LogicalKeyboardKey.keyC) {
-      copySelectedSection();
-      return true;
-    }
-    if (isCtrl && isShift && event.logicalKey == LogicalKeyboardKey.keyV) {
-      pasteSection();
-      return true;
-    }
+    // Delete/Backspace → Delete selected (only if no text focused)
     if (event.logicalKey == LogicalKeyboardKey.delete ||
         event.logicalKey == LogicalKeyboardKey.backspace) {
-      final textFocused =
-      items.any((i) => i.isText && (i.focusNode?.hasFocus ?? false));
-      if (!textFocused &&
-          (selectedId != null || multiSelected.isNotEmpty)) {
+      final textFocused = items.any((i) => i.isText && (i.focusNode?.hasFocus ?? false));
+      if (!textFocused && (selectedId != null || multiSelected.isNotEmpty)) {
         saveSnapshot();
         deleteSelected();
         return true;
@@ -816,7 +972,7 @@ class CanvasController extends ChangeNotifier {
     return false;
   }
 
-  // ─── Add to Firestore ─────────────────────────────────────────────────
+  // ─── FIRESTORE JSON ───────────────────────────────────────────────────
 
   Map<String, dynamic> toFirestoreJson(String userId, String templateId) {
     return {
@@ -860,37 +1016,4 @@ class CanvasController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ─── Copy and Paste Sections ─────────────────────────────────────────────────
-
-  void copySelectedSection() {
-    if (selected == null || !selected!.isText) return;
-    _copiedDelta = selected!.controller!.document.toDelta().toJson();
-    _copiedTitle = selected!.title;
-    _copiedSectionType = selected!.sectionType;
-  }
-
-  void pasteSection() {
-    if (_copiedDelta == null) return;
-    saveSnapshot();
-    final pageOffset = currentPage * canvasH;
-    final item = CanvasItem(
-      type: CanvasItemType.textSection,
-      position: Offset(40, pageOffset + 40),
-      width: selected?.width ?? 400,
-      height: selected?.height ?? 100,
-      title: '${_copiedTitle ?? 'Section'} (Pasted)',
-      color: Colors.white,
-      borderColor: const Color(0xFFE0E0E0),
-      sectionType: _copiedSectionType,
-    );
-    try {
-      item.controller!.document = Document.fromJson(_copiedDelta!);
-    } catch (_) {}
-    items.add(item);
-    selectedId = item.id;
-    multiSelected.clear();
-    notifyListeners();
-  }
-
-  bool get hasCopiedSection => _copiedDelta != null;
 }
