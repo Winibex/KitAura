@@ -305,244 +305,69 @@ exports.spellcheck = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", t
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// AI REWRITE
+// 3. AI REWRITE
 // ═══════════════════════════════════════════════════════════════════════════
 
-exports.aiRewrite = onCall(
-  { region: "us-central1", secrets: ["ANTHROPIC_KEY"] },
-  async (request) => {
-    // ── Auth check ──────────────────────────────────────────────────────
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Sign in required");
-    }
-    const uid = request.auth.uid;
+exports.aiRewrite = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", timeoutSeconds: 120 }, async (req) => {
+  if (!req.auth) throw new HttpsError("unauthenticated", "Sign in required.");
+  const uid = req.auth.uid;
+  const t0 = Date.now();
+  const { text="", sectionType="custom", mode="professional", customInstruction=null,
+    tool="cv", documentId=null, documentTitle=null, templateId=null } = req.data || {};
 
-    const {
-      text,
-      sectionType,
-      mode,
-      customInstruction,
-      tool,
-      documentId,
-      documentTitle,
-      templateId,
-    } = request.data;
+  if (!text || !sectionType) throw new HttpsError("invalid-argument", "Missing text or sectionType");
 
-    if (!text || !sectionType) {
-      throw new HttpsError("invalid-argument", "Missing text or sectionType");
-    }
+  const { sub } = await getSubWithCycleCheck(uid);
+  await checkPaywall(sub, "aiRewriteCount", "aiRewritePerMonth");
 
-    const db = getFirestore();
-    const subRef = db.doc(`users/${uid}/data/subscription`);
-    const subSnap = await subRef.get();
-    const subData = subSnap.data() || {};
+  const pSnap = await db.doc("config/pricing").get();
+  const rates = pSnap.exists ? pSnap.data().models[MODEL_SONNET] : { inputPerMTok:3, outputPerMTok:15, cacheReadMultiplier:0.1 };
 
-    // ── Cycle reset check ───────────────────────────────────────────────
-    await checkAndResetCycle(uid, subRef, subData);
-    const freshSub = (await subRef.get()).data() || {};
-
-    // ── Paywall check ───────────────────────────────────────────────────
-    const limitsSnap = await db.doc("config/limits").get();
-    const limits = limitsSnap.data();
-    const planLimits = limits[freshSub.plan || "free"];
-
-    if (
-      planLimits.aiRewritePerMonth !== -1 &&
-      (freshSub.aiRewriteCount || 0) >= planLimits.aiRewritePerMonth
-    ) {
-      throw new HttpsError(
-        "resource-exhausted",
-        "AI Rewrite limit reached. Upgrade to Pro for unlimited rewrites."
-      );
-    }
-
-    // ── Build prompt ────────────────────────────────────────────────────
-    const rewriteMode = mode || "professional";
-    let modeInstruction = "";
-    switch (rewriteMode) {
-      case "professional":
-        modeInstruction =
-          "Rewrite in a formal, polished professional tone suitable for corporate CVs. Use strong action verbs and industry-standard phrasing.";
-        break;
-      case "concise":
-        modeInstruction =
-          "Make it shorter and more impactful. Remove filler words. Compress sentences. Use strong action verbs. Aim for 30-50% fewer words while keeping all key information.";
-        break;
-      case "detailed":
-        modeInstruction =
-          "Expand with more specific details, metrics, quantified accomplishments, and context. Add measurable results where appropriate (e.g. 'increased revenue by 25%').";
-        break;
-      case "creative":
-        modeInstruction =
-          "Rewrite with a creative, engaging tone that stands out from typical CVs while remaining professional. Use vivid language and compelling narrative.";
-        break;
-    }
-
-    const customPart = customInstruction
-      ? `\n\nAdditional user instruction: "${customInstruction}"`
-      : "";
-
-    const systemPrompt = `You are a professional CV content rewriter. You improve CV section text without changing its meaning.
-
-RULES:
-- Keep the same general structure (headings, bullet points, entries)
-- Preserve ALL factual information: dates, company names, degrees, metrics
-- Only change wording, tone, and phrasing
-- Return ONLY the rewritten text — no explanations, no markdown, no quotes
-- Keep the same format as the input (if input has bullet points, output should too)
-- If the input has a heading in ALL CAPS, keep it in ALL CAPS
-- Maintain professional CV formatting conventions
-
-STYLE: ${modeInstruction}${customPart}`;
-
-    // ── Call Anthropic API ──────────────────────────────────────────────
-    const startTime = Date.now();
-    const ANTHROPIC_KEY = process.env.ANTHROPIC_KEY;
-
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": ANTHROPIC_KEY,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 2000,
-        system: [
-          {
-            type: "text",
-            text: systemPrompt,
-            cache_control: { type: "ephemeral" },
-          },
-        ],
-        messages: [
-          {
-            role: "user",
-            content: `Rewrite this ${sectionType} section:\n\n${text}`,
-          },
-        ],
-      }),
-    });
-
-    const result = await response.json();
-    const durationMs = Date.now() - startTime;
-
-    if (result.error) {
-      throw new HttpsError("internal", result.error.message);
-    }
-
-    const content = result.content?.[0]?.text || "";
-    const usage = result.usage || {};
-
-    // ── Calculate cost ─────────────────────────────────────────────────
-    const pricingSnap = await db.doc("config/pricing").get();
-    const pricing = pricingSnap.data();
-    const modelPricing = pricing.models["claude-sonnet-4-6"];
-
-    const inputCost =
-      ((usage.input_tokens || 0) / 1000000) * modelPricing.inputPerMTok;
-    const outputCost =
-      ((usage.output_tokens || 0) / 1000000) * modelPricing.outputPerMTok;
-    const cacheReadCost =
-      ((usage.cache_read_input_tokens || 0) / 1000000) *
-      modelPricing.inputPerMTok *
-      modelPricing.cacheReadMultiplier;
-    const totalCost = inputCost + outputCost + cacheReadCost;
-
-    // ── Batch write (atomic) ───────────────────────────────────────────
-    const batch = db.batch();
-    const activityRef = db.collection(`users/${uid}/aiActivity`).doc();
-    const now = FieldValue.serverTimestamp();
-    const month = new Date().toISOString().slice(0, 7);
-
-    // 1. Activity log
-    batch.set(activityRef, {
-      id: activityRef.id,
-      tool: tool || "cv",
-      type: "aiRewrite",
-      status: "success",
-      documentId: documentId || null,
-      documentTitle: documentTitle || null,
-      templateId: templateId || null,
-      sectionType: sectionType,
-      sectionTitle: null,
-      tokens: {
-        inputTokens: usage.input_tokens || 0,
-        outputTokens: usage.output_tokens || 0,
-        cacheReadTokens: usage.cache_read_input_tokens || 0,
-        cacheCreationTokens: usage.cache_creation_input_tokens || 0,
-      },
-      cost: { inputCost, outputCost, cacheReadCost, totalCost },
-      model: "claude-sonnet-4-6",
-      rewriteOptions: { mode: rewriteMode, scope: "section" },
-      spellcheckSummary: null,
-      detailsPath: `users/${uid}/ai_details/${activityRef.id}.json`,
-      errorMessage: null,
-      createdAt: now,
-      durationMs,
-    });
-
-    // 2. Increment rewrite counter
-    batch.update(subRef, {
-      aiRewriteCount: FieldValue.increment(1),
-    });
-
-    // 3. Analytics summary
-    const summaryRef = db.doc(`users/${uid}/analytics/summary`);
-    batch.set(
-      summaryRef,
-      {
-        totalAiRewrites: FieldValue.increment(1),
-        totalTokensUsed: FieldValue.increment(
-          (usage.input_tokens || 0) + (usage.output_tokens || 0)
-        ),
-        totalCostUsd: FieldValue.increment(totalCost),
-        lastActiveAt: now,
-      },
-      { merge: true }
-    );
-
-    // 4. Monthly analytics
-    const monthRef = db.doc(`users/${uid}/analytics/${month}`);
-    batch.set(
-      monthRef,
-      {
-        month,
-        aiRewrites: FieldValue.increment(1),
-        cvAiRewrites: FieldValue.increment(1),
-        totalInputTokens: FieldValue.increment(usage.input_tokens || 0),
-        totalOutputTokens: FieldValue.increment(usage.output_tokens || 0),
-        totalCost: FieldValue.increment(totalCost),
-        updatedAt: now,
-      },
-      { merge: true }
-    );
-
-    await batch.commit();
-
-    // ── Upload detail to Storage (fire-and-forget) ─────────────────────
-    try {
-      const bucket = getStorage().bucket();
-      const detailPath = `users/${uid}/ai_details/${activityRef.id}.json`;
-      const detailJson = JSON.stringify({
-        tool: tool || "cv",
-        type: "aiRewrite",
-        sectionType,
-        scope: "section",
-        mode: rewriteMode,
-        customInstruction: customInstruction || null,
-        beforeText: text,
-        afterText: content,
-      });
-      await bucket.file(detailPath).save(detailJson, {
-        contentType: "application/json",
-      });
-    } catch (storageErr) {
-      console.warn("Detail upload failed (non-critical):", storageErr.message);
-    }
-
-    // ── Return content only ────────────────────────────────────────────
-    return { content };
+  let modeInstruction = "";
+  switch (mode) {
+    case "professional": modeInstruction = "Rewrite in a formal, polished professional tone. Use strong action verbs."; break;
+    case "concise": modeInstruction = "Make it shorter and more impactful. Remove filler. Aim for 30-50% fewer words."; break;
+    case "detailed": modeInstruction = "Expand with metrics, quantified accomplishments, and specific context."; break;
+    case "creative": modeInstruction = "Rewrite with creative, engaging tone that stands out while staying professional."; break;
   }
-);
+
+  const customPart = customInstruction ? `\nAdditional instruction: "${customInstruction}"` : "";
+
+  const sys = [{
+    type: "text",
+    text: "You are a professional CV content rewriter.\n\nRULES:\n" +
+      "- Keep same structure (headings, bullets, entries)\n" +
+      "- Preserve ALL facts: dates, companies, degrees, metrics\n" +
+      "- Return ONLY rewritten text — no explanations, no markdown\n" +
+      "- Keep same format as input\n" +
+      "- If heading is ALL CAPS, keep it ALL CAPS\n\n" +
+      "STYLE: " + modeInstruction + customPart,
+    cache_control: { type: "ephemeral" },
+  }];
+
+  let rewrittenText, usage;
+  try {
+    const r = await callClaude({ model: MODEL_SONNET, system: sys,
+      userContent: `Rewrite this ${sectionType} section:\n\n${text}`,
+      maxTokens: 2000, apiKey: ANTHROPIC_KEY.value() });
+    rewrittenText = r.text; usage = r.usage;
+  } catch (err) {
+    console.error("aiRewrite API error:", err?.response?.data || err.message);
+    throw new HttpsError("internal", "AI rewrite failed.");
+  }
+
+  const cost = calculateCost(usage, rates);
+  const actId = await writeTracking({ uid,
+    data: { tool, type:"aiRewrite", status:"success", model:MODEL_SONNET,
+      documentId, documentTitle, templateId, sectionType, sectionTitle:null,
+      rewriteOptions:{ mode, scope:"section" },
+      spellcheckSummary:null, errorMessage:null, durationMs:Date.now()-t0 },
+    counterField:"aiRewriteCount", summaryField:"totalAiRewrites",
+    monthlyField:"aiRewrites", monthlyToolField:`${tool}AiRewrites`, tokens:usage, cost });
+
+  uploadDetail(uid, actId, { tool, type:"aiRewrite", sectionType, scope:"section",
+    mode, customInstruction: customInstruction || null,
+    beforeText: text, afterText: rewrittenText });
+
+  return { content: rewrittenText };
+});
