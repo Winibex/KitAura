@@ -5,9 +5,9 @@
 // before replacing text, preserving template styling.
 
 import 'package:flutter_quill/flutter_quill.dart';
-import '../../../shared/models/ai_profile_model.dart';
-import '../../../shared/models/canvas_item.dart';
-import '../../../shared/models/section_type.dart';
+import '../../../../shared/models/ai_profile_model.dart';
+import '../../../../shared/models/canvas_item.dart';
+import '../../../../shared/models/section_type.dart';
 
 class SectionAutofill {
   SectionAutofill._();
@@ -125,7 +125,8 @@ class SectionAutofill {
     SectionType type,
     AiProfileModel p,
     _TemplateStyles styles,
-  ) {
+  )
+  {
     switch (type) {
       case SectionType.name:
         if (p.fullName.isEmpty) return null;
@@ -405,6 +406,17 @@ class SectionAutofill {
           _styledOp(p.hobbies.join(' • '), styles.bodyAttrs),
         ];
 
+      case SectionType.senderAddress:
+      case SectionType.recipientAddress:
+      case SectionType.dateLine:
+      case SectionType.salutation:
+      case SectionType.coverLetterBody:
+      case SectionType.closing:
+      case SectionType.signature:
+      // Cover letter sections — not autofillable from CV profile.
+      // They get filled by AI Design or manually.
+        return null;
+
       case SectionType.custom:
         return null;
     }
@@ -416,7 +428,8 @@ class SectionAutofill {
     String text,
     Map<String, dynamic> templateAttrs, {
     bool forceBold = false,
-  }) {
+  })
+  {
     final attrs = Map<String, dynamic>.from(templateAttrs);
     if (forceBold) attrs['bold'] = true;
     final t = text.endsWith('\n') ? text : '$text\n';

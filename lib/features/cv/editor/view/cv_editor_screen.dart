@@ -9,29 +9,29 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kitaura/core/constants/app_routes.dart';
-import 'package:kitaura/features/cv/view/spellcheck_panel.dart';
+import 'package:kitaura/features/cv/editor/view/spellcheck_panel.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:printing/printing.dart';
 import 'package:toastification/toastification.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_fonts.dart';
-import '../../../shared/canvas/editor_ui/editor_app_bar.dart';
-import '../../../shared/canvas/editor_ui/editor_left_panel.dart';
-import '../../../shared/canvas/editor_ui/editor_right_panel.dart';
-import '../../../shared/canvas/editor_ui/editor_widgets.dart';
-import '../../../shared/canvas/engine/canvas_item_widget.dart';
-import '../../../shared/canvas/engine/shape_painter.dart';
-import '../../../shared/canvas/engine/snap_guide.dart';
-import '../../../shared/services/firebase_service.dart';
-import '../../../shared/canvas/engine/canvas_controller.dart';
-import '../controller/claude_controller.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_fonts.dart';
+import '../../../../shared/canvas/editor_ui/editor_app_bar.dart';
+import '../../../../shared/canvas/editor_ui/editor_left_panel.dart';
+import '../../../../shared/canvas/editor_ui/editor_right_panel.dart';
+import '../../../../shared/canvas/editor_ui/editor_widgets.dart';
+import '../../../../shared/canvas/engine/canvas_item_widget.dart';
+import '../../../../shared/canvas/engine/shape_painter.dart';
+import '../../../../shared/canvas/engine/snap_guide.dart';
+import '../../../../shared/services/firebase_service.dart';
+import '../../../../shared/canvas/engine/canvas_controller.dart';
+import '../../../../shared/ai/claude_controller.dart';
 import 'package:web/web.dart' as web;
 
-import '../controller/spellcheck_controller.dart';
+import '../../../../shared/ai/spellcheck_controller.dart';
 
 import '../controller/section_autofill.dart';
-import '../../../shared/models/ai_profile_model.dart';
-import '../data/cv_template_data.dart';
+import '../../../../shared/models/ai_profile_model.dart';
+import '../../templates/data/cv_template_data.dart';
 
 // ──────────────────────────────────────────────────────────────────────────
 // CHANGED: StatefulWidget → ConsumerStatefulWidget for Riverpod access
@@ -362,7 +362,7 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
                 if (context.canPop()) {
                   context.pop();
                 } else {
-                  context.go(AppRoutes.cvTemplates);
+                  context.go(AppRoutes.cvDashboard);
                 }
               },
             onTitleTap: () => setState(() {

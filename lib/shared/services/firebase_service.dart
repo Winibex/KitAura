@@ -28,6 +28,7 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 
 class FirebaseService {
   // Private constructor — this class is a pure static utility; never instantiate it.
@@ -540,4 +541,42 @@ class FirebaseService {
         .orderBy('createdAt', descending: true)
         .get();
   }
+
+  /// Fetches plan limits from config/limits for the given plan.
+  /// Returns a map with resolved limits (replaces -1 with 999 for unlimited).
+  /// Falls back to hardcoded free defaults if config doc doesn't exist.
+  static Future<Map<String, int>> getPlanLimits(String plan) async {
+    try {
+      final limDoc = await _db.doc('config/limits').get();
+      if (limDoc.exists) {
+        final planLimits = (limDoc.data()?[plan] ?? limDoc.data()?['free']) as Map<String, dynamic>?;
+        if (planLimits != null) {
+          return {
+            'maxCvs': _resolveLimit(planLimits['maxCvs'], 3),
+            'maxCoverLetters': _resolveLimit(planLimits['maxCoverLetters'], 3),
+            'maxProposals': _resolveLimit(planLimits['maxProposals'], 3),
+            'exportsPerMonth': _resolveLimit(planLimits['exportsPerMonth'], 3),
+            'aiFillPerMonth': _resolveLimit(planLimits['aiFillPerMonth'], 15),
+            'aiRewritePerMonth': _resolveLimit(planLimits['aiRewritePerMonth'], 15),
+            'aiDesignPerMonth': _resolveLimit(planLimits['aiDesignPerMonth'], 5),
+          };
+        }
+      }
+    } catch (e) {
+      debugPrint('getPlanLimits error: $e');
+    }
+    // Fallback defaults
+    return {
+      'maxCvs': 3, 'maxCoverLetters': 3, 'maxProposals': 3,
+      'exportsPerMonth': 3, 'aiFillPerMonth': 15,
+      'aiRewritePerMonth': 15, 'aiDesignPerMonth': 5,
+    };
+  }
+
+  /// Resolves -1 (unlimited in Firestore) to 999 for UI display.
+  static int _resolveLimit(dynamic value, int fallback) {
+    final v = value as int? ?? fallback;
+    return v == -1 ? 999 : v;
+  }
+
 }

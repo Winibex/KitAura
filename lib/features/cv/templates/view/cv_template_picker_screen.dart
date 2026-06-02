@@ -2,16 +2,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kitaura/features/cv/view/cv_template_preview_modal.dart';
+import 'package:kitaura/core/constants/app_routes.dart';
 import 'package:kitaura/shared/widgets/app_top_bar.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_fonts.dart';
-import '../../../shared/services/firebase_service.dart';
-import '../../ai_setup/view/ai_setup_panel.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_fonts.dart';
+import '../../../../shared/services/firebase_service.dart';
+import '../../../ai_setup/view/ai_setup_panel.dart';
 import '../controller/cv_template_controller.dart';
-import '../../../shared/models/template_model.dart';
+import '../../../../shared/models/template_model.dart';
 import 'cv_template_card_widget.dart';
+import 'cv_template_preview_modal.dart';
 
 class CVTemplatePickerScreen extends ConsumerStatefulWidget {
   const CVTemplatePickerScreen({super.key});
@@ -31,13 +32,13 @@ class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen>
       color: AppColors.lavenderBlush,
       child: Column(
         children: [
-          const AppTopBar(
+          AppTopBar(
             canBack: true,
+            whereToGo: AppRoutes.cvDashboard,
           ),
           Expanded(
             child: SingleChildScrollView(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+              padding: const EdgeInsets.all(32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -91,7 +92,7 @@ class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen>
             onChanged: (v) =>
                 ref.read(templateControllerProvider.notifier).setSearch(v),
             decoration: InputDecoration(
-              hintText: 'Search cv_templates...',
+              hintText: 'Search cv templates...',
               prefixIcon: const Icon(LucideIcons.search,
                   size: 16, color: AppColors.slateGrey),
               contentPadding: const EdgeInsets.symmetric(vertical: 0),
@@ -155,6 +156,18 @@ class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen>
         if (constraints.maxWidth < 500) columns = 1;
         if (constraints.maxWidth < 700) columns = 2;
         if (constraints.maxWidth < 1000) columns = 3;
+
+        if (templates.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(48),
+            child: Center(
+              child: Text(
+                'No CV templates match your search',
+                style: TextStyle(color: AppColors.slateGrey, fontSize: 14),
+              ),
+            ),
+          );
+        }
 
         return GridView.builder(
           shrinkWrap: true,
@@ -344,7 +357,7 @@ class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen>
                 child: ElevatedButton.icon(
                   onPressed: () {
                     Navigator.pop(dialogContext);
-                    context.go('/cv/$templateId');
+                    context.go('/cv/edit/$templateId');
                   },
                   icon: const Icon(LucideIcons.zap, size: 16),
                   label: const Text('Use Saved Profile'),
@@ -445,11 +458,11 @@ class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen>
       builder: (dialogContext) => AiSetupPanel(
         onContinue: () {
           Navigator.pop(dialogContext);
-          context.go('/cv/$templateId');
+          context.go('/cv/edit/$templateId');
         },
         onSkip: () {
           Navigator.pop(dialogContext);
-          context.go('/cv/$templateId');
+          context.go('/cv/edit/$templateId');
         },
         onClose: () => Navigator.pop(dialogContext),
       ),

@@ -1,0 +1,288 @@
+{
+  "canvasBackground": "#FFFFFF",
+  "items": [
+    {
+      "type": "rectangle",
+      "title": "Gold Bar",
+      "x": 0,
+      "y": 0,
+      "w": 595,
+      "h": 4,
+      "color": "#D4AF37",
+      "borderColor": "#D4AF37",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Sender Address",
+      "x": 50,
+      "y": 30,
+      "w": 495,
+      "h": 70,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "YOUR FULL NAME\n",
+          "attributes": {
+            "bold": true,
+            "size": "22",
+            "color": "#0F172A"
+          }
+        },
+        {
+          "insert": "Chief Executive Officer  |  Strategic Leader\n",
+          "attributes": {
+            "size": "11",
+            "color": "#555555"
+          }
+        },
+        {
+          "insert": "email@example.com  |  +1 234 567 890  |  linkedin.com/in/you\n",
+          "attributes": {
+            "size": "10",
+            "color": "#555555"
+          }
+        }
+      ],
+      "sectionType": "senderAddress"
+    },
+    {
+      "type": "line",
+      "title": "Divider",
+      "x": 50,
+      "y": 115,
+      "w": 495,
+      "h": 1,
+      "color": "#D4AF37",
+      "borderColor": "#D4AF37",
+      "borderWidth": 1,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Date",
+      "x": 50,
+      "y": 140,
+      "w": 495,
+      "h": 22,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "January 15, 2026\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ],
+      "sectionType": "dateLine"
+    },
+    {
+      "type": "textSection",
+      "title": "Recipient Address",
+      "x": 50,
+      "y": 180,
+      "w": 495,
+      "h": 100,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Hiring Manager Name\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#0F172A"
+          }
+        },
+        {
+          "insert": "Title\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "Company Name\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "Company Street Address\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "City, State ZIP\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ],
+      "sectionType": "recipientAddress"
+    },
+    {
+      "type": "textSection",
+      "title": "Salutation",
+      "x": 50,
+      "y": 300,
+      "w": 495,
+      "h": 30,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Dear Mr./Ms. [Last Name],\n",
+          "attributes": {
+            "size": "12",
+            "color": "#0F172A"
+          }
+        }
+      ],
+      "sectionType": "salutation"
+    },
+    {
+      "type": "textSection",
+      "title": "Letter Body",
+      "x": 50,
+      "y": 345,
+      "w": 495,
+      "h": 390,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "It is with great interest that I submit my candidacy for the [Position Title] role at [Company Name]. With over [X years] of executive leadership in [industry], I bring a proven track record of driving organizational growth and operational excellence.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "As [Current Title] at [Current Company], I have led [scope of responsibility — e.g., a $200M business unit, 500-person organization]. Key accomplishments include [achievement 1 with metrics], [achievement 2], and [achievement 3]. These initiatives delivered [combined impact].\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "I am particularly drawn to [Company Name]'s [specific strategic initiative or value]. My experience in [relevant area] positions me to contribute strategically while building on the strong foundation your team has established.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "I would welcome the opportunity to discuss how my background aligns with [Company Name]'s vision. Thank you for your consideration.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ],
+      "sectionType": "coverLetterBody"
+    },
+    {
+      "type": "textSection",
+      "title": "Closing",
+      "x": 50,
+      "y": 755,
+      "w": 495,
+      "h": 30,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Respectfully,\n",
+          "attributes": {
+            "size": "12",
+            "color": "#0F172A"
+          }
+        }
+      ],
+      "sectionType": "closing"
+    },
+    {
+      "type": "textSection",
+      "title": "Signature",
+      "x": 50,
+      "y": 800,
+      "w": 495,
+      "h": 30,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Your Full Name\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#0F172A"
+          }
+        }
+      ],
+      "sectionType": "signature"
+    }
+  ]
+}

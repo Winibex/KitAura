@@ -24,6 +24,9 @@ class DashboardState {
   final int loginCount;
   final DateTime? lastActiveAt;
   final List<RecentItem> recentItems;
+  // Limits from Firebase config/limits
+  final int maxExports;
+  final int maxAiFills;
 
   const DashboardState({
     this.isLoading = false,
@@ -44,6 +47,8 @@ class DashboardState {
     this.loginCount = 0,
     this.lastActiveAt,
     this.recentItems = const [],
+    this.maxExports = 3,
+    this.maxAiFills = 15,
   });
 
   bool get isPro => plan == 'pro' || (plan == 'trial' && trialActive);
@@ -70,6 +75,8 @@ class DashboardState {
     int? loginCount,
     DateTime? lastActiveAt,
     List<RecentItem>? recentItems,
+    int? maxExports,
+    int? maxAiFills,
   }) {
     return DashboardState(
       isLoading: isLoading ?? this.isLoading,
@@ -90,6 +97,8 @@ class DashboardState {
       loginCount: loginCount ?? this.loginCount,
       lastActiveAt: lastActiveAt ?? this.lastActiveAt,
       recentItems: recentItems ?? this.recentItems,
+      maxExports: maxExports ?? this.maxExports,
+      maxAiFills: maxAiFills ?? this.maxAiFills,
     );
   }
 }
@@ -197,10 +206,38 @@ class DashboardController extends StateNotifier<DashboardState> {
         debugPrint('Recent CVs load error: $e');
       }
 
+      // Load limits from config/limits
+      int maxExports = 3, maxAiFills = 15;
+      final limits = await FirebaseService.getPlanLimits(state.plan);
+      maxExports = limits['exportsPerMonth']!;
+      maxAiFills = limits['aiFillPerMonth']!;
+
+      // Load recent cover letters too
+      try {
+        final clsSnapshot = await FirebaseService.getUserCoverLetters(_uid!);
+        for (final doc in clsSnapshot.docs.take(4)) {
+          final data = doc.data() as Map<String, dynamic>;
+          recentItems.add(RecentItem(
+            id: doc.id,
+            title: data['title'] ?? 'Untitled Cover Letter',
+            type: 'coverLetter',
+            templateId: data['templateId'] ?? 'custom',
+            updatedAt: (data['updatedAt'] as dynamic)?.toDate() ?? DateTime.now(),
+          ));
+        }
+      } catch (e) {
+        debugPrint('Recent CLs load error: $e');
+      }
+
+      // Sort recent items by date
+      recentItems.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+
       state = state.copyWith(
         isLoading: false,
         displayName: name,
-        recentItems: recentItems,
+        recentItems: recentItems.take(5).toList(),
+        maxExports: maxExports == -1 ? 999 : maxExports,
+        maxAiFills: maxAiFills == -1 ? 999 : maxAiFills,
       );
     } catch (e, stack) {
       debugPrint('Dashboard load error: $e\n$stack');

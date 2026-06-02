@@ -5,9 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'core/constants/app_routes.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/view/auth_screen.dart';
-import 'features/cv/view/cv_editor_screen.dart';
-import 'features/cv/view/cv_dashboard_screen.dart';
-import 'features/cv/view/cv_template_picker_screen.dart';
+import 'features/cover_letter/dashboard/view/cl_dashboard_screen.dart';
+import 'features/cover_letter/template/view/cl_template_picker_screen.dart';
+import 'features/cv/dashboard/view/cv_dashboard_screen.dart';
+import 'features/cv/editor/view/cv_editor_screen.dart';
+import 'features/cv/templates/view/cv_template_picker_screen.dart';
 import 'features/dashboard/view/dashboard_screen.dart';
 import 'features/settings/view/settings_screen.dart';
 import 'features/auth/view/verify_email_screen.dart';
@@ -20,30 +22,56 @@ final _router = GoRouter(
   routes: [
     GoRoute(path: AppRoutes.auth, builder: (_, _) => const AuthScreen()),
     GoRoute(
-      path: AppRoutes.dashboard,
-      builder: (_, _) => const DashboardScreen(),
-    ),
-    GoRoute(path: AppRoutes.cvDashboard, builder: (_, _) => const CVDashboardScreen()),
-    GoRoute(
-      path: AppRoutes.cvTemplates,
-      builder: (_, _) => const CVTemplatePickerScreen(),
-    ),
-    GoRoute(
-      path: AppRoutes.cvEditor,
-      builder: (_, state) =>
-          CvEditorScreen(docId: state.pathParameters['docId'] ?? 'blank'),
-    ),
-    GoRoute(
-      path: AppRoutes.settings,
-      builder: (_, _) => const SettingsScreen(),
-    ),
-    GoRoute(
       path: AppRoutes.verifyEmail,
       builder: (_, _) => const VerifyEmailScreen(),
     ),
     GoRoute(
       path: AppRoutes.resetPassword,
       builder: (_, _) => const ResetPasswordScreen(),
+    ),
+
+    GoRoute(
+      path: AppRoutes.dashboard,
+      builder: (_, _) => const DashboardScreen(),
+    ),
+
+    // CV routes
+    GoRoute(
+      path: AppRoutes.cvDashboard,
+      builder: (_, _) => const CVDashboardScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.cvTemplates,
+      builder: (_, _) => const CVTemplatePickerScreen(),
+    ),
+    GoRoute(
+      path: '/cv/edit/:docId',
+      builder: (ctx, state) {
+        final docId = state.pathParameters['docId']!;
+        return CvEditorScreen(docId: docId);
+      },
+    ),
+    // Cover Letter routes
+    GoRoute(
+      path: AppRoutes.clDashboard,
+      builder: (_, _) => const ClDashboardScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.clTemplates,
+      builder: (_, _) => const ClTemplatePickerScreen(),
+    ),
+    GoRoute(
+      path: '/cover-letters/edit/:docId',
+      builder: (ctx, state) {
+        final docId = state.pathParameters['docId']!;
+        return Scaffold(body: Center(child: Text('CL Editor — $docId — Phase 3')));
+        // Will be: ClEditorScreen(docId: docId);
+      },
+    ),
+    // Settings
+    GoRoute(
+      path: AppRoutes.settings,
+      builder: (_, _) => const SettingsScreen(),
     ),
   ],
   redirect: (context, state) {

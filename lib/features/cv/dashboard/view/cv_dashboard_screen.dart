@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_fonts.dart';
-import '../../../core/constants/app_routes.dart';
-import '../../../core/utils/responsive.dart';
-import '../../../shared/widgets/app_sidebar.dart';
-import '../../../shared/widgets/app_top_bar.dart';
-import '../../../shared/widgets/shimmer_card.dart';
-import '../../../shared/widgets/stat_card.dart';
-import '../../settings/view/upgrade_modal.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_fonts.dart';
+import '../../../../core/constants/app_routes.dart';
+import '../../../../core/utils/responsive.dart';
+import '../../../../shared/widgets/app_sidebar.dart';
+import '../../../../shared/widgets/app_top_bar.dart';
+import '../../../../shared/widgets/shimmer_card.dart';
+import '../../../../shared/widgets/stat_card.dart';
+import '../../../settings/view/upgrade_modal.dart';
 import '../controller/cv_dashboard_controller.dart';
 import 'cv_card_widget.dart';
 import 'empty_state_widget.dart';
@@ -50,7 +50,10 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
   Widget _buildDesktopLayout() {
     return Column(
       children: [
-        const AppTopBar(),
+        AppTopBar(
+          canBack: false,
+          whereToGo: AppRoutes.cvDashboard,
+        ),
         Expanded(
           child: Row(
             children: [
@@ -68,7 +71,10 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
   Widget _buildMobileLayout() {
     return Column(
       children: [
-        const AppTopBar(),
+        AppTopBar(
+          canBack: false,
+          whereToGo: AppRoutes.cvDashboard,
+        ),
         Expanded(child: _buildScrollableContent()),
       ],
     );
@@ -114,8 +120,7 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
                       icon: LucideIcons.fileText,
                       label: 'Total CVs',
                       value: '${state.cvs.length}',
-                      subtext: '${state.cvs.length} total',
-                      subtextColor: AppColors.success,
+                      subtext: state.isPro ? 'Unlimited' : '${state.cvs.length} / ${state.maxCvs}',                      subtextColor: AppColors.success,
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -123,10 +128,10 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
                     child: statCard(
                       icon: LucideIcons.download,
                       label: 'Exports Used',
-                      value: state.isPro ? '∞' : '${state.exportCount} / 3',
-                      subtext: state.isPro ? 'Unlimited' : 'Resets Jun 1',
+                      value: state.isPro ? '∞' : '${state.exportCount} / ${state.exportsPerMonth}',
+                      subtext: state.isPro ? 'Unlimited' : '${state.exportsPerMonth - state.exportCount} remaining',
                       showProgress: !state.isPro,
-                      progressValue: state.exportCount / 3,
+                      progressValue: state.isPro ? 0 : state.exportCount / state.exportsPerMonth,
                     ),
                   ),
                 ],
@@ -138,10 +143,10 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
                     child: statCard(
                       icon: LucideIcons.sparkles,
                       label: 'AI Fills Used',
-                      value: state.isPro ? '∞' : '${state.aiUsageCount} / 10',
+                      value: state.isPro ? '∞' : '${state.aiUsageCount} / ${state.aiFillsPerMonth}',
                       subtext: state.isPro
                           ? 'Unlimited'
-                          : '${10 - state.aiUsageCount} remaining',
+                          : '${state.aiFillsPerMonth - state.aiUsageCount} remaining',
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -159,7 +164,7 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
                 icon: LucideIcons.fileText,
                 label: 'Total CVs',
                 value: '${state.cvs.length}',
-                subtext: '${state.cvs.length} total',
+                subtext: state.isPro ? 'Unlimited' : '${state.cvs.length} / ${state.maxCvs}',
                 subtextColor: AppColors.success,
               ),
             ),
@@ -168,10 +173,10 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
               child: statCard(
                 icon: LucideIcons.download,
                 label: 'Exports Used',
-                value: state.isPro ? '∞' : '${state.exportCount} / 3',
-                subtext: state.isPro ? 'Unlimited' : 'Resets Jun 1',
+                value: state.isPro ? '∞' : '${state.exportCount} / ${state.exportsPerMonth}',
+                subtext: state.isPro ? 'Unlimited' : '${state.exportsPerMonth - state.exportCount} remaining',
                 showProgress: !state.isPro,
-                progressValue: state.exportCount / 3,
+                progressValue: state.isPro ? 0 : state.exportCount / state.exportsPerMonth,
               ),
             ),
             const SizedBox(width: 16),
@@ -179,10 +184,10 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
               child: statCard(
                 icon: LucideIcons.sparkles,
                 label: 'AI Fills Used',
-                value: state.isPro ? '∞' : '${state.aiUsageCount} / 10',
+                value: state.isPro ? '∞' : '${state.aiUsageCount} / ${state.aiFillsPerMonth}',
                 subtext: state.isPro
                     ? 'Unlimited'
-                    : '${10 - state.aiUsageCount} remaining',
+                    : '${state.aiFillsPerMonth - state.aiUsageCount} remaining',
               ),
             ),
             const SizedBox(width: 16),
@@ -285,7 +290,7 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
             SizedBox(
               width: 140,
               child: ElevatedButton.icon(
-                onPressed: () => context.push(AppRoutes.cvTemplates),
+                onPressed: () => context.go(AppRoutes.cvTemplates),
                 icon: const Icon(LucideIcons.plus, size: 16),
                 label: const Text('New CV'),
                 style: ElevatedButton.styleFrom(
@@ -315,7 +320,7 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
           SizedBox(
             height: 300,
             child: EmptyStateWidget(
-              onCreateCV: () => context.push(AppRoutes.cvDashboard),
+              onCreateCV: () => context.push(AppRoutes.cvTemplates),
             ),
           )
         else
@@ -363,7 +368,7 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
             }
             return CvCardWidget(
               cv: state.cvs[index],
-              onTap: () => context.push('/cv/${state.cvs[index].id}'),
+              onTap: () => context.push('/cv/edit/${state.cvs[index].id}'),
               onDelete: () {
                 ref.read(dashboardControllerProvider.notifier)
                     .deleteCV(state.cvs[index].id);
@@ -381,7 +386,7 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
 
   Widget _buildNewCVCard() {
     return InkWell(
-      onTap: () => context.push(AppRoutes.cvTemplates),
+      onTap: () => context.go(AppRoutes.cvTemplates),
       child: Container(
         decoration: BoxDecoration(
           border: Border.all(

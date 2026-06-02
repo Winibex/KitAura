@@ -65,7 +65,7 @@ class AppSidebar extends ConsumerWidget {
                     icon: LucideIcons.mail,
                     label: 'Cover Letter',
                     isActive: active == AppPage.coverLetter,
-                    onTap: () {}, // TODO: context.go(AppRoutes.coverLetter)
+                    onTap: () => context.go(AppRoutes.clDashboard),
                   ),
                   _SidebarItem(
                     icon: LucideIcons.linkedin,
@@ -105,7 +105,7 @@ class AppSidebar extends ConsumerWidget {
 
   static AppPage _pageFromRoute(String route) {
     if (route.startsWith('/dashboard'))     return AppPage.dashboard;
-    if (route.startsWith('/cv-cv_templates'))  return AppPage.cvTemplates;
+    if (route.startsWith('/cv/templates'))  return AppPage.cvTemplates;
     if (route.startsWith('/cv'))            return AppPage.cvDashboard;
     if (route.startsWith('/proposals'))     return AppPage.proposal;
     if (route.startsWith('/cover-letters')) return AppPage.coverLetter;

@@ -21,12 +21,14 @@ class AppTopBar extends ConsumerWidget {
   final dynamic profile;
   final dynamic subscription;
   final bool canBack;
+  final String whereToGo;
 
   const AppTopBar({
     super.key,
     this.profile,
     this.subscription,
-    this.canBack = false,
+    required this.canBack,
+    required this.whereToGo,
   });
 
   @override
@@ -40,11 +42,11 @@ class AppTopBar extends ConsumerWidget {
       child: Row(
         children: [
           if(canBack)...[
-            IconButton(
-              icon: const Icon(LucideIcons.arrowLeft,
-                  color: AppColors.white, size: 20),
-              onPressed: () => context.pop(),
-            ),
+              IconButton(
+                icon: const Icon(LucideIcons.arrowLeft,
+                    color: AppColors.white, size: 20),
+                onPressed: () => context.go(whereToGo),
+              ),
           ],
           SizedBox(width: 20,),
           Image.asset(AppAssets.logoHorizontalLight, height: 24),

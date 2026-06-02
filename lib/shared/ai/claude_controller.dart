@@ -11,10 +11,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import '../../../shared/models/ai_profile_model.dart';
-import '../../../shared/models/section_type.dart';
-import '../../../shared/services/claude_service.dart';
-import '../../../shared/services/firebase_service.dart';
+import '../models/ai_profile_model.dart';
+import '../models/section_type.dart';
+import '../services/firebase_service.dart';
+import 'claude_service.dart';
 
 // ─── STATE ───────────────────────────────────────────────────────────────
 

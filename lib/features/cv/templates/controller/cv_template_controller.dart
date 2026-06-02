@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:kitaura/core/constants/app_assets.dart';
-import '../../../shared/models/template_model.dart';
+import '../../../../shared/models/template_model.dart';
 
 class CVTemplateState {
   final List<TemplateModel> templates;

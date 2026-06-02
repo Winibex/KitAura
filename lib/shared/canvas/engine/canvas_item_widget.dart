@@ -10,9 +10,9 @@
 //   - Click away  → deselect / exit edit.
 //
 // MULTI-SELECT MOVE:
-//   Controller.multiMoveUpdate() updates all selected items' model positions
+//   Controller.multiMoveUpdate() updates all selected items' data positions
 //   WITHOUT calling notifyListeners (to avoid killing the drag gesture).
-//   The dragged item reads _pos from its model each frame via a manual
+//   The dragged item reads _pos from its data each frame via a manual
 //   setState. On pan end, controller.notifyListeners() fires once to sync.
 
 import 'package:flutter/material.dart';
@@ -85,7 +85,7 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
   @override
   void didUpdateWidget(CanvasItemWidget old) {
     super.didUpdateWidget(old);
-    // Always sync from model unless mid-solo-drag
+    // Always sync from data unless mid-solo-drag
     if (!_isDraggingSolo) {
       _pos = widget.item.position;
       _w = widget.item.width;

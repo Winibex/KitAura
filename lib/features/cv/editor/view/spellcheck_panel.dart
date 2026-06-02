@@ -7,11 +7,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_fonts.dart';
-import '../../../shared/services/claude_service.dart';
-import '../../../shared/models/canvas_item.dart';
-import '../controller/spellcheck_controller.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_fonts.dart';
+import '../../../../shared/ai/claude_service.dart';
+import '../../../../shared/models/canvas_item.dart';
+import '../../../../shared/ai/spellcheck_controller.dart';
 
 class SpellcheckPanel extends ConsumerWidget {
   final List<CanvasItem> items;

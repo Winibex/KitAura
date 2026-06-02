@@ -1,0 +1,260 @@
+{
+  "canvasBackground": "#FFFFFF",
+  "items": [
+    {
+      "type": "textSection",
+      "title": "Sender Address",
+      "x": 50,
+      "y": 50,
+      "w": 495,
+      "h": 80,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Your Full Name\n",
+          "attributes": {
+            "bold": true,
+            "size": "14",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Your Street Address\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "City, State ZIP\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "email@example.com  |  +1 234 567 890\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ],
+      "sectionType": "senderAddress"
+    },
+    {
+      "type": "textSection",
+      "title": "Date",
+      "x": 50,
+      "y": 150,
+      "w": 495,
+      "h": 22,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "January 15, 2026\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ],
+      "sectionType": "dateLine"
+    },
+    {
+      "type": "textSection",
+      "title": "Recipient Address",
+      "x": 50,
+      "y": 190,
+      "w": 495,
+      "h": 90,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Hiring Manager Name\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Company Name\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "Company Street Address\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "City, State ZIP\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ],
+      "sectionType": "recipientAddress"
+    },
+    {
+      "type": "textSection",
+      "title": "Salutation",
+      "x": 50,
+      "y": 300,
+      "w": 495,
+      "h": 30,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Dear Hiring Manager,\n",
+          "attributes": {
+            "size": "12",
+            "color": "#1A1A1A"
+          }
+        }
+      ],
+      "sectionType": "salutation"
+    },
+    {
+      "type": "textSection",
+      "title": "Letter Body",
+      "x": 50,
+      "y": 345,
+      "w": 495,
+      "h": 380,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "I am writing to express my strong interest in the [Position Title] role at [Company Name]. With [X years] of experience in [your field], I am confident that my skills and passion align perfectly with what your team is looking for.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "In my current role at [Current Company], I have [key achievement with metric]. I have also [second achievement] which resulted in [measurable outcome]. These experiences have prepared me to contribute meaningfully to [Company Name]'s mission of [company mission].\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "What particularly excites me about this opportunity is [specific reason — company values, project, growth potential]. I would welcome the chance to bring my expertise in [your specialty] to your team and help drive [specific company goal].\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "I have attached my resume for your review and would greatly appreciate the opportunity to discuss how my background can contribute to [Company Name]'s continued success. Thank you for considering my application.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ],
+      "sectionType": "coverLetterBody"
+    },
+    {
+      "type": "textSection",
+      "title": "Closing",
+      "x": 50,
+      "y": 745,
+      "w": 495,
+      "h": 30,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Sincerely,\n",
+          "attributes": {
+            "size": "12",
+            "color": "#1A1A1A"
+          }
+        }
+      ],
+      "sectionType": "closing"
+    },
+    {
+      "type": "textSection",
+      "title": "Signature",
+      "x": 50,
+      "y": 790,
+      "w": 495,
+      "h": 30,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Your Full Name\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#1A1A1A"
+          }
+        }
+      ],
+      "sectionType": "signature"
+    }
+  ]
+}

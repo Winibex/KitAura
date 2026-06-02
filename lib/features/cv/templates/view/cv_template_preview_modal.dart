@@ -5,10 +5,10 @@
 // Supports multi-page cv_templates with page navigation.
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_fonts.dart';
-import '../../../shared/widgets/template_thumbnail.dart';
-import '../../../shared/models/template_model.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_fonts.dart';
+import '../../../../shared/widgets/template_thumbnail.dart';
+import '../../../../shared/models/template_model.dart';
 import '../data/cv_template_data.dart';
 
 class CVTemplatePreviewModal extends StatefulWidget {

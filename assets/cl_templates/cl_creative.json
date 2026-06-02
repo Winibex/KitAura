@@ -1,0 +1,297 @@
+{
+  "canvasBackground": "#FFFFFF",
+  "items": [
+    {
+      "type": "rectangle",
+      "title": "Sidebar",
+      "x": 0,
+      "y": 0,
+      "w": 180,
+      "h": 842,
+      "color": "#E91E63",
+      "borderColor": "#E91E63",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Sender Address",
+      "x": 18,
+      "y": 50,
+      "w": 145,
+      "h": 200,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "YOUR\n",
+          "attributes": {
+            "bold": true,
+            "size": "22",
+            "color": "#FFFFFF"
+          }
+        },
+        {
+          "insert": "NAME\n",
+          "attributes": {
+            "bold": true,
+            "size": "22",
+            "color": "#FFFFFF"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#FFFFFF"
+          }
+        },
+        {
+          "insert": "Creative Director\n",
+          "attributes": {
+            "size": "12",
+            "color": "#FFD9E6"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#FFFFFF"
+          }
+        },
+        {
+          "insert": "hello@example.com\n",
+          "attributes": {
+            "size": "10",
+            "color": "#FFD9E6"
+          }
+        },
+        {
+          "insert": "+1 234 567 890\n",
+          "attributes": {
+            "size": "10",
+            "color": "#FFD9E6"
+          }
+        },
+        {
+          "insert": "Los Angeles, CA\n",
+          "attributes": {
+            "size": "10",
+            "color": "#FFD9E6"
+          }
+        }
+      ],
+      "sectionType": "senderAddress"
+    },
+    {
+      "type": "textSection",
+      "title": "Date",
+      "x": 210,
+      "y": 50,
+      "w": 335,
+      "h": 22,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "January 15, 2026\n",
+          "attributes": {
+            "size": "11",
+            "color": "#666666"
+          }
+        }
+      ],
+      "sectionType": "dateLine"
+    },
+    {
+      "type": "textSection",
+      "title": "Recipient Address",
+      "x": 210,
+      "y": 90,
+      "w": 335,
+      "h": 80,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Hiring Manager\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Company Name\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "City, State\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ],
+      "sectionType": "recipientAddress"
+    },
+    {
+      "type": "textSection",
+      "title": "Salutation",
+      "x": 210,
+      "y": 200,
+      "w": 335,
+      "h": 30,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Dear Hiring Manager,\n",
+          "attributes": {
+            "bold": true,
+            "size": "14",
+            "color": "#E91E63"
+          }
+        }
+      ],
+      "sectionType": "salutation"
+    },
+    {
+      "type": "textSection",
+      "title": "Letter Body",
+      "x": 210,
+      "y": 250,
+      "w": 335,
+      "h": 460,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Creativity isn't just my profession — it's how I see the world. I'm thrilled to apply for the [Position Title] role at [Company Name] because your work in [specific area] resonates with everything I believe great design should be.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "Over the past [X years], I've had the privilege of [achievement] for clients like [client examples]. My recent project on [project name] resulted in [specific outcome], and I'm proud to have contributed to [larger impact].\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "What draws me to [Company Name] is [specific reason — culture, mission, work]. I'd love to bring my background in [your expertise] to help shape the next chapter of your creative journey.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "My portfolio at [link] shows the full range of my work. I'd be honored to discuss how I can contribute to your team.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ],
+      "sectionType": "coverLetterBody"
+    },
+    {
+      "type": "textSection",
+      "title": "Closing",
+      "x": 210,
+      "y": 730,
+      "w": 335,
+      "h": 30,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Warmly,\n",
+          "attributes": {
+            "size": "12",
+            "color": "#1A1A1A"
+          }
+        }
+      ],
+      "sectionType": "closing"
+    },
+    {
+      "type": "textSection",
+      "title": "Signature",
+      "x": 210,
+      "y": 775,
+      "w": 335,
+      "h": 30,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Your Full Name\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#E91E63"
+          }
+        }
+      ],
+      "sectionType": "signature"
+    }
+  ]
+}

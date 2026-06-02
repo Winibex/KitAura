@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import '../../../shared/services/firebase_service.dart';
+import '../../../../shared/services/firebase_service.dart';
 import '../model/cv_summary_model.dart';
 
 // Dashboard state
@@ -14,6 +14,11 @@ class DashboardState {
   final int aiUsageCount;
   final String plan;
 
+  // Limits from Firebase config/limits
+  final int maxCvs;
+  final int exportsPerMonth;
+  final int aiFillsPerMonth;
+
   DashboardState({
     this.isLoading = false,
     this.error,
@@ -21,11 +26,14 @@ class DashboardState {
     this.exportCount = 0,
     this.aiUsageCount = 0,
     this.plan = 'free',
+    this.maxCvs = 3,
+    this.exportsPerMonth = 3,
+    this.aiFillsPerMonth = 15,
   });
 
-  bool get isPro => plan == 'pro';
-  bool get canExport => isPro || exportCount < 3;
-  bool get canCreateCV => isPro || cvs.length < 10;
+  bool get isPro => plan == 'pro' || plan == 'trial';
+  bool get canExport => isPro || exportCount < exportsPerMonth;
+  bool get canCreateCV => isPro || cvs.length < maxCvs;
 
   DashboardState copyWith({
     bool? isLoading,
@@ -34,6 +42,9 @@ class DashboardState {
     int? exportCount,
     int? aiUsageCount,
     String? plan,
+    int? maxCvs,
+    int? exportsPerMonth,
+    int? aiFillsPerMonth,
   }) {
     return DashboardState(
       isLoading: isLoading ?? this.isLoading,
@@ -42,6 +53,9 @@ class DashboardState {
       exportCount: exportCount ?? this.exportCount,
       aiUsageCount: aiUsageCount ?? this.aiUsageCount,
       plan: plan ?? this.plan,
+      maxCvs: maxCvs ?? this.maxCvs,
+      exportsPerMonth: exportsPerMonth ?? this.exportsPerMonth,
+      aiFillsPerMonth: aiFillsPerMonth ?? this.aiFillsPerMonth,
     );
   }
 }
@@ -59,14 +73,33 @@ class DashboardController extends StateNotifier<DashboardState> {
     try {
       // Load subscription data
       final subDoc = await FirebaseService.getSubscription(_uid!);
+      String plan = 'free';
+      int exportCount = 0;
+      int aiUsageCount = 0;
+
       if (subDoc.exists) {
         final data = subDoc.data() as Map<String, dynamic>;
-        state = state.copyWith(
-          plan: data['plan'] ?? 'free',
-          exportCount: data['exportCount'] ?? 0,
-          aiUsageCount: data['aiUsageCount'] ?? 0,
-        );
+        plan = data['plan'] ?? 'free';
+        exportCount = data['exportCount'] ?? 0;
+        aiUsageCount = data['aiFillCount'] ?? 0;
       }
+
+      // Load limits from config/limits (not hardcoded)
+      int maxCvs = 3, maxExports = 3, maxAiFills = 15;
+      final limits = await FirebaseService.getPlanLimits(state.plan);
+      maxCvs = limits['maxCvs']!;
+      maxExports = limits['exportsPerMonth']!;
+      maxAiFills = limits['aiFillPerMonth']!;
+
+
+      state = state.copyWith(
+        plan: plan,
+        exportCount: exportCount,
+        aiUsageCount: aiUsageCount,
+        maxCvs: maxCvs == -1 ? 999 : maxCvs,
+        exportsPerMonth: maxExports == -1 ? 999 : maxExports,
+        aiFillsPerMonth: maxAiFills == -1 ? 999 : maxAiFills,
+      );
 
       // Load CVs
       List<CvSummaryModel> cvs = [];
@@ -96,8 +129,6 @@ class DashboardController extends StateNotifier<DashboardState> {
       );
     }
   }
-
-
 
   Future<void> deleteCV(String cvId) async {
     try {

@@ -1,0 +1,295 @@
+{
+  "canvasBackground": "#FFFFFF",
+  "items": [
+    {
+      "type": "rectangle",
+      "title": "Top Accent",
+      "x": 0,
+      "y": 0,
+      "w": 595,
+      "h": 8,
+      "color": "#0066CC",
+      "borderColor": "#0066CC",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Sender Address",
+      "x": 50,
+      "y": 40,
+      "w": 495,
+      "h": 80,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "YOUR FULL NAME\n",
+          "attributes": {
+            "bold": true,
+            "size": "22",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Senior Software Engineer\n",
+          "attributes": {
+            "size": "12",
+            "color": "#0066CC"
+          }
+        },
+        {
+          "insert": "email@example.com  •  +1 234 567 890  •  San Francisco, CA\n",
+          "attributes": {
+            "size": "10",
+            "color": "#666666"
+          }
+        }
+      ],
+      "sectionType": "senderAddress"
+    },
+    {
+      "type": "line",
+      "title": "Divider",
+      "x": 50,
+      "y": 130,
+      "w": 495,
+      "h": 1,
+      "color": "#0066CC",
+      "borderColor": "#0066CC",
+      "borderWidth": 1,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Date",
+      "x": 50,
+      "y": 150,
+      "w": 240,
+      "h": 22,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "January 15, 2026\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ],
+      "sectionType": "dateLine"
+    },
+    {
+      "type": "textSection",
+      "title": "Recipient Address",
+      "x": 305,
+      "y": 150,
+      "w": 240,
+      "h": 80,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Hiring Manager\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Company Name\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "City, State\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ],
+      "sectionType": "recipientAddress"
+    },
+    {
+      "type": "textSection",
+      "title": "Salutation",
+      "x": 50,
+      "y": 250,
+      "w": 495,
+      "h": 30,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Dear Hiring Manager,\n",
+          "attributes": {
+            "size": "12",
+            "color": "#1A1A1A"
+          }
+        }
+      ],
+      "sectionType": "salutation"
+    },
+    {
+      "type": "textSection",
+      "title": "Letter Body",
+      "x": 50,
+      "y": 295,
+      "w": 495,
+      "h": 420,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "I am excited to apply for the [Position Title] role at [Company Name]. As a [your current title] with [X years] of experience, I am drawn to [Company Name]'s commitment to [company value or mission].\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "Throughout my career, I have:\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Achievement 1 with measurable impact (e.g., increased revenue by 30%)\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Achievement 2 demonstrating leadership or technical skills\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Achievement 3 relevant to the target role\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "I am particularly excited about [specific aspect of the role/company]. My experience with [relevant skill] makes me well-positioned to contribute immediately while continuing to grow with your team.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "Thank you for considering my application. I look forward to discussing how I can contribute to [Company Name]'s success.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ],
+      "sectionType": "coverLetterBody"
+    },
+    {
+      "type": "textSection",
+      "title": "Closing",
+      "x": 50,
+      "y": 735,
+      "w": 495,
+      "h": 30,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Best regards,\n",
+          "attributes": {
+            "size": "12",
+            "color": "#1A1A1A"
+          }
+        }
+      ],
+      "sectionType": "closing"
+    },
+    {
+      "type": "textSection",
+      "title": "Signature",
+      "x": 50,
+      "y": 780,
+      "w": 495,
+      "h": 30,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Your Full Name\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#0066CC"
+          }
+        }
+      ],
+      "sectionType": "signature"
+    }
+  ]
+}

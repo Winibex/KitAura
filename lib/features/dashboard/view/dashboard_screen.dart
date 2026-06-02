@@ -44,7 +44,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           // Main content
           Column(
             children: [
-              const AppTopBar(),
+              AppTopBar(
+                canBack: false,
+                whereToGo: AppRoutes.dashboard,
+              ),
               Expanded(
                 child: Row(
                   children: [
@@ -143,18 +146,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           _StatCardData(
             icon: LucideIcons.download,
             label: 'Exports',
-            value: state.isPro ? '∞' : '${state.exportCount} / 3',
-            subtitle: state.isPro ? 'Unlimited' : '${3 - state.exportCount} remaining',
+            value: state.isPro ? '∞' : '${state.exportCount} / ${state.maxExports}',
+            subtitle: state.isPro ? 'Unlimited' : '${state.maxExports - state.exportCount} remaining',
             color: AppColors.dustyRose,
-            progress: state.isPro ? null : state.exportCount / 3,
+            progress: state.isPro ? null : state.exportCount / state.maxExports,
           ),
           _StatCardData(
             icon: LucideIcons.sparkles,
             label: 'AI Fills',
-            value: state.isPro ? '∞' : '${state.aiFillCount} / 15',
-            subtitle: state.isPro ? 'Unlimited' : '${15 - state.aiFillCount} remaining',
+            value: state.isPro ? '∞' : '${state.aiFillCount} / ${state.maxAiFills}',
+            subtitle: state.isPro ? 'Unlimited' : '${state.maxAiFills - state.aiFillCount} remaining',
             color: AppColors.dustyMauve,
-            progress: state.isPro ? null : state.aiFillCount / 15,
+            progress: state.isPro ? null : state.aiFillCount / state.maxAiFills,
           ),
           _StatCardData(
             icon: LucideIcons.logIn,
@@ -315,8 +318,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 title: 'Cover Letter',
                 subtitle: 'Stand out from the crowd',
                 color: AppColors.magentaBloom,
-                onTap: () {}, // TODO
-                comingSoon: true,
+                onTap: () => context.push(AppRoutes.clTemplates),
+                comingSoon: false,
               ),
               _QuickStartData(
                 icon: LucideIcons.linkedin,
@@ -572,7 +575,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: InkWell(
-        onTap: () => context.push('/cv/${item.id}'),
+        onTap: () {
+          switch (item.type) {
+            case 'cv':
+              context.push('/cv/edit/${item.id}');
+              break;
+            case 'coverLetter':
+              context.push('/cover-letters/edit/${item.id}');
+              break;
+            default:
+              context.push('/cv/edit/${item.id}');
+          }
+        },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           decoration: const BoxDecoration(

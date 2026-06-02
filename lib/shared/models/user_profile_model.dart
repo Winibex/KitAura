@@ -37,7 +37,7 @@ class UserProfileModel {
   // Serialization
   // ---------------------------------------------------------------------------
 
-  /// Converts the model to a Firestore-compatible map.
+  /// Converts the data to a Firestore-compatible map.
   /// [DateTime] values are stored as [Timestamp] so Firestore can index them.
   Map<String, dynamic> toJson() => {
     'uid': uid,

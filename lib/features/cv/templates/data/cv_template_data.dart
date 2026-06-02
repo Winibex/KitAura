@@ -12,7 +12,7 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
 
-import '../../../core/constants/app_assets.dart';
+import '../../../../core/constants/app_assets.dart';
 
 class CvTemplateData {
   CvTemplateData._();

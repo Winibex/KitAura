@@ -4,8 +4,8 @@
 // shows corrections, user can fix individually or fix all at once.
 
 import 'package:flutter_riverpod/legacy.dart';
-import '../../../shared/services/claude_service.dart';
-import '../../../shared/models/canvas_item.dart';
+import 'claude_service.dart';
+import '../models/canvas_item.dart';
 
 // ─── STATE ───────────────────────────────────────────────────────────────
 

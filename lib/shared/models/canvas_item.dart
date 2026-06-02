@@ -1,6 +1,6 @@
 // lib/shared/models/canvas_item.dart
 //
-// Canvas item model + snapshot classes for undo/redo.
+// Canvas item data + snapshot classes for undo/redo.
 // CHANGES FROM PREVIOUS VERSION:
 //   1. ItemSnapshot now stores deltaJson (Quill delta) for text undo/redo
 //   2. imageBytes stored in snapshot for image undo/redo
