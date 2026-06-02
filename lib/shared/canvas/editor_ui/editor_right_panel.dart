@@ -32,6 +32,8 @@ class EditorRightPanel extends StatefulWidget {
   final bool isSpellchecking;
 
   final Future<void> Function(CanvasItem item, String mode, String? customInstruction)? onRewrite;
+  final Future<void> Function(CanvasItem item)? onAiFill;
+  final bool isAiFilling;
 
   const EditorRightPanel({
     super.key,
@@ -43,13 +45,15 @@ class EditorRightPanel extends StatefulWidget {
     this.extraContentBuilder,
     this.onSpellcheck,
     this.isSpellchecking = false,
-    this.onRewrite,  // NEW
+    this.onRewrite,
+    this.onAiFill,
+    this.isAiFilling = false,
   });
   @override
   State<EditorRightPanel> createState() => _EditorRightPanelState();
 }
 class _EditorRightPanelState extends State<EditorRightPanel> {
-  String _rewriteMode = 'professional';
+  String _aiMode = 'generate'; // 'generate' | 'professional' | 'concise' | 'detailed' | 'creative'
   final _rewriteInstructionCtrl = TextEditingController();
   bool _isRewriting = false;
 
@@ -201,17 +205,9 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
           ),
           const SizedBox(height: 12),
 
-          // Extra content slot (e.g. AI Fill button for CV)
-          if (widget.extraContentBuilder != null) ...[
-            widget.extraContentBuilder!(item),
-            const SizedBox(height: 12),
-          ],
-
-          // ── AI REWRITE SECTION ──────────────────────────────────
-          if (widget.onRewrite != null) ...[
-            const Divider(color: AppColors.almondSilk),
-            const SizedBox(height: 8),
-            const EditorSectionLabel('AI REWRITE'),
+          // ── UNIFIED AI CONTENT (Fill + Rewrite merged) ────────────
+          if (widget.onAiFill != null || widget.onRewrite != null) ...[
+            const EditorSectionLabel('AI CONTENT'),
             const SizedBox(height: 6),
             // Mode dropdown
             Container(
@@ -222,74 +218,106 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
-                  value: _rewriteMode,
+                  value: _aiMode,
                   isExpanded: true,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   borderRadius: BorderRadius.circular(8),
-                  icon: const Icon(LucideIcons.chevronDown,
-                      size: 16, color: AppColors.slateGrey),
+                  icon: const Icon(LucideIcons.chevronDown, size: 16, color: AppColors.slateGrey),
                   items: const [
-                    DropdownMenuItem(value: 'professional', child: Text('Professional', style: TextStyle(fontSize: 12))),
-                    DropdownMenuItem(value: 'concise', child: Text('Concise', style: TextStyle(fontSize: 12))),
-                    DropdownMenuItem(value: 'detailed', child: Text('Detailed', style: TextStyle(fontSize: 12))),
-                    DropdownMenuItem(value: 'creative', child: Text('Creative', style: TextStyle(fontSize: 12))),
+                    DropdownMenuItem(value: 'generate', child: Text('Generate from my profile',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.normal, fontFamily: AppFonts.openSans, color: AppColors.prussianBlue))),
+                    DropdownMenuItem(value: 'professional', child: Text('Rewrite as Professional',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.normal, fontFamily: AppFonts.openSans, color: AppColors.prussianBlue))),
+                    DropdownMenuItem(value: 'concise', child: Text('Rewrite as Concise',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.normal, fontFamily: AppFonts.openSans, color: AppColors.prussianBlue))),
+                    DropdownMenuItem(value: 'detailed', child: Text('Rewrite as Detailed',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.normal, fontFamily: AppFonts.openSans, color: AppColors.prussianBlue))),
+                    DropdownMenuItem(value: 'creative', child: Text('Rewrite as Creative',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.normal, fontFamily: AppFonts.openSans, color: AppColors.prussianBlue))),
                   ],
-                  onChanged: (v) => setState(() => _rewriteMode = v ?? 'professional'),
+                  onChanged: (v) => setState(() => _aiMode = v ?? 'generate'),
                 ),
               ),
             ),
-            const SizedBox(height: 6),
-            // Custom instruction
-            TextField(
-              controller: _rewriteInstructionCtrl,
-              maxLines: 2,
-              style: const TextStyle(fontSize: 12, fontFamily: AppFonts.openSans),
-              decoration: InputDecoration(
-                hintText: 'Custom instruction (optional)...\ne.g. "focus on metrics"',
-                hintStyle: const TextStyle(color: AppColors.slateGrey, fontSize: 10),
-                contentPadding: const EdgeInsets.all(8),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.almondSilk),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.almondSilk),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.darkRaspberry),
-                ),
-              ),
+            const SizedBox(height: 4),
+            Text(
+              _aiMode == 'generate'
+                  ? 'Generates new content from your saved profile'
+                  : 'Rewrites the existing text in this section',
+              style: const TextStyle(fontSize: 10, fontFamily: AppFonts.openSans, color: AppColors.slateGrey),
             ),
             const SizedBox(height: 6),
-            // Rewrite button
+            // Custom instruction (only show for rewrite modes)
+            if (_aiMode != 'generate') ...[
+              TextField(
+                controller: _rewriteInstructionCtrl,
+                maxLines: 2,
+                style: const TextStyle(fontSize: 12, fontFamily: AppFonts.openSans),
+                decoration: InputDecoration(
+                  hintText: 'Custom instruction (optional)...\ne.g. "focus on metrics"',
+                  hintStyle: const TextStyle(color: AppColors.slateGrey, fontSize: 10),
+                  contentPadding: const EdgeInsets.all(8),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: AppColors.almondSilk),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: AppColors.almondSilk),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: AppColors.darkRaspberry),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+            ],
+            // Apply button
             SizedBox(
               width: double.infinity,
-              height: 36,
+              height: 38,
               child: ElevatedButton.icon(
-                onPressed: _isRewriting ? null : () async {
-                  setState(() => _isRewriting = true);
-                  await widget.onRewrite!(
-                    item,
-                    _rewriteMode,
-                    _rewriteInstructionCtrl.text.trim().isEmpty
-                        ? null
-                        : _rewriteInstructionCtrl.text.trim(),
-                  );
-                  if (mounted) setState(() => _isRewriting = false);
+                onPressed: (_isRewriting || widget.isAiFilling) ? null : () async {
+                  if (_aiMode == 'generate') {
+                    // Trigger AI Fill
+                    if (widget.onAiFill != null) {
+                      await widget.onAiFill!(item);
+                    }
+                  } else {
+                    // Trigger AI Rewrite
+                    if (widget.onRewrite != null) {
+                      setState(() => _isRewriting = true);
+                      await widget.onRewrite!(
+                        item,
+                        _aiMode,
+                        _rewriteInstructionCtrl.text.trim().isEmpty
+                            ? null
+                            : _rewriteInstructionCtrl.text.trim(),
+                      );
+                      if (mounted) setState(() => _isRewriting = false);
+                    }
+                  }
                 },
-                icon: _isRewriting
+                icon: (_isRewriting || widget.isAiFilling)
                     ? const SizedBox(width: 14, height: 14,
                     child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white))
-                    : Icon(LucideIcons.pencil, size: 14),
+                    : Icon(_aiMode == 'generate' ? LucideIcons.sparkles : LucideIcons.pencil, size: 14),
                 label: Text(
-                  _isRewriting ? 'Rewriting...' : 'AI Rewrite — ${item.title}',
-                  style: const TextStyle(fontSize: 11),
+                  _isRewriting
+                      ? 'Rewriting...'
+                      : widget.isAiFilling
+                      ? 'Generating...'
+                      : _aiMode == 'generate'
+                      ? 'AI Generate'
+                      : 'AI Rewrite — ${_aiMode[0].toUpperCase()}${_aiMode.substring(1)}',
+                  style: const TextStyle(fontSize: 12),
                   overflow: TextOverflow.ellipsis,
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _isRewriting ? AppColors.slateGrey : const Color(0xFFA36D90),
+                  backgroundColor: (_isRewriting || widget.isAiFilling)
+                      ? AppColors.slateGrey
+                      : AppColors.darkRaspberry,
                   foregroundColor: AppColors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   padding: const EdgeInsets.symmetric(horizontal: 10),

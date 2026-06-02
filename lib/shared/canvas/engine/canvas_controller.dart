@@ -738,6 +738,15 @@ class CanvasController extends ChangeNotifier {
       items.add(item);
     }
 
+    // Auto-calculate page count from item positions
+    double maxY = 0;
+    for (final item in items) {
+      final bottom = item.position.dy + item.height;
+      if (bottom > maxY) maxY = bottom;
+    }
+    totalPages = (maxY / canvasH).ceil().clamp(1, 99);
+    currentPage = 0;
+
     canvasBackground = hexColor(bg);
     selectedId = null;
     multiSelected.clear();
@@ -932,11 +941,29 @@ class CanvasController extends ChangeNotifier {
 
   Future<Uint8List> buildPdf() async {
     final doc = pw.Document();
-    doc.addPage(pw.Page(
-      pageFormat: PdfPageFormat.a4,
-      margin: pw.EdgeInsets.zero,
-      build: (ctx) => pw.Stack(children: items.map(itemToPdf).toList()),
-    ));
+    for (int p = 0; p < totalPages; p++) {
+      final pageOffset = p * canvasH;
+      final pageItems = items.where((item) {
+        final itemPage = (item.position.dy / canvasH).floor();
+        return itemPage == p;
+      }).toList();
+
+      doc.addPage(pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        margin: pw.EdgeInsets.zero,
+        build: (ctx) => pw.Stack(
+          children: pageItems.map((item) {
+            // Offset Y back to per-page coordinates
+            final adjustedItem = item;
+            final original = adjustedItem.position;
+            adjustedItem.position = Offset(original.dx, original.dy - pageOffset);
+            final widget = itemToPdf(adjustedItem);
+            adjustedItem.position = original; // restore
+            return widget;
+          }).toList(),
+        ),
+      ));
+    }
     return doc.save();
   }
 

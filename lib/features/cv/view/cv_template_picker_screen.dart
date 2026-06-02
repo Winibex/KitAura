@@ -281,38 +281,56 @@ class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen>
               if (profileData != null)
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.only(top: 14, left: 14, bottom: 14, right: 14),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFAF8F7),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: const Color(0xFFF0EBE7)),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Stack(
                     children: [
-                      if ((profileData['fullName'] ?? '').isNotEmpty)
-                        _buildProfileRow(
-                            LucideIcons.user, profileData['fullName']),
-                      if ((profileData['email'] ?? '').isNotEmpty)
-                        _buildProfileRow(
-                            LucideIcons.mail, profileData['email']),
-                      if ((profileData['jobTitle'] ?? '').isNotEmpty)
-                        _buildProfileRow(
-                            LucideIcons.briefcase, profileData['jobTitle']),
-                      if ((profileData['industry'] ?? '').isNotEmpty)
-                        _buildProfileRow(
-                            LucideIcons.building2, profileData['industry']),
-                      if ((profileData['experiences'] as List?)?.isNotEmpty ??
-                          false)
-                        _buildProfileRow(LucideIcons.award,
-                            '${(profileData['experiences'] as List).length} work experiences'),
-                      if ((profileData['education'] as List?)?.isNotEmpty ??
-                          false)
-                        _buildProfileRow(LucideIcons.graduationCap,
-                            '${(profileData['education'] as List).length} education entries'),
-                      if ((profileData['skills'] as List?)?.isNotEmpty ?? false)
-                        _buildProfileRow(LucideIcons.sparkles,
-                            '${(profileData['skills'] as List).length} skills'),
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: GestureDetector(
+                          onTap: (){
+                            //todo
+                          },
+                          child: Icon(
+                              LucideIcons.trash2,
+                              size: 16,
+                              color: AppColors.error,
+                            ),
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if ((profileData['fullName'] ?? '').isNotEmpty)
+                            _buildProfileRow(
+                                LucideIcons.user, profileData['fullName']),
+                          if ((profileData['email'] ?? '').isNotEmpty)
+                            _buildProfileRow(
+                                LucideIcons.mail, profileData['email']),
+                          if ((profileData['jobTitle'] ?? '').isNotEmpty)
+                            _buildProfileRow(
+                                LucideIcons.briefcase, profileData['jobTitle']),
+                          if ((profileData['industry'] ?? '').isNotEmpty)
+                            _buildProfileRow(
+                                LucideIcons.building2, profileData['industry']),
+                          if ((profileData['experiences'] as List?)?.isNotEmpty ??
+                              false)
+                            _buildProfileRow(LucideIcons.award,
+                                '${(profileData['experiences'] as List).length} work experiences'),
+                          if ((profileData['education'] as List?)?.isNotEmpty ??
+                              false)
+                            _buildProfileRow(LucideIcons.graduationCap,
+                                '${(profileData['education'] as List).length} education entries'),
+                          if ((profileData['skills'] as List?)?.isNotEmpty ?? false)
+                            _buildProfileRow(LucideIcons.sparkles,
+                                '${(profileData['skills'] as List).length} skills'),
+                        ],
+                      ),
                     ],
                   ),
                 ),

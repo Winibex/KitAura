@@ -99,7 +99,7 @@
           }
         },
         {
-          "insert": "Passionate full-stack developer with expertise in modern web technologies. Focused on building performant, accessible applications that solve real-world problems. Strong advocate for clean code and test-driven development.\n",
+          "insert": "Passionate full-stack developer with expertise in modern web technologies. Focused on building performant, accessible applications.\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
@@ -113,7 +113,7 @@
       "x": 40,
       "y": 232,
       "w": 515,
-      "h": 185,
+      "h": 200,
       "color": "#FFFFFF",
       "borderColor": "#E0E0E0",
       "borderWidth": 0,
@@ -130,7 +130,7 @@
           }
         },
         {
-          "insert": "Senior Developer  \u2014  TechStartup Inc  |  2021 \u2013 Present\n",
+          "insert": "Senior Developer  —  TechStartup Inc  |  2021 – Present\n",
           "attributes": {
             "bold": true,
             "size": "11",
@@ -138,21 +138,21 @@
           }
         },
         {
-          "insert": "\u2022 Architected microservices platform handling 1M+ daily requests\n",
+          "insert": "• Architected microservices platform handling 1M+ daily requests\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "\u2022 Reduced infrastructure costs by 35% through optimization\n",
+          "insert": "• Reduced infrastructure costs by 35% through optimization\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "\u2022 Led migration from monolith to event-driven architecture\n",
+          "insert": "• Led migration from monolith to event-driven architecture\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
@@ -166,7 +166,7 @@
           }
         },
         {
-          "insert": "Developer  \u2014  Digital Agency  |  2019 \u2013 2021\n",
+          "insert": "Developer  —  Digital Agency  |  2019 – 2021\n",
           "attributes": {
             "bold": true,
             "size": "11",
@@ -174,14 +174,14 @@
           }
         },
         {
-          "insert": "\u2022 Built 15+ client websites using React and Next.js\n",
+          "insert": "• Built 15+ client websites using React and Next.js\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "\u2022 Created reusable component library adopted by entire team\n",
+          "insert": "• Created reusable component library adopted by entire team\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
@@ -193,7 +193,7 @@
       "type": "textSection",
       "title": "Education",
       "x": 40,
-      "y": 432,
+      "y": 446,
       "w": 515,
       "h": 70,
       "color": "#FFFFFF",
@@ -212,7 +212,7 @@
           }
         },
         {
-          "insert": "BSc Software Engineering  \u2014  Tech University  |  2015 \u2013 2019\n",
+          "insert": "BSc Software Engineering  —  Tech University  |  2015 – 2019\n",
           "attributes": {
             "bold": true,
             "size": "11",
@@ -232,7 +232,7 @@
       "type": "line",
       "title": "Divider 2",
       "x": 40,
-      "y": 520,
+      "y": 530,
       "w": 515,
       "h": 2,
       "color": "#E0E0E0",
@@ -246,7 +246,7 @@
       "type": "textSection",
       "title": "Skills",
       "x": 40,
-      "y": 536,
+      "y": 546,
       "w": 250,
       "h": 95,
       "color": "#FFFFFF",
@@ -265,21 +265,21 @@
           }
         },
         {
-          "insert": "React \u2022 Next.js \u2022 TypeScript\n",
+          "insert": "React • Next.js • TypeScript\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "Node.js \u2022 Python \u2022 Go\n",
+          "insert": "Node.js • Python • Go\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "PostgreSQL \u2022 Redis \u2022 Docker\n",
+          "insert": "PostgreSQL • Redis • Docker\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
@@ -289,9 +289,9 @@
     },
     {
       "type": "textSection",
-      "title": "Achievements",
+      "title": "Certifications",
       "x": 305,
-      "y": 536,
+      "y": 546,
       "w": 250,
       "h": 95,
       "color": "#FFFFFF",
@@ -302,7 +302,7 @@
       "flipY": false,
       "delta": [
         {
-          "insert": "ACHIEVEMENTS\n",
+          "insert": "CERTIFICATIONS\n",
           "attributes": {
             "bold": true,
             "size": "13",
@@ -310,21 +310,228 @@
           }
         },
         {
-          "insert": "\u2022 Open source contributor (500+ stars)\n",
+          "insert": "• AWS Solutions Architect\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "\u2022 Speaker at 3 tech conferences\n",
+          "insert": "• Google Cloud Professional\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Projects",
+      "x": 40,
+      "y": 660,
+      "w": 515,
+      "h": 140,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "PROJECTS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#2ECC71"
+          }
+        },
+        {
+          "insert": "Real-time Collaboration App  |  2024\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#2C3E50"
+          }
+        },
+        {
+          "insert": "Built collaborative editor with WebRTC, used by 10K+ users.\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "\u2022 Hackathon winner (2\u00d7 first place)\n",
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "E-commerce Platform  |  2023\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#2C3E50"
+          }
+        },
+        {
+          "insert": "Full-stack platform with Stripe integration, 500+ daily transactions.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Awards",
+      "x": 40,
+      "y": 870,
+      "w": 515,
+      "h": 100,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "AWARDS & HONORS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#2ECC71"
+          }
+        },
+        {
+          "insert": "• Open source contributor (500+ GitHub stars)\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Speaker at 3 tech conferences\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Hackathon winner (2× first place)\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Volunteer",
+      "x": 40,
+      "y": 990,
+      "w": 515,
+      "h": 110,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "VOLUNTEER EXPERIENCE\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#2ECC71"
+          }
+        },
+        {
+          "insert": "Code Mentor  —  freeCodeCamp  |  2022 – Present\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#2C3E50"
+          }
+        },
+        {
+          "insert": "Teaching web development fundamentals to 200+ students.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Languages",
+      "x": 40,
+      "y": 1120,
+      "w": 250,
+      "h": 90,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "LANGUAGES\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#2ECC71"
+          }
+        },
+        {
+          "insert": "English — Native\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "Spanish — Fluent\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Hobbies",
+      "x": 305,
+      "y": 1120,
+      "w": 250,
+      "h": 90,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "INTERESTS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#2ECC71"
+          }
+        },
+        {
+          "insert": "Photography • Hiking • Chess\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
@@ -336,9 +543,9 @@
       "type": "textSection",
       "title": "References",
       "x": 40,
-      "y": 648,
+      "y": 1230,
       "w": 515,
-      "h": 50,
+      "h": 80,
       "color": "#FFFFFF",
       "borderColor": "#E0E0E0",
       "borderWidth": 0,
@@ -367,7 +574,7 @@
       "type": "rectangle",
       "title": "Bottom Accent",
       "x": 0,
-      "y": 836,
+      "y": 1678,
       "w": 595,
       "h": 6,
       "color": "#2ECC71",

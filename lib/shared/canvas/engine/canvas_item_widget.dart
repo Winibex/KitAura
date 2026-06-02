@@ -123,9 +123,15 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
     // SOLO DRAG with snap guides
     _isDraggingSolo = true;
     final delta = d.globalPosition - _dragStart;
+    // canvasH includes page gaps (24px between pages), but item positions
+    // don't include gaps. Subtract gaps from clamp max to keep items in pages.
+    const pageGap = 24.0;
+    const pageH = 842.0;
+    final totalPages = (widget.canvasH / (pageH + pageGap)).ceil().clamp(1, 99);
+    final usableH = pageH * totalPages; // total without gaps
     final rawPos = Offset(
       (_posAtDragStart.dx + delta.dx).clamp(0, widget.canvasW - _w),
-      (_posAtDragStart.dy + delta.dy).clamp(0, widget.canvasH - _h),
+      (_posAtDragStart.dy + delta.dy).clamp(0, usableH - _h),
     );
 
     // Calculate snap
@@ -186,13 +192,17 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
         b = t + minH;
       }
     }
+    const pageGap = 24.0;
+    const pageH = 842.0;
+    final totalPages = (widget.canvasH / (pageH + pageGap)).ceil().clamp(1, 99);
+    final usableH = pageH * totalPages.toDouble();
     setState(() {
       _pos = Offset(
         l.clamp(0, widget.canvasW - minW),
-        t.clamp(0, widget.canvasH - minH),
+        t.clamp(0, usableH - minH),
       );
       _w = (r - l).clamp(minW, widget.canvasW - _pos.dx);
-      _h = (b - t).clamp(minH, widget.canvasH - _pos.dy);
+      _h = (b - t).clamp(minH, usableH - _pos.dy);
     });
   }
 
@@ -200,9 +210,15 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
 
   @override
   Widget build(BuildContext context) {
+    // Calculate which page this item belongs to and add visual gap
+    const pageGap = 24.0;
+    const canvasH = 842.0;
+    final pageIdx = (_pos.dy / canvasH).floor();
+    final renderTop = _pos.dy + (pageIdx * pageGap);
+
     return Positioned(
       left: _pos.dx,
-      top: _pos.dy,
+      top: renderTop,
       width: _w,
       height: _h,
       child: Transform(

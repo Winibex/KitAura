@@ -99,7 +99,7 @@
           }
         },
         {
-          "insert": "Creative UX designer passionate about building beautiful, functional interfaces. Combines user research with visual design to craft experiences that delight and convert.\n",
+          "insert": "Creative UX designer passionate about building beautiful, functional interfaces. Combines user research with visual design to craft experiences that delight.\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
@@ -130,7 +130,7 @@
           }
         },
         {
-          "insert": "Senior UX Designer  \u2014  DesignCo  |  2021 \u2013 Present\n",
+          "insert": "Senior UX Designer  —  DesignCo  |  2021 – Present\n",
           "attributes": {
             "bold": true,
             "size": "11",
@@ -138,21 +138,21 @@
           }
         },
         {
-          "insert": "\u2022 Designed mobile app used by 2M+ monthly active users\n",
+          "insert": "• Designed mobile app used by 2M+ monthly active users\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "\u2022 Increased conversion rate by 28% through A/B testing\n",
+          "insert": "• Increased conversion rate by 28% through A/B testing\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "\u2022 Created and maintained comprehensive design system\n",
+          "insert": "• Created and maintained comprehensive design system\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
@@ -166,7 +166,7 @@
           }
         },
         {
-          "insert": "UX Designer  \u2014  Agency Studio  |  2018 \u2013 2021\n",
+          "insert": "UX Designer  —  Agency Studio  |  2018 – 2021\n",
           "attributes": {
             "bold": true,
             "size": "11",
@@ -174,14 +174,14 @@
           }
         },
         {
-          "insert": "\u2022 Delivered 20+ client projects across fintech, healthcare, e-commerce\n",
+          "insert": "• Delivered 20+ client projects across fintech, healthcare\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "\u2022 Established user research practice and testing protocols\n",
+          "insert": "• Established user research practice and testing protocols\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
@@ -212,7 +212,7 @@
           }
         },
         {
-          "insert": "BA Graphic Design  \u2014  Art Institute  |  2014 \u2013 2018\n",
+          "insert": "BA Graphic Design  —  Art Institute  |  2014 – 2018\n",
           "attributes": {
             "bold": true,
             "size": "11",
@@ -244,21 +244,21 @@
           }
         },
         {
-          "insert": "Figma \u2022 Sketch \u2022 Adobe XD\n",
+          "insert": "Figma • Sketch • Adobe XD\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "Prototyping \u2022 User Research\n",
+          "insert": "Prototyping • User Research\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "HTML/CSS \u2022 React basics\n",
+          "insert": "HTML/CSS • React basics\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
@@ -289,14 +289,266 @@
           }
         },
         {
-          "insert": "Google UX Design Certificate\n",
+          "insert": "• Google UX Design Certificate\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "Nielsen Norman UX Certification\n",
+          "insert": "• Nielsen Norman UX Certification\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Projects",
+      "x": 30,
+      "y": 660,
+      "w": 535,
+      "h": 150,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "PROJECTS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#6C3CB4"
+          }
+        },
+        {
+          "insert": "Mobile Banking Redesign  |  2024\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Led complete redesign of mobile banking app, resulting in 45% increase in user engagement and 30% reduction in support tickets.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "Design System Library  |  2023\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Built comprehensive design system used across 8 product teams.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Awards",
+      "x": 30,
+      "y": 870,
+      "w": 535,
+      "h": 110,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "AWARDS & RECOGNITION\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#6C3CB4"
+          }
+        },
+        {
+          "insert": "• Webby Award — Best Mobile App Design | 2023\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Awwwards Honorable Mention | 2022\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• UX Design Awards — Top 100 | 2021\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Volunteer",
+      "x": 30,
+      "y": 1000,
+      "w": 535,
+      "h": 110,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "VOLUNTEER EXPERIENCE\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#6C3CB4"
+          }
+        },
+        {
+          "insert": "UX Mentor  —  Designlab  |  2022 – Present\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Mentoring junior UX designers through portfolio reviews and career guidance.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Languages",
+      "x": 30,
+      "y": 1130,
+      "w": 250,
+      "h": 80,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "LANGUAGES\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#3B82C4"
+          }
+        },
+        {
+          "insert": "English — Native\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "French — Fluent\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Hobbies",
+      "x": 310,
+      "y": 1130,
+      "w": 250,
+      "h": 80,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "INTERESTS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#3B82C4"
+          }
+        },
+        {
+          "insert": "Photography • Illustration\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "Travel • Vintage Posters\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Social Links",
+      "x": 30,
+      "y": 1230,
+      "w": 535,
+      "h": 80,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "SOCIAL LINKS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#6C3CB4"
+          }
+        },
+        {
+          "insert": "Behance: behance.net/you  •  Dribbble: dribbble.com/you  •  Portfolio: you.design\n",
           "attributes": {
             "size": "11",
             "color": "#333333"

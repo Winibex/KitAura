@@ -1,6 +1,7 @@
 // lib/features/cv/view/cv_editor_screen.dart
 
 import 'dart:convert';
+import 'dart:async';
 import 'dart:js_interop';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +25,6 @@ import '../../../shared/canvas/engine/snap_guide.dart';
 import '../../../shared/services/firebase_service.dart';
 import '../../../shared/canvas/engine/canvas_controller.dart';
 import '../controller/claude_controller.dart';
-import '../../../shared/models/canvas_item.dart';
 import 'package:web/web.dart' as web;
 
 import '../controller/spellcheck_controller.dart';
@@ -64,6 +64,11 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
   bool _showSpellcheckPanel = false;
 
   List<GuideLine> _snapGuides = [];
+  bool _isTemplateLoading = true;
+
+  bool _isSaved = true;
+  bool _isSaving = false;
+  Timer? _autoSaveTimer;
 
   @override
   void initState() {
@@ -87,6 +92,40 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
     HardwareKeyboard.instance.addHandler(_ctrl.handleKeyEvent);
   }
 
+  void _markDirty() {
+    if (!mounted) return;
+    setState(() => _isSaved = false);
+    _autoSaveTimer?.cancel();
+    _autoSaveTimer = Timer(const Duration(seconds: 2), () {
+      _autoSave();
+    });
+  }
+
+  Future<void> _autoSave() async {
+    if (_isSaving || _isTemplateLoading) return;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      final data = _ctrl.toFirestoreJson(uid, _cvTitle);
+      data['title'] = _cvTitle;
+
+      if (_firestoreDocId != null) {
+        await FirebaseService.updateCV(uid, _firestoreDocId!, data);
+      } else {
+        final docRef = await FirebaseService.createCV(uid, data);
+        _firestoreDocId = docRef.id;
+      }
+
+      if (mounted) setState(() { _isSaved = true; _isSaving = false; });
+    } catch (e) {
+      debugPrint('Auto-save failed: $e');
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
   void _loadInitialTemplate() async {
     if (widget.docId == 'blank') {
       _ctrl.init();
@@ -105,7 +144,11 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
     await _tryAutofillFromProfile();
 
     await _ctrl.preloadFonts();
-    if (mounted) setState(() {});
+    if (mounted) {
+      setState(() => _isTemplateLoading = false);
+      // Auto-save the initial state (creates Firestore doc if new)
+      _autoSave();
+    }
   }
 
   /// Wire focus listeners on all text items so tapping a text section
@@ -182,7 +225,10 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
   }
 
   void _onControllerUpdate() {
-    if (mounted) setState(() => _toolbarKey = UniqueKey());
+    if (mounted) {
+      setState(() => _toolbarKey = UniqueKey());
+      _markDirty();
+    }
   }
 
   @override
@@ -192,6 +238,7 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
     _ctrl.disposeAll();
     _verticalScrollCtrl.dispose();
     _titleCtrl.dispose();
+    _autoSaveTimer?.cancel();
     super.dispose();
   }
 
@@ -322,22 +369,28 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
               _isEditingTitle = true;
               _titleCtrl.text = _cvTitle;
             }),
-            onTitleSubmitted: (val) => setState(() {
-              _cvTitle = val.trim().isEmpty ? 'Untitled CV' : val.trim();
-              _isEditingTitle = false;
-            }),
+            onTitleSubmitted: (val) {
+              setState(() {
+                _cvTitle = val.trim().isEmpty ? 'Untitled CV' : val.trim();
+                _isEditingTitle = false;
+              });
+              _markDirty();
+            },
             canUndo: _ctrl.canUndo,
             canRedo: _ctrl.canRedo,
             onUndo: _ctrl.undo,
             onRedo: _ctrl.redo,
-            showSavedBadge: true,
+            showSavedBadge: _isSaved && !_isSaving,
+            isSaving: _isSaving,
             actions: [
               EditorAppBarAction(
-                icon: LucideIcons.cloud,
-                label: 'Save',
-                color: AppColors.success,
-                bgColor: AppColors.success.withValues(alpha: 0.2),
-                onTap: _saveToCloud,
+                icon: _isSaving ? LucideIcons.loader : (_isSaved ? LucideIcons.cloudCog : LucideIcons.cloud),
+                label: _isSaving ? 'Saving...' : (_isSaved ? 'Saved' : 'Save'),
+                color: _isSaved ? AppColors.success : AppColors.white,
+                bgColor: _isSaved
+                    ? AppColors.success.withValues(alpha: 0.2)
+                    : AppColors.white.withValues(alpha: 0.1),
+                onTap: _isSaving ? null : _saveToCloud,
               ),
               EditorAppBarAction(
                 icon: LucideIcons.fileJson,
@@ -360,7 +413,25 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
               fit: StackFit.expand,
               children: [
                 // Canvas always centered, full width
-                Positioned.fill(child: _buildCanvas()),
+                Positioned.fill(
+                  child: _isTemplateLoading
+                      ? const Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(color: AppColors.darkRaspberry),
+                        SizedBox(height: 16),
+                        Text('Loading template...',
+                            style: TextStyle(
+                              color: AppColors.slateGrey,
+                              fontSize: 13,
+                              fontFamily: AppFonts.poppins,
+                            )),
+                      ],
+                    ),
+                  )
+                      : _buildCanvas(),
+                ),
                 // Left panel overlay
                 if (_leftPanelOpen)
                   Positioned(
@@ -385,14 +456,24 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
                       isMultiSelected: isMulti,
                       toolbarKey: _toolbarKey,
                       onClose: () => setState(() => _rightPanelOpen = false),
-                      extraContentBuilder: (item) => _buildAiFillButton(item),
-                      // NEW: spellcheck
+                      // NEW: AI Fill via dropdown
+                      onAiFill: (item) async {
+                        _ctrl.saveSnapshot();
+                        await ref.read(claudeControllerProvider.notifier).fillSection(
+                          itemId: item.id,
+                          sectionType: item.sectionType,
+                          sectionTitle: item.title,
+                          controller: item.controller!,
+                          cvId: _firestoreDocId,
+                          cvTitle: _cvTitle,
+                        );
+                      },
+                      isAiFilling: ref.watch(claudeControllerProvider).activeOperation == 'fill',
                       isSpellchecking: ref.watch(spellcheckControllerProvider).isChecking,
                       onSpellcheck: () {
                         ref.read(spellcheckControllerProvider.notifier).checkAll(_ctrl.items);
                         setState(() => _showSpellcheckPanel = true);
                       },
-                      // NEW: Wire AI Rewrite
                       onRewrite: (item, mode, customInstruction) async {
                         _ctrl.saveSnapshot();
                         await ref.read(claudeControllerProvider.notifier).rewriteSection(
@@ -454,173 +535,6 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
       }
     });
   }
-
-  // ────────────────────────────────────────────────────────────────────────
-  // AI FILL BUTTON + PAYWALL + STREAMING INDICATOR
-  // ────────────────────────────────────────────────────────────────────────
-
-  Widget _buildAiFillButton(CanvasItem item) {
-    final claudeState = ref.watch(claudeControllerProvider);
-    final isThisItem = claudeState.activeItemId == item.id;
-    final isActive = claudeState.isActive && isThisItem && claudeState.activeOperation == 'fill';
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        EditorSectionLabel('AI CONTENT'),
-        const SizedBox(height: 6),
-
-        // Main button — toggles between Fill and Cancel
-        SizedBox(
-          width: double.infinity,
-          height: 36,
-          child: ElevatedButton.icon(
-            onPressed: isActive
-                ? () => ref.read(claudeControllerProvider.notifier).cancel()
-                : () {
-              _ctrl.saveSnapshot();
-              ref
-                  .read(claudeControllerProvider.notifier)
-                  .fillSection(
-                itemId: item.id,
-                sectionType: item.sectionType,
-                sectionTitle: item.title,
-                controller: item.controller!,
-                cvId: widget.docId,
-              );
-            }
-            ,
-            icon: isActive
-                ? const SizedBox(
-              width: 14,
-              height: 14,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: AppColors.white,
-              ),
-            )
-                : const Icon(LucideIcons.sparkles, size: 14),
-            label: Text(
-              isActive ? 'Cancel' : 'AI Fill — ${item.title}',
-              style: const TextStyle(fontSize: 12),
-              overflow: TextOverflow.ellipsis,
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isActive
-                  ? AppColors.slateGrey
-                  : AppColors.magentaBloom,
-              foregroundColor: AppColors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-            ),
-          ),
-        ),
-
-        // Streaming character count
-        if (isActive && claudeState.streamedChars > 0) ...[
-          const SizedBox(height: 4),
-          Text(
-            '${claudeState.streamedChars} characters generated...',
-            style: const TextStyle(
-              color: AppColors.slateGrey,
-              fontSize: 10,
-              fontFamily: AppFonts.openSans,
-            ),
-          ),
-        ],
-
-        // Error display
-        if (claudeState.status == AiFillStatus.error && isThisItem) ...[
-          const SizedBox(height: 8),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.error.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              claudeState.error ?? 'Something went wrong.',
-              style: const TextStyle(color: AppColors.error, fontSize: 11),
-            ),
-          ),
-        ],
-
-        // Paywall display
-        if (claudeState.status == AiFillStatus.paywalled && isThisItem) ...[
-          const SizedBox(height: 8),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.petalFrost,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.almondSilk),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Icon(
-                      LucideIcons.sparkles,
-                      size: 14,
-                      color: AppColors.darkRaspberry,
-                    ),
-                    SizedBox(width: 6),
-                    Text(
-                      'Free AI fills used up',
-                      style: TextStyle(
-                        color: AppColors.prussianBlue,
-                        fontSize: 12,
-                        fontFamily: AppFonts.poppins,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Upgrade to Pro for unlimited AI generation.',
-                  style: TextStyle(
-                    color: AppColors.slateGrey,
-                    fontSize: 11,
-                    fontFamily: AppFonts.openSans,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  height: 30,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // TODO: Show upgrade modal
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.darkRaspberry,
-                      foregroundColor: AppColors.white,
-                      textStyle: const TextStyle(
-                        fontSize: 11,
-                        fontFamily: AppFonts.poppins,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                    child: const Text('Upgrade to Pro'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
 
   // ─── CANVAS ───────────────────────────────────────────────────────────
 

@@ -122,7 +122,7 @@
           }
         },
         {
-          "insert": "Visionary technology leader with 15+ years driving digital transformation at Fortune 500 companies. Proven ability to scale engineering organizations from 20 to 200+ while maintaining velocity and quality.\n",
+          "insert": "Visionary technology leader with 15+ years driving digital transformation at Fortune 500 companies. Proven ability to scale engineering organizations from 20 to 200+.\n",
           "attributes": {
             "size": "11",
             "color": "#D0D0D0"
@@ -153,7 +153,7 @@
           }
         },
         {
-          "insert": "CTO  \u2014  Enterprise Corp  |  2020 \u2013 Present\n",
+          "insert": "CTO  —  Enterprise Corp  |  2020 – Present\n",
           "attributes": {
             "bold": true,
             "size": "11",
@@ -161,21 +161,21 @@
           }
         },
         {
-          "insert": "\u2022 Scaled engineering team from 40 to 180 across 5 offices\n",
+          "insert": "• Scaled engineering team from 40 to 180 across 5 offices\n",
           "attributes": {
             "size": "11",
             "color": "#D0D0D0"
           }
         },
         {
-          "insert": "\u2022 Led cloud migration saving $2.4M annually\n",
+          "insert": "• Led cloud migration saving $2.4M annually\n",
           "attributes": {
             "size": "11",
             "color": "#D0D0D0"
           }
         },
         {
-          "insert": "\u2022 Established engineering culture and technical standards\n",
+          "insert": "• Established engineering culture and technical standards\n",
           "attributes": {
             "size": "11",
             "color": "#D0D0D0"
@@ -189,7 +189,7 @@
           }
         },
         {
-          "insert": "VP Engineering  \u2014  Growth Startup  |  2015 \u2013 2020\n",
+          "insert": "VP Engineering  —  Growth Startup  |  2015 – 2020\n",
           "attributes": {
             "bold": true,
             "size": "11",
@@ -197,14 +197,14 @@
           }
         },
         {
-          "insert": "\u2022 Built platform processing $500M+ in transactions\n",
+          "insert": "• Built platform processing $500M+ in transactions\n",
           "attributes": {
             "size": "11",
             "color": "#D0D0D0"
           }
         },
         {
-          "insert": "\u2022 Achieved 99.99% uptime across all production services\n",
+          "insert": "• Achieved 99.99% uptime across all production services\n",
           "attributes": {
             "size": "11",
             "color": "#D0D0D0"
@@ -249,7 +249,7 @@
           }
         },
         {
-          "insert": "MBA \u2014 Stanford GSB  |  MS Computer Science \u2014 MIT\n",
+          "insert": "MBA — Stanford GSB  |  MS Computer Science — MIT\n",
           "attributes": {
             "size": "11",
             "color": "#D0D0D0"
@@ -280,7 +280,180 @@
           }
         },
         {
-          "insert": "Board Member, TechNonprofit  \u2022  Advisor, 3 Series-A startups  \u2022  IEEE Member\n",
+          "insert": "Board Member, TechNonprofit  •  Advisor, 3 Series-A startups  •  IEEE Member\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Skills",
+      "x": 40,
+      "y": 680,
+      "w": 515,
+      "h": 90,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "CORE COMPETENCIES\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#D4AF37"
+          }
+        },
+        {
+          "insert": "Strategic Leadership • Organizational Design • Cloud Architecture\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        },
+        {
+          "insert": "M&A • P&L Management • Board Communication • Technical Vision\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Awards",
+      "x": 40,
+      "y": 870,
+      "w": 515,
+      "h": 130,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "AWARDS & RECOGNITION\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#D4AF37"
+          }
+        },
+        {
+          "insert": "• CTO of the Year — Tech Leadership Awards | 2023\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        },
+        {
+          "insert": "• Top 50 CTOs in North America — Forbes | 2022\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        },
+        {
+          "insert": "• Innovation Excellence Award — Industry Council | 2021\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "Gold Divider 3",
+      "x": 40,
+      "y": 1020,
+      "w": 515,
+      "h": 2,
+      "color": "#D4AF37",
+      "borderColor": "#D4AF37",
+      "borderWidth": 2,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Speaking",
+      "x": 40,
+      "y": 1036,
+      "w": 515,
+      "h": 120,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "SPEAKING & PUBLICATIONS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#D4AF37"
+          }
+        },
+        {
+          "insert": "• Keynote Speaker — TechCrunch Disrupt 2023\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        },
+        {
+          "insert": "• Panel: \"Future of Engineering Leadership\" — AWS re:Invent 2022\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        },
+        {
+          "insert": "• Author of 12 articles on engineering management\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Languages",
+      "x": 40,
+      "y": 1175,
+      "w": 515,
+      "h": 50,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "LANGUAGES\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#D4AF37"
+          }
+        },
+        {
+          "insert": "English (Native) • Mandarin (Fluent) • Spanish (Intermediate)\n",
           "attributes": {
             "size": "11",
             "color": "#D0D0D0"
@@ -292,7 +465,7 @@
       "type": "rectangle",
       "title": "Gold Bar Bottom",
       "x": 0,
-      "y": 837,
+      "y": 1679,
       "w": 595,
       "h": 5,
       "color": "#D4AF37",

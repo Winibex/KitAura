@@ -253,45 +253,44 @@ class ClaudeController extends StateNotifier<ClaudeState> {
   /// Apply rewritten text while preserving template formatting styles.
   void _applyRewrittenText(
       QuillController controller, String newText, _StyleSet styles) {
-    final lines = newText.split('\n');
-    final ops = <Map<String, dynamic>>[];
-
-    bool firstBold = true; // First bold line gets heading style
-
-    for (final line in lines) {
-      if (line.trim().isEmpty) {
-        ops.add({'insert': '\n'});
-        continue;
-      }
-
-      // Detect if line looks like a heading (ALL CAPS, short)
-      final isHeading = line == line.toUpperCase() && line.length < 40;
-      // Detect if line looks like a title/subtitle (contains — or |)
-      final isTitle = line.contains('—') || line.contains('|') ||
-          (line.contains('–') && line.length < 80);
-
-      Map<String, dynamic> attrs;
-      if (isHeading && firstBold) {
-        attrs = Map.from(styles.headingAttrs);
-        if (attrs.isEmpty) attrs = {'bold': true};
-        firstBold = false;
-      } else if (isTitle) {
-        attrs = Map.from(styles.titleAttrs);
-        if (attrs.isEmpty) attrs = {'bold': true};
-      } else {
-        attrs = Map.from(styles.bodyAttrs);
-      }
-
-      final t = '$line\n';
-      ops.add(attrs.isEmpty ? {'insert': t} : {'insert': t, 'attributes': attrs});
-    }
-
-    if (ops.isEmpty) ops.add({'insert': '\n'});
-
     try {
+      // Get existing delta to preserve formatting
+      final existingOps = controller.document.toDelta().toJson();
+
+      // Find the dominant text style from existing content
+      Map<String, dynamic> defaultAttrs = {};
+      for (final op in existingOps) {
+        final insert = op['insert'];
+        if (insert is String && insert.trim().length > 3) {
+          defaultAttrs = Map<String, dynamic>.from((op['attributes'] as Map?) ?? {});
+          if (!defaultAttrs.containsKey('bold')) break; // prefer body style
+        }
+      }
+
+      // Build new delta: apply existing style to all rewritten text
+      final ops = <Map<String, dynamic>>[];
+      final lines = newText.split('\n');
+
+      for (final line in lines) {
+        if (line.trim().isEmpty) {
+          ops.add({'insert': '\n'});
+          continue;
+        }
+        final t = '$line\n';
+        if (defaultAttrs.isNotEmpty) {
+          ops.add({'insert': t, 'attributes': Map<String, dynamic>.from(defaultAttrs)});
+        } else {
+          ops.add({'insert': t});
+        }
+      }
+
+      if (ops.isEmpty) ops.add({'insert': '\n'});
+
       controller.document = Document.fromJson(ops);
+      debugPrint('🤖 [ClaudeController] Rewrite applied (${ops.length} ops)');
     } catch (e) {
-      debugPrint('🤖 [ClaudeController] Rewrite delta apply failed, using plain: $e');
+      debugPrint('🤖 [ClaudeController] Rewrite delta failed, using plain insert: $e');
+      // Fallback: just replace all text
       final len = controller.document.length;
       if (len > 1) controller.replaceText(0, len - 1, '', null);
       controller.document.insert(0, newText.trimRight());

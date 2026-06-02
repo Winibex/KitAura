@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:kitaura/core/constants/app_assets.dart';
 import '../../../shared/models/template_model.dart';
 
 class CVTemplateState {
@@ -61,6 +62,7 @@ class CVTemplateController extends StateNotifier<CVTemplateState> {
     'Creative',
     'Minimal',
     'Modern',
+    'Ats'
   ];
 
   void loadTemplates() {
@@ -82,7 +84,7 @@ class CVTemplateController extends StateNotifier<CVTemplateState> {
         id: 'classic_navy',
         label: 'Classic Navy',
         category: 'professional',
-        assetPath: 'assets/cv_templates/template_classic_navy.json',
+        assetPath: AppAssets.templateClassicNavy,
         isPremium: false,
         sortOrder: 1,
       ),
@@ -90,7 +92,7 @@ class CVTemplateController extends StateNotifier<CVTemplateState> {
         id: 'two_column',
         label: 'Two Column',
         category: 'creative',
-        assetPath: 'assets/cv_templates/template_two_column.json',
+        assetPath: AppAssets.templateTwoColumn,
         isPremium: false,
         sortOrder: 2,
       ),
@@ -98,7 +100,7 @@ class CVTemplateController extends StateNotifier<CVTemplateState> {
         id: 'minimal_clean',
         label: 'Minimal Clean',
         category: 'minimal',
-        assetPath: 'assets/cv_templates/template_minimal.json',
+        assetPath: AppAssets.templateMinimal,
         isPremium: false,
         sortOrder: 3,
       ),
@@ -106,7 +108,7 @@ class CVTemplateController extends StateNotifier<CVTemplateState> {
         id: 'executive_dark',
         label: 'Executive Dark',
         category: 'professional',
-        assetPath: null,
+        assetPath: AppAssets.templateExecutiveDark,
         isPremium: true,
         sortOrder: 4,
       ),
@@ -114,7 +116,7 @@ class CVTemplateController extends StateNotifier<CVTemplateState> {
         id: 'modern_gradient',
         label: 'Modern Gradient',
         category: 'modern',
-        assetPath: null,
+        assetPath: AppAssets.templateModernGradient,
         isPremium: true,
         sortOrder: 5,
       ),
@@ -122,7 +124,7 @@ class CVTemplateController extends StateNotifier<CVTemplateState> {
         id: 'corporate_blue',
         label: 'Corporate Blue',
         category: 'professional',
-        assetPath: null,
+        assetPath: AppAssets.templateCorporateBlue,
         isPremium: true,
         sortOrder: 6,
       ),
@@ -130,9 +132,41 @@ class CVTemplateController extends StateNotifier<CVTemplateState> {
         id: 'creative_bold',
         label: 'Creative Bold',
         category: 'creative',
-        assetPath: null,
+        assetPath: AppAssets.templateCreativeBold,
         isPremium: true,
         sortOrder: 7,
+      ),
+      TemplateModel(
+        id: 'ats_classic',
+        label: 'ATS Classic',
+        category: 'ats',
+        assetPath: AppAssets.templateAtsClassic,
+        isPremium: false,
+        sortOrder: 8,
+      ),
+      TemplateModel(
+        id: 'ats_modern',
+        label: 'ATS Modern',
+        category: 'ats',
+        assetPath: AppAssets.templateAtsModern,
+        isPremium: false,
+        sortOrder: 9,
+      ),
+      TemplateModel(
+        id: 'ats_tech',
+        label: 'ATS Tech',
+        category: 'ats',
+        assetPath: AppAssets.templateAtsTech,
+        isPremium: true,
+        sortOrder: 10,
+      ),
+      TemplateModel(
+        id: 'ats_executive',
+        label: 'ATS Executive',
+        category: 'ats',
+        assetPath: AppAssets.templateAtsExecutive,
+        isPremium: true,
+        sortOrder: 11,
       ),
     ];
 

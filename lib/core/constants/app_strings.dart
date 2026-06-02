@@ -5,7 +5,6 @@ class AppStrings {
   static const String tagline   = 'Your career, beautifully crafted.';
 
   // AUTH
-  static const String appVersion      = 'Version: 1.3';
   static const String signIn          = 'Sign In';
   static const String signUp          = 'Sign Up';
   static const String welcomeBack     = 'Welcome back';

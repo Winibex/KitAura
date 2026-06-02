@@ -12,6 +12,8 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
 
+import '../../../core/constants/app_assets.dart';
+
 class CvTemplateData {
   CvTemplateData._();
 
@@ -22,7 +24,7 @@ class CvTemplateData {
       id: 'classic_navy',
       label: 'Classic Navy',
       category: 'professional',
-      assetPath: 'assets/cv_templates/template_classic_navy.json',
+      assetPath: AppAssets.templateClassicNavy,
       isPremium: false,
       sortOrder: 1,
       description: 'A polished dark navy header with gold accents. '
@@ -33,7 +35,7 @@ class CvTemplateData {
       id: 'two_column',
       label: 'Two Column',
       category: 'creative',
-      assetPath: 'assets/cv_templates/template_two_column.json',
+      assetPath: AppAssets.templateTwoColumn,
       isPremium: false,
       sortOrder: 2,
       description: 'Dark sidebar with contact and skills, white main area '
@@ -44,7 +46,7 @@ class CvTemplateData {
       id: 'minimal_clean',
       label: 'Minimal Clean',
       category: 'minimal',
-      assetPath: 'assets/cv_templates/template_minimal.json',
+      assetPath: AppAssets.templateMinimal,
       isPremium: false,
       sortOrder: 3,
       description: 'Clean white layout with green accent lines. '
@@ -55,7 +57,7 @@ class CvTemplateData {
       id: 'executive_dark',
       label: 'Executive Dark',
       category: 'professional',
-      assetPath: 'assets/cv_templates/template_executive_dark.json',
+      assetPath: AppAssets.templateExecutiveDark,
       isPremium: true,
       sortOrder: 4,
       description: 'Premium dark background with gold typography. '
@@ -66,7 +68,7 @@ class CvTemplateData {
       id: 'modern_gradient',
       label: 'Modern Gradient',
       category: 'modern',
-      assetPath: 'assets/cv_templates/template_modern_gradient.json',
+      assetPath: AppAssets.templateModernGradient,
       isPremium: true,
       sortOrder: 5,
       description: 'Eye-catching purple-to-blue gradient header. '
@@ -77,7 +79,7 @@ class CvTemplateData {
       id: 'corporate_blue',
       label: 'Corporate Blue',
       category: 'professional',
-      assetPath: 'assets/cv_templates/template_corporate_blue.json',
+      assetPath: AppAssets.templateCorporateBlue,
       isPremium: true,
       sortOrder: 6,
       description: 'Professional blue header with green accent. '
@@ -88,12 +90,56 @@ class CvTemplateData {
       id: 'creative_bold',
       label: 'Creative Bold',
       category: 'creative',
-      assetPath: 'assets/cv_templates/template_creative_bold.json',
+      assetPath: AppAssets.templateCreativeBold,
       isPremium: true,
       sortOrder: 7,
       description: 'Bold pink sidebar with striking typography. '
           'For creative directors, designers, and artists. '
           'Showcases personality and creative flair.',
+    ),
+    CvTemplateInfo(
+      id: 'ats_classic',
+      label: 'ATS Classic',
+      category: 'ats',
+      assetPath: AppAssets.templateAtsClassic,
+      isPremium: false,
+      sortOrder: 8,
+      description: 'Single-column, black-on-white layout with Arial font. '
+          'Optimized for Applicant Tracking Systems used by Microsoft, Google, '
+          'and most Fortune 500 companies. Maximum ATS pass-through rate.',
+    ),
+    CvTemplateInfo(
+      id: 'ats_modern',
+      label: 'ATS Modern',
+      category: 'ats',
+      assetPath: AppAssets.templateAtsModern,
+      isPremium: false,
+      sortOrder: 9,
+      description: 'Clean ATS-friendly design with subtle blue accents and OpenSans font. '
+          'Best for product managers, business roles, and consultants. '
+          'LinkedIn-inspired layout that passes ATS while looking modern.',
+    ),
+    CvTemplateInfo(
+      id: 'ats_tech',
+      label: 'ATS Tech',
+      category: 'ats',
+      assetPath: AppAssets.templateAtsTech,
+      isPremium: true,
+      sortOrder: 10,
+      description: 'FAANG-style template optimized for software engineers. '
+          'Skills section positioned for keyword matching, compact header, '
+          'and project showcase with GitHub stars and tech stack.',
+    ),
+    CvTemplateInfo(
+      id: 'ats_executive',
+      label: 'ATS Executive',
+      category: 'ats',
+      assetPath: AppAssets.templateAtsExecutive,
+      isPremium: true,
+      sortOrder: 11,
+      description: 'Conservative ATS-perfect formatting for senior leadership roles. '
+          'Includes board positions and speaking engagements sections. '
+          'Best for C-suite, VP, and director-level executives.',
     ),
   ];
 

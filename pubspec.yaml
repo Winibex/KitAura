@@ -76,6 +76,7 @@ dependencies:
   url_launcher: ^6.3.2
   web: ^1.1.1
   vector_math: ^2.1.4
+  showcaseview: ^5.0.2
 
 dev_dependencies:
   flutter_test:
@@ -106,6 +107,10 @@ flutter:
     - assets/cv_templates/template_creative_bold.json
     - assets/cv_templates/template_executive_dark.json
     - assets/cv_templates/template_modern_gradient.json
+    - assets/cv_templates/template_ats_classic.json
+    - assets/cv_templates/template_ats_executive.json
+    - assets/cv_templates/template_ats_modern.json
+    - assets/cv_templates/template_ats_tech.json
 
   fonts:
     - family: Poppins

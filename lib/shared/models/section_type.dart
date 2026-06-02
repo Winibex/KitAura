@@ -1,8 +1,9 @@
 // lib/shared/models/section_type.dart
 //
-// Identifies what KIND of CV section a text item represents, so the AI
-// autofill knows which profile data to put where. Independent of
-// CanvasItemType (which is always `textSection` for these).
+// Identifies what KIND of CV section a text item represents.
+// Used by AI autofill, AI Fill, and section detection.
+//
+// CHANGES: Added volunteer, references, hobbies, socialLinks
 
 enum SectionType {
   name,
@@ -17,86 +18,145 @@ enum SectionType {
   awards,
   languages,
   interests,
-  custom; // unknown / user-defined — AI leaves it alone
+  volunteer,
+  references,
+  hobbies,
+  socialLinks,
+  custom;
 
   /// Human-readable label for the dropdown.
   String get label {
     switch (this) {
-      case SectionType.name:           return 'Full Name';
-      case SectionType.jobTitle:       return 'Job Title';
-      case SectionType.contact:        return 'Contact Info';
-      case SectionType.summary:        return 'Summary / Profile';
-      case SectionType.experience:     return 'Work Experience';
-      case SectionType.education:      return 'Education';
-      case SectionType.skills:         return 'Skills';
-      case SectionType.projects:       return 'Projects';
-      case SectionType.certifications: return 'Certifications';
-      case SectionType.awards:         return 'Awards';
-      case SectionType.languages:      return 'Languages';
-      case SectionType.interests:      return 'Interests';
-      case SectionType.custom:         return 'Custom / Other';
+      case SectionType.name:
+        return 'Full Name';
+      case SectionType.jobTitle:
+        return 'Job Title';
+      case SectionType.contact:
+        return 'Contact Info';
+      case SectionType.summary:
+        return 'Summary / Profile';
+      case SectionType.experience:
+        return 'Work Experience';
+      case SectionType.education:
+        return 'Education';
+      case SectionType.skills:
+        return 'Skills';
+      case SectionType.projects:
+        return 'Projects';
+      case SectionType.certifications:
+        return 'Certifications';
+      case SectionType.awards:
+        return 'Awards / Honors';
+      case SectionType.languages:
+        return 'Languages';
+      case SectionType.interests:
+        return 'Interests';
+      case SectionType.volunteer:
+        return 'Volunteer Experience';
+      case SectionType.references:
+        return 'References';
+      case SectionType.hobbies:
+        return 'Hobbies';
+      case SectionType.socialLinks:
+        return 'Social Links';
+      case SectionType.custom:
+        return 'Custom';
     }
   }
 
-  /// Serialize to a stable string for JSON / Firestore.
+  /// Whether this section can be auto-filled from the AI profile.
+  bool get isAutofillable {
+    switch (this) {
+      case SectionType.custom:
+        return false;
+      default:
+        return true;
+    }
+  }
+
+  /// Stable key for JSON serialization (uses the enum name).
+  /// We use toString().split('.').last instead of .name because
+  /// Dart's .name getter conflicts with SectionType.name enum value.
   String get key => toString().split('.').last;
 
-  /// Parse from a stored string.
-  static SectionType fromKey(String? key) {
-    if (key == null) return SectionType.custom;
+  /// Parse from a stored key string.
+  static SectionType fromKey(String key) {
     return SectionType.values.firstWhere(
-          (t) => t.toString().split('.').last == key,
+      (t) => t.key == key,
       orElse: () => SectionType.custom,
     );
   }
 
-  /// Auto-detect the section type from a title string.
-  /// Used when loading templates that don't have an explicit sectionType.
+  /// Auto-detect section type from a title string.
   static SectionType detectFromTitle(String title) {
     final t = title.toLowerCase().trim();
 
-    // Order matters — check more specific terms first
-    if (_matchesAny(t, ['full name', 'name'])) return SectionType.name;
-    if (_matchesAny(t, ['job title', 'title', 'role', 'position', 'headline'])) {
+    if (t.contains('name') || t.contains('full name')) return SectionType.name;
+    if (t.contains('job title') ||
+        t.contains('role') ||
+        t.contains('position') ||
+        t.contains('designation')) {
       return SectionType.jobTitle;
     }
-    if (_matchesAny(t, ['contact', 'details', 'info', 'phone', 'email'])) {
+    if (t.contains('contact') ||
+        t.contains('email') ||
+        t.contains('phone') ||
+        t.contains('address')) {
       return SectionType.contact;
     }
-    if (_matchesAny(t, ['summary', 'profile', 'about', 'objective', 'overview', 'executive summary'])) {
+    if (t.contains('summary') ||
+        t.contains('profile') ||
+        t.contains('objective') ||
+        t.contains('about')) {
       return SectionType.summary;
     }
-    if (_matchesAny(t, ['experience', 'employment', 'work history', 'career', 'professional experience', 'leadership'])) {
+    if (t.contains('experience') ||
+        t.contains('work') ||
+        t.contains('employment') ||
+        t.contains('career')) {
       return SectionType.experience;
     }
-    if (_matchesAny(t, ['education', 'academic', 'qualification', 'degree'])) {
+    if (t.contains('education') ||
+        t.contains('academic') ||
+        t.contains('qualification') ||
+        t.contains('degree')) {
       return SectionType.education;
     }
-    if (_matchesAny(t, ['technical skills', 'soft skills', 'skills', 'expertise', 'competence', 'technologies'])) {
+    if (t.contains('skill') ||
+        t.contains('competenc') ||
+        t.contains('technical') ||
+        t.contains('expertise')) {
       return SectionType.skills;
     }
-    if (_matchesAny(t, ['project'])) return SectionType.projects;
-    if (_matchesAny(t, ['certification', 'cert', 'license', 'credential'])) {
+    if (t.contains('project')) return SectionType.projects;
+    if (t.contains('certif') ||
+        t.contains('license') ||
+        t.contains('accreditation')) {
       return SectionType.certifications;
     }
-    if (_matchesAny(t, ['award', 'achievement', 'honor', 'honour', 'recognition'])) {
+    if (t.contains('award') ||
+        t.contains('honor') ||
+        t.contains('achievement') ||
+        t.contains('recognition')) {
       return SectionType.awards;
     }
-    if (_matchesAny(t, ['language'])) return SectionType.languages;
-    if (_matchesAny(t, ['interest', 'hobby', 'hobbies', 'activities'])) {
-      return SectionType.interests;
+    if (t.contains('language')) return SectionType.languages;
+    if (t.contains('interest') || t.contains('hobby') || t.contains('hobbies')) {
+      return SectionType.hobbies;
+    }
+    if (t.contains('volunteer') ||
+        t.contains('community') ||
+        t.contains('non-profit')) {
+      return SectionType.volunteer;
+    }
+    if (t.contains('reference')) return SectionType.references;
+    if (t.contains('social') ||
+        t.contains('github') ||
+        t.contains('twitter') ||
+        t.contains('portfolio')) {
+      return SectionType.socialLinks;
     }
 
     return SectionType.custom;
   }
-
-  static bool _matchesAny(String text, List<String> keywords) {
-    for (final kw in keywords) {
-      if (text.contains(kw)) return true;
-    }
-    return false;
-  }
-
-  /// Whether the AI autofill can populate this section from profile data.
-  bool get isAutofillable => this != SectionType.custom;
 }

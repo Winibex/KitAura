@@ -3,9 +3,23 @@
   "items": [
     {
       "type": "rectangle",
-      "title": "Sidebar BG",
+      "title": "Sidebar BG P1",
       "x": 0,
       "y": 0,
+      "w": 200,
+      "h": 842,
+      "color": "#2C3E50",
+      "borderColor": "#2C3E50",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "rectangle",
+      "title": "Sidebar BG P2",
+      "x": 0,
+      "y": 842,
       "w": 200,
       "h": 842,
       "color": "#2C3E50",
@@ -83,9 +97,54 @@
     },
     {
       "type": "textSection",
-      "title": "Skills",
+      "title": "Social Links",
       "x": 16,
       "y": 175,
+      "w": 168,
+      "h": 110,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "SOCIAL\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#FFFFFF"
+          }
+        },
+        {
+          "insert": "github.com/you\n",
+          "attributes": {
+            "size": "9",
+            "color": "#ECF0F1"
+          }
+        },
+        {
+          "insert": "twitter.com/you\n",
+          "attributes": {
+            "size": "9",
+            "color": "#ECF0F1"
+          }
+        },
+        {
+          "insert": "portfolio.you.com\n",
+          "attributes": {
+            "size": "9",
+            "color": "#ECF0F1"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Skills",
+      "x": 16,
+      "y": 305,
       "w": 168,
       "h": 150,
       "color": "#FFFFFF",
@@ -144,7 +203,7 @@
       "type": "textSection",
       "title": "Languages",
       "x": 16,
-      "y": 340,
+      "y": 470,
       "w": 168,
       "h": 110,
       "color": "#FFFFFF",
@@ -163,21 +222,21 @@
           }
         },
         {
-          "insert": "English \u2014 Native\n",
+          "insert": "English — Native\n",
           "attributes": {
             "size": "10",
             "color": "#ECF0F1"
           }
         },
         {
-          "insert": "Spanish \u2014 Fluent\n",
+          "insert": "Spanish — Fluent\n",
           "attributes": {
             "size": "10",
             "color": "#ECF0F1"
           }
         },
         {
-          "insert": "French \u2014 Basic\n",
+          "insert": "French — Basic\n",
           "attributes": {
             "size": "10",
             "color": "#ECF0F1"
@@ -187,9 +246,9 @@
     },
     {
       "type": "textSection",
-      "title": "Interests",
+      "title": "Hobbies",
       "x": 16,
-      "y": 465,
+      "y": 595,
       "w": 168,
       "h": 110,
       "color": "#FFFFFF",
@@ -225,6 +284,81 @@
           "insert": "Tech Blogging\n",
           "attributes": {
             "size": "10",
+            "color": "#ECF0F1"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "References",
+      "x": 16,
+      "y": 870,
+      "w": 168,
+      "h": 200,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "REFERENCES\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#FFFFFF"
+          }
+        },
+        {
+          "insert": "Jane Smith\n",
+          "attributes": {
+            "bold": true,
+            "size": "10",
+            "color": "#FFFFFF"
+          }
+        },
+        {
+          "insert": "Former Manager\n",
+          "attributes": {
+            "size": "9",
+            "color": "#ECF0F1"
+          }
+        },
+        {
+          "insert": "jane@example.com\n",
+          "attributes": {
+            "size": "9",
+            "color": "#ECF0F1"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "9",
+            "color": "#ECF0F1"
+          }
+        },
+        {
+          "insert": "John Doe\n",
+          "attributes": {
+            "bold": true,
+            "size": "10",
+            "color": "#FFFFFF"
+          }
+        },
+        {
+          "insert": "Tech Lead\n",
+          "attributes": {
+            "size": "9",
+            "color": "#ECF0F1"
+          }
+        },
+        {
+          "insert": "john@example.com\n",
+          "attributes": {
+            "size": "9",
             "color": "#ECF0F1"
           }
         }
@@ -300,7 +434,7 @@
           }
         },
         {
-          "insert": "Creative product designer and engineer with 6 years of experience crafting intuitive digital products. Bridges the gap between design and engineering to deliver user-centered solutions.\n",
+          "insert": "Creative product designer and engineer with 6 years of experience crafting intuitive digital products. Bridges the gap between design and engineering.\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
@@ -345,7 +479,7 @@
           }
         },
         {
-          "insert": "Lead Product Designer  \u2014  TechCorp  |  2021 \u2013 Present\n",
+          "insert": "Lead Product Designer  —  TechCorp  |  2021 – Present\n",
           "attributes": {
             "bold": true,
             "size": "11",
@@ -353,21 +487,21 @@
           }
         },
         {
-          "insert": "\u2022 Redesigned core product, increasing user retention by 35%\n",
+          "insert": "• Redesigned core product, increasing user retention by 35%\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "\u2022 Led design system migration across 4 product teams\n",
+          "insert": "• Led design system migration across 4 product teams\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "\u2022 Ran 50+ user research sessions\n",
+          "insert": "• Ran 50+ user research sessions\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
@@ -381,7 +515,7 @@
           }
         },
         {
-          "insert": "UI Engineer  \u2014  StartupXYZ  |  2018 \u2013 2021\n",
+          "insert": "UI Engineer  —  StartupXYZ  |  2018 – 2021\n",
           "attributes": {
             "bold": true,
             "size": "11",
@@ -389,14 +523,7 @@
           }
         },
         {
-          "insert": "\u2022 Built component library used across 3 products\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
-        },
-        {
-          "insert": "\u2022 Implemented responsive design system with Figma tokens\n",
+          "insert": "• Built component library used across 3 products\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
@@ -441,7 +568,7 @@
           }
         },
         {
-          "insert": "BSc Interaction Design  \u2014  Design University  |  2014 \u2013 2018\n",
+          "insert": "BSc Interaction Design  —  Design University  |  2014 – 2018\n",
           "attributes": {
             "bold": true,
             "size": "11",
@@ -477,7 +604,7 @@
       "x": 225,
       "y": 564,
       "w": 345,
-      "h": 110,
+      "h": 130,
       "color": "#FFFFFF",
       "borderColor": "#E0E0E0",
       "borderWidth": 0,
@@ -494,7 +621,7 @@
           }
         },
         {
-          "insert": "Design System Toolkit  \u2014  Open Source\n",
+          "insert": "Design System Toolkit  —  Open Source\n",
           "attributes": {
             "bold": true,
             "size": "11",
@@ -516,7 +643,7 @@
           }
         },
         {
-          "insert": "UX Analytics Dashboard  \u2014  Hackathon Winner\n",
+          "insert": "UX Analytics Dashboard  —  Hackathon Winner\n",
           "attributes": {
             "bold": true,
             "size": "11",
@@ -524,7 +651,157 @@
           }
         },
         {
-          "insert": "Real-time user behavior analytics with heatmaps and session replay.\n",
+          "insert": "Real-time user behavior analytics with heatmaps.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "Main Divider 4",
+      "x": 225,
+      "y": 710,
+      "w": 345,
+      "h": 2,
+      "color": "#E74C3C",
+      "borderColor": "#E74C3C",
+      "borderWidth": 2,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Certifications",
+      "x": 225,
+      "y": 726,
+      "w": 345,
+      "h": 90,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "CERTIFICATIONS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "• Google UX Design Certificate | 2023\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Nielsen Norman UX Certification | 2022\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Awards",
+      "x": 225,
+      "y": 870,
+      "w": 345,
+      "h": 130,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "AWARDS & HONORS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "• Awwwards Site of the Day | 2023\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Best Portfolio Award — Design Conference | 2022\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Top 30 Under 30 — Design Magazine | 2021\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "Main Divider 5",
+      "x": 225,
+      "y": 1010,
+      "w": 345,
+      "h": 2,
+      "color": "#E74C3C",
+      "borderColor": "#E74C3C",
+      "borderWidth": 2,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Volunteer",
+      "x": 225,
+      "y": 1026,
+      "w": 345,
+      "h": 130,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "VOLUNTEER EXPERIENCE\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Design Mentor  —  AIGA  |  2021 – Present\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Mentoring junior designers through 1:1 sessions and workshops.\n",
           "attributes": {
             "size": "11",
             "color": "#333333"

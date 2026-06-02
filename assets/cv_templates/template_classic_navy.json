@@ -17,9 +17,23 @@
     },
     {
       "type": "rectangle",
-      "title": "Gold Accent",
+      "title": "Gold Accent P1",
       "x": 0,
       "y": 0,
+      "w": 5,
+      "h": 842,
+      "color": "#C9A84C",
+      "borderColor": "#C9A84C",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "rectangle",
+      "title": "Gold Accent P2",
+      "x": 0,
+      "y": 842,
       "w": 5,
       "h": 842,
       "color": "#C9A84C",
@@ -136,7 +150,7 @@
           }
         },
         {
-          "insert": "Results-driven professional with 5+ years of experience building scalable web applications. Passionate about clean code, system design, and delivering impactful user experiences. Proven track record of leading cross-functional teams and shipping products on time.\n",
+          "insert": "Results-driven professional with 5+ years of experience building scalable web applications. Passionate about clean code, system design, and delivering impactful user experiences.\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
@@ -167,7 +181,7 @@
           }
         },
         {
-          "insert": "Senior Developer  \u2014  Company Name  |  2021 \u2013 Present\n",
+          "insert": "Senior Developer  —  Company Name  |  2021 – Present\n",
           "attributes": {
             "bold": true,
             "size": "11",
@@ -175,21 +189,21 @@
           }
         },
         {
-          "insert": "\u2022 Led development of core product features used by 100K+ users\n",
+          "insert": "• Led development of core product features used by 100K+ users\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "\u2022 Reduced load time by 40% through architecture improvements\n",
+          "insert": "• Reduced load time by 40% through architecture improvements\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "\u2022 Mentored junior developers and conducted code reviews\n",
+          "insert": "• Mentored junior developers and conducted code reviews\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
@@ -203,7 +217,7 @@
           }
         },
         {
-          "insert": "Junior Developer  \u2014  Previous Company  |  2019 \u2013 2021\n",
+          "insert": "Junior Developer  —  Previous Company  |  2019 – 2021\n",
           "attributes": {
             "bold": true,
             "size": "11",
@@ -211,14 +225,14 @@
           }
         },
         {
-          "insert": "\u2022 Built RESTful APIs serving 50K+ daily requests\n",
+          "insert": "• Built RESTful APIs serving 50K+ daily requests\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "\u2022 Implemented CI/CD pipeline reducing deployment time by 60%\n",
+          "insert": "• Implemented CI/CD pipeline reducing deployment time by 60%\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
@@ -249,7 +263,7 @@
           }
         },
         {
-          "insert": "BSc Computer Science  \u2014  University Name  |  2015 \u2013 2019\n",
+          "insert": "BSc Computer Science  —  University Name  |  2015 – 2019\n",
           "attributes": {
             "bold": true,
             "size": "11",
@@ -257,7 +271,7 @@
           }
         },
         {
-          "insert": "Graduated with Honours. Coursework: Data Structures, Algorithms, Distributed Systems.\n",
+          "insert": "Graduated with Honours. Coursework: Data Structures, Algorithms.\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
@@ -302,21 +316,21 @@
           }
         },
         {
-          "insert": "Flutter \u2022 Dart \u2022 React \u2022 Node.js\n",
+          "insert": "Flutter • Dart • React • Node.js\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "Python \u2022 TypeScript \u2022 SQL\n",
+          "insert": "Python • TypeScript • SQL\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "Firebase \u2022 AWS \u2022 Docker \u2022 Git\n",
+          "insert": "Firebase • AWS • Docker • Git\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
@@ -327,10 +341,10 @@
     {
       "type": "textSection",
       "title": "Certifications",
-      "x": 30,
-      "y": 716,
-      "w": 535,
-      "h": 55,
+      "x": 305,
+      "y": 612,
+      "w": 260,
+      "h": 90,
       "color": "#FFFFFF",
       "borderColor": "#E0E0E0",
       "borderWidth": 0,
@@ -347,7 +361,228 @@
           }
         },
         {
-          "insert": "AWS Certified Solutions Architect \u2022 Google Cloud Professional\n",
+          "insert": "• AWS Certified Solutions Architect\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Google Cloud Professional\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Projects",
+      "x": 30,
+      "y": 870,
+      "w": 535,
+      "h": 150,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "PROJECTS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1B2A4A"
+          }
+        },
+        {
+          "insert": "E-commerce Platform  |  2024\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Full-stack e-commerce platform with Stripe integration and admin dashboard.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "Tech: Flutter, Firebase, Stripe, Node.js\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "AI Resume Builder  |  2023\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "AI-powered tool that generates and optimizes CVs using Claude API.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Awards",
+      "x": 30,
+      "y": 1040,
+      "w": 535,
+      "h": 90,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "AWARDS & HONORS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1B2A4A"
+          }
+        },
+        {
+          "insert": "• Employee of the Year — Company Name | 2024\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Best Innovation Award — Tech Conference | 2023\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Volunteer",
+      "x": 30,
+      "y": 1150,
+      "w": 535,
+      "h": 100,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "VOLUNTEER EXPERIENCE\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1B2A4A"
+          }
+        },
+        {
+          "insert": "Mentor  —  Code for Good  |  2022 – Present\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Teaching programming fundamentals to underprivileged students.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Languages",
+      "x": 30,
+      "y": 1270,
+      "w": 260,
+      "h": 80,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "LANGUAGES\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1B2A4A"
+          }
+        },
+        {
+          "insert": "English — Native\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "Spanish — Fluent\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Hobbies",
+      "x": 305,
+      "y": 1270,
+      "w": 260,
+      "h": 80,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "INTERESTS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1B2A4A"
+          }
+        },
+        {
+          "insert": "Photography • Hiking • Open Source\n",
           "attributes": {
             "size": "11",
             "color": "#333333"
@@ -359,7 +594,7 @@
       "type": "rectangle",
       "title": "Footer Line",
       "x": 0,
-      "y": 836,
+      "y": 1678,
       "w": 595,
       "h": 6,
       "color": "#1B2A4A",

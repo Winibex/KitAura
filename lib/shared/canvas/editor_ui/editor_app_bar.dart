@@ -38,6 +38,7 @@ class EditorAppBar extends StatelessWidget {
   final VoidCallback onUndo;
   final VoidCallback onRedo;
   final bool showSavedBadge;
+  final bool isSaving;
   final List<EditorAppBarAction> actions;
 
   const EditorAppBar({
@@ -52,6 +53,7 @@ class EditorAppBar extends StatelessWidget {
     required this.canRedo,
     required this.onUndo,
     required this.onRedo,
+    this.isSaving = false,
     this.showSavedBadge = false,
     this.actions = const [],
   });
@@ -145,7 +147,24 @@ class EditorAppBar extends StatelessWidget {
 
           const SizedBox(width: 10),
 
-          if (showSavedBadge)
+          if (isSaving)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.dustyRose.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(width: 10, height: 10,
+                      child: CircularProgressIndicator(strokeWidth: 1.5, color: AppColors.dustyRose)),
+                  SizedBox(width: 6),
+                  Text('Saving...', style: TextStyle(color: AppColors.dustyRose, fontSize: 11, fontFamily: AppFonts.poppins)),
+                ],
+              ),
+            )
+          else if (showSavedBadge)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(

@@ -35,27 +35,32 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(dashboardControllerProvider);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F5F2),
-      body: Column(
+      body: Stack(
         children: [
-          const AppTopBar(),
-          Expanded(
-            child: Row(
-              children: [
-                const AppSidebar(),
-                Expanded(child: _buildContent()),
-              ],
-            ),
+          // Main content
+          Column(
+            children: [
+              const AppTopBar(),
+              Expanded(
+                child: Row(
+                  children: [
+                    const AppSidebar(),
+                    Expanded(child: _buildContent(state)),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildContent() {
-    final state = ref.watch(dashboardControllerProvider);
-
+  Widget _buildContent(DashboardState state) {
     if (state.isLoading) {
       return const Center(
         child: CircularProgressIndicator(color: AppColors.darkRaspberry),
@@ -75,7 +80,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           const SizedBox(height: 32),
           _buildRecentActivity(state),
           const SizedBox(height: 32),
-          if (!state.isPro) _buildUpgradeBanner(),
+          if (!state.isPro)
+            _buildUpgradeBanner(),
           const SizedBox(height: 40),
         ],
       ),

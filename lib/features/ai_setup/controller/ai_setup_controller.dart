@@ -1,11 +1,9 @@
+// lib/features/ai_setup/controller/ai_setup_controller.dart
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../../../shared/models/ai_profile_model.dart';
-import '../../../shared/models/certification_entry.dart';
-import '../../../shared/models/education_entry.dart';
-import '../../../shared/models/language_entry.dart';
-import '../../../shared/models/work_experience_entry.dart';
 import '../../../shared/services/firebase_service.dart';
 
 class AiSetupState {
@@ -13,7 +11,7 @@ class AiSetupState {
   final bool isSaving;
   final String? error;
   final AiProfileModel profile;
-  final int currentStep; // 0-4
+  final int currentStep;
 
   AiSetupState({
     this.isLoading = false,
@@ -21,9 +19,9 @@ class AiSetupState {
     this.error,
     AiProfileModel? profile,
     this.currentStep = 0,
-  }) : profile = profile ?? AiProfileModel();
+  }) : profile = profile ?? const AiProfileModel();
 
-  static const int totalSteps = 5;
+  static const int totalSteps = 8;
 
   bool get isFirstStep => currentStep == 0;
   bool get isLastStep => currentStep == totalSteps - 1;
@@ -35,18 +33,24 @@ class AiSetupState {
       case 1: return 'Work Experience';
       case 2: return 'Education';
       case 3: return 'Skills & Languages';
-      case 4: return 'AI Preferences';
+      case 4: return 'Projects';
+      case 5: return 'Awards & Volunteer';
+      case 6: return 'Additional Info';
+      case 7: return 'AI Preferences';
       default: return '';
     }
   }
 
   String get stepSubtitle {
     switch (currentStep) {
-      case 0: return 'Basic contact information';
+      case 0: return 'Basic contact & social links';
       case 1: return 'Add your work history';
       case 2: return 'Add your education';
       case 3: return 'Skills, languages & certifications';
-      case 4: return 'How should AI write your content?';
+      case 4: return 'Showcase your projects';
+      case 5: return 'Awards, honors & volunteer work';
+      case 6: return 'References, hobbies & custom sections';
+      case 7: return 'How should AI write your content?';
       default: return '';
     }
   }
@@ -105,7 +109,6 @@ class AiSetupController extends StateNotifier<AiSetupState> {
         AiProfileModel.fromJson(doc.data() as Map<String, dynamic>);
         state = state.copyWith(isLoading: false, profile: profile);
       } else {
-        // Pre-fill from Firebase Auth
         final user = FirebaseAuth.instance.currentUser;
         state = state.copyWith(
           isLoading: false,
@@ -139,10 +142,9 @@ class AiSetupController extends StateNotifier<AiSetupState> {
   }
 
   Future<void> deleteProfile() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
+    if (_uid == null) return;
     try {
-      await FirebaseService.saveAiProfile(uid, const AiProfileModel().toJson());
+      await FirebaseService.saveAiProfile(_uid!, const AiProfileModel().toJson());
       state = state.copyWith(profile: const AiProfileModel());
     } catch (e) {
       state = state.copyWith(error: 'Failed to delete profile: $e');
@@ -158,6 +160,10 @@ class AiSetupController extends StateNotifier<AiSetupState> {
     String? location,
     String? linkedIn,
     String? website,
+    String? profilePhotoUrl,
+    String? dateOfBirth,
+    String? nationality,
+    String? gender,
   }) {
     state = state.copyWith(
       profile: state.profile.copyWith(
@@ -167,128 +173,250 @@ class AiSetupController extends StateNotifier<AiSetupState> {
         location: location,
         linkedIn: linkedIn,
         website: website,
+        profilePhotoUrl: profilePhotoUrl,
+        dateOfBirth: dateOfBirth,
+        nationality: nationality,
+        gender: gender,
       ),
+    );
+  }
+
+  void updateSocialLinks(SocialLinks links) {
+    state = state.copyWith(
+      profile: state.profile.copyWith(socialLinks: links),
     );
   }
 
   // ─── STEP 2: WORK EXPERIENCE ──────────────────────────────────────────
 
   void addExperience() {
-    final list = List<WorkExperienceEntry>.from(state.profile.experiences);
-    list.add(WorkExperienceEntry());
-    state = state.copyWith(
-      profile: state.profile.copyWith(experiences: list),
-    );
+    final list = [...state.profile.experiences, const WorkExperienceEntry()];
+    state = state.copyWith(profile: state.profile.copyWith(experiences: list));
   }
 
   void updateExperience(int index, WorkExperienceEntry entry) {
-    final list = List<WorkExperienceEntry>.from(state.profile.experiences);
+    final list = [...state.profile.experiences];
     if (index < list.length) {
       list[index] = entry;
-      state = state.copyWith(
-        profile: state.profile.copyWith(experiences: list),
-      );
+      state = state.copyWith(profile: state.profile.copyWith(experiences: list));
     }
   }
 
   void removeExperience(int index) {
-    final list = List<WorkExperienceEntry>.from(state.profile.experiences);
+    final list = [...state.profile.experiences];
     if (index < list.length) {
       list.removeAt(index);
-      state = state.copyWith(
-        profile: state.profile.copyWith(experiences: list),
-      );
+      state = state.copyWith(profile: state.profile.copyWith(experiences: list));
     }
   }
 
   // ─── STEP 3: EDUCATION ────────────────────────────────────────────────
 
   void addEducation() {
-    final list = List<EducationEntry>.from(state.profile.education);
-    list.add(EducationEntry());
-    state = state.copyWith(
-      profile: state.profile.copyWith(education: list),
-    );
+    final list = [...state.profile.education, const EducationEntry()];
+    state = state.copyWith(profile: state.profile.copyWith(education: list));
   }
 
   void updateEducation(int index, EducationEntry entry) {
-    final list = List<EducationEntry>.from(state.profile.education);
+    final list = [...state.profile.education];
     if (index < list.length) {
       list[index] = entry;
-      state = state.copyWith(
-        profile: state.profile.copyWith(education: list),
-      );
+      state = state.copyWith(profile: state.profile.copyWith(education: list));
     }
   }
 
   void removeEducation(int index) {
-    final list = List<EducationEntry>.from(state.profile.education);
+    final list = [...state.profile.education];
     if (index < list.length) {
       list.removeAt(index);
-      state = state.copyWith(
-        profile: state.profile.copyWith(education: list),
-      );
+      state = state.copyWith(profile: state.profile.copyWith(education: list));
     }
   }
 
-  // ─── STEP 4: SKILLS & LANGUAGES ───────────────────────────────────────
+  // ─── STEP 4: SKILLS, LANGUAGES, CERTIFICATIONS ───────────────────────
 
   void addSkill(String skill) {
     if (skill.trim().isEmpty) return;
-    final list = List<String>.from(state.profile.skills);
+    final list = [...state.profile.skills];
     if (!list.contains(skill.trim())) {
       list.add(skill.trim());
-      state = state.copyWith(
-        profile: state.profile.copyWith(skills: list),
-      );
+      state = state.copyWith(profile: state.profile.copyWith(skills: list));
     }
   }
 
   void removeSkill(String skill) {
-    final list = List<String>.from(state.profile.skills);
-    list.remove(skill);
-    state = state.copyWith(
-      profile: state.profile.copyWith(skills: list),
-    );
+    final list = [...state.profile.skills]..remove(skill);
+    state = state.copyWith(profile: state.profile.copyWith(skills: list));
   }
 
   void addLanguage(String language, String proficiency) {
     if (language.trim().isEmpty) return;
-    final list = List<LanguageEntry>.from(state.profile.languages);
-    list.add(LanguageEntry(
-        language: language.trim(), proficiency: proficiency));
-    state = state.copyWith(
-      profile: state.profile.copyWith(languages: list),
-    );
+    final list = [...state.profile.languages,
+      LanguageEntry(language: language.trim(), proficiency: proficiency)];
+    state = state.copyWith(profile: state.profile.copyWith(languages: list));
   }
 
   void removeLanguage(int index) {
-    final list = List<LanguageEntry>.from(state.profile.languages);
+    final list = [...state.profile.languages];
     if (index < list.length) {
       list.removeAt(index);
-      state = state.copyWith(
-        profile: state.profile.copyWith(languages: list),
-      );
+      state = state.copyWith(profile: state.profile.copyWith(languages: list));
     }
   }
 
   void addCertification() {
-    final updated = [...state.profile.certifications, const CertificationEntry()];
-    state = state.copyWith(profile: state.profile.copyWith(certifications: updated));
-  }
-
-  void removeCertification(int index) {
-    final updated = [...state.profile.certifications]..removeAt(index);
-    state = state.copyWith(profile: state.profile.copyWith(certifications: updated));
+    final list = [...state.profile.certifications, const CertificationEntry()];
+    state = state.copyWith(profile: state.profile.copyWith(certifications: list));
   }
 
   void updateCertification(int index, CertificationEntry cert) {
-    final updated = [...state.profile.certifications];
-    updated[index] = cert;
-    state = state.copyWith(profile: state.profile.copyWith(certifications: updated));
+    final list = [...state.profile.certifications];
+    if (index < list.length) {
+      list[index] = cert;
+      state = state.copyWith(profile: state.profile.copyWith(certifications: list));
+    }
   }
 
-  // ─── STEP 5: AI PREFERENCES ───────────────────────────────────────────
+  void removeCertification(int index) {
+    final list = [...state.profile.certifications];
+    if (index < list.length) {
+      list.removeAt(index);
+      state = state.copyWith(profile: state.profile.copyWith(certifications: list));
+    }
+  }
+
+  // ─── STEP 5: PROJECTS ────────────────────────────────────────────────
+
+  void addProject() {
+    final list = [...state.profile.projects, const ProjectEntry()];
+    state = state.copyWith(profile: state.profile.copyWith(projects: list));
+  }
+
+  void updateProject(int index, ProjectEntry entry) {
+    final list = [...state.profile.projects];
+    if (index < list.length) {
+      list[index] = entry;
+      state = state.copyWith(profile: state.profile.copyWith(projects: list));
+    }
+  }
+
+  void removeProject(int index) {
+    final list = [...state.profile.projects];
+    if (index < list.length) {
+      list.removeAt(index);
+      state = state.copyWith(profile: state.profile.copyWith(projects: list));
+    }
+  }
+
+  // ─── STEP 6: AWARDS ──────────────────────────────────────────────────
+
+  void addAward() {
+    final list = [...state.profile.awards, const AwardEntry()];
+    state = state.copyWith(profile: state.profile.copyWith(awards: list));
+  }
+
+  void updateAward(int index, AwardEntry entry) {
+    final list = [...state.profile.awards];
+    if (index < list.length) {
+      list[index] = entry;
+      state = state.copyWith(profile: state.profile.copyWith(awards: list));
+    }
+  }
+
+  void removeAward(int index) {
+    final list = [...state.profile.awards];
+    if (index < list.length) {
+      list.removeAt(index);
+      state = state.copyWith(profile: state.profile.copyWith(awards: list));
+    }
+  }
+
+  // ─── STEP 6: VOLUNTEER ───────────────────────────────────────────────
+
+  void addVolunteer() {
+    final list = [...state.profile.volunteerExperience, const VolunteerEntry()];
+    state = state.copyWith(profile: state.profile.copyWith(volunteerExperience: list));
+  }
+
+  void updateVolunteer(int index, VolunteerEntry entry) {
+    final list = [...state.profile.volunteerExperience];
+    if (index < list.length) {
+      list[index] = entry;
+      state = state.copyWith(profile: state.profile.copyWith(volunteerExperience: list));
+    }
+  }
+
+  void removeVolunteer(int index) {
+    final list = [...state.profile.volunteerExperience];
+    if (index < list.length) {
+      list.removeAt(index);
+      state = state.copyWith(profile: state.profile.copyWith(volunteerExperience: list));
+    }
+  }
+
+  // ─── STEP 7: REFERENCES ──────────────────────────────────────────────
+
+  void addReference() {
+    final list = [...state.profile.references, const ReferenceEntry()];
+    state = state.copyWith(profile: state.profile.copyWith(references: list));
+  }
+
+  void updateReference(int index, ReferenceEntry entry) {
+    final list = [...state.profile.references];
+    if (index < list.length) {
+      list[index] = entry;
+      state = state.copyWith(profile: state.profile.copyWith(references: list));
+    }
+  }
+
+  void removeReference(int index) {
+    final list = [...state.profile.references];
+    if (index < list.length) {
+      list.removeAt(index);
+      state = state.copyWith(profile: state.profile.copyWith(references: list));
+    }
+  }
+
+  // ─── STEP 7: HOBBIES ─────────────────────────────────────────────────
+
+  void addHobby(String hobby) {
+    if (hobby.trim().isEmpty) return;
+    final list = [...state.profile.hobbies];
+    if (!list.contains(hobby.trim())) {
+      list.add(hobby.trim());
+      state = state.copyWith(profile: state.profile.copyWith(hobbies: list));
+    }
+  }
+
+  void removeHobby(String hobby) {
+    final list = [...state.profile.hobbies]..remove(hobby);
+    state = state.copyWith(profile: state.profile.copyWith(hobbies: list));
+  }
+
+  // ─── STEP 7: CUSTOM SECTIONS ─────────────────────────────────────────
+
+  void addCustomSection() {
+    final list = [...state.profile.customSections, const CustomSection()];
+    state = state.copyWith(profile: state.profile.copyWith(customSections: list));
+  }
+
+  void updateCustomSection(int index, CustomSection section) {
+    final list = [...state.profile.customSections];
+    if (index < list.length) {
+      list[index] = section;
+      state = state.copyWith(profile: state.profile.copyWith(customSections: list));
+    }
+  }
+
+  void removeCustomSection(int index) {
+    final list = [...state.profile.customSections];
+    if (index < list.length) {
+      list.removeAt(index);
+      state = state.copyWith(profile: state.profile.copyWith(customSections: list));
+    }
+  }
+
+  // ─── STEP 8: AI PREFERENCES ──────────────────────────────────────────
 
   void updatePreferences({
     String? experienceLevel,
@@ -307,7 +435,6 @@ class AiSetupController extends StateNotifier<AiSetupState> {
   }
 }
 
-// Provider
 final aiSetupControllerProvider =
 StateNotifierProvider<AiSetupController, AiSetupState>(
       (ref) => AiSetupController(),

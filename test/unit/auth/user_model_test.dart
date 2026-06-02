@@ -10,14 +10,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kitaura/shared/models/ai_profile_model.dart';
 import 'package:kitaura/shared/models/analytics_summary_model.dart';
-import 'package:kitaura/shared/models/education_entry.dart';
-import 'package:kitaura/shared/models/language_entry.dart';
 import 'package:kitaura/shared/models/monthly_analytics_model.dart';
 import 'package:kitaura/shared/models/subscription_model.dart';
 import 'package:kitaura/shared/models/transaction_model.dart';
 import 'package:kitaura/shared/models/user_preferences_model.dart';
 import 'package:kitaura/shared/models/user_profile_model.dart';
-import 'package:kitaura/shared/models/work_experience_entry.dart';
 
 void main() {
   // ─── USER PROFILE MODEL ────────────────────────────────────────────
