@@ -2,7 +2,7 @@
 //
 // Run:  flutter test test/unit/auth/user_model_test.dart
 //
-// Pure unit tests for model serialization. No Firebase, no mocks needed.
+// Pure unit tests for data serialization. No Firebase, no mocks needed.
 // These verify that toJson → fromJson round-trips preserve all data,
 // that defaults are applied correctly, and that computed properties work.
 

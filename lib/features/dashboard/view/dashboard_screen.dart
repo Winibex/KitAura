@@ -303,7 +303,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 title: 'Create CV',
                 subtitle: 'Professional resume builder',
                 color: AppColors.darkRaspberry,
-                onTap: () => context.push(AppRoutes.cvTemplates),
+                onTap: () => context.go(AppRoutes.cvTemplates),
               ),
               _QuickStartData(
                 icon: LucideIcons.fileText,
@@ -318,7 +318,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 title: 'Cover Letter',
                 subtitle: 'Stand out from the crowd',
                 color: AppColors.magentaBloom,
-                onTap: () => context.push(AppRoutes.clTemplates),
+                onTap: () => context.go(AppRoutes.clTemplates),
                 comingSoon: false,
               ),
               _QuickStartData(
@@ -513,7 +513,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 SizedBox(
                   width: 150,
                   child: ElevatedButton.icon(
-                    onPressed: () => context.push(AppRoutes.cvTemplates),
+                    onPressed: () => context.go(AppRoutes.cvTemplates),
                     icon: const Icon(LucideIcons.plus, size: 16),
                     label: const Text('Create CV'),
                     style: ElevatedButton.styleFrom(
@@ -578,13 +578,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         onTap: () {
           switch (item.type) {
             case 'cv':
-              context.push('/cv/edit/${item.id}');
+              context.go('/cv/edit/${item.id}');
               break;
             case 'coverLetter':
-              context.push('/cover-letters/edit/${item.id}');
+              context.go('/cover-letters/edit/${item.id}');
               break;
             default:
-              context.push('/cv/edit/${item.id}');
+              context.go('/cv/edit/${item.id}');
           }
         },
         child: Container(

@@ -300,7 +300,7 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
             final cl = state.coverLetters[index];
             return ClCardWidget(
               cl: cl,
-              onTap: () => context.push('/cover-letters/edit/${cl.id}'),
+              onTap: () => context.go('/cover-letters/edit/${cl.id}'),
               onDelete: () => ref.read(clDashboardControllerProvider.notifier).deleteCL(cl.id),
               onRename: (t) => ref.read(clDashboardControllerProvider.notifier).renameCL(cl.id, t),
             );

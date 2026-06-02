@@ -320,7 +320,7 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
           SizedBox(
             height: 300,
             child: EmptyStateWidget(
-              onCreateCV: () => context.push(AppRoutes.cvTemplates),
+              onCreateCV: () => context.go(AppRoutes.cvTemplates),
             ),
           )
         else
@@ -368,7 +368,7 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
             }
             return CvCardWidget(
               cv: state.cvs[index],
-              onTap: () => context.push('/cv/edit/${state.cvs[index].id}'),
+              onTap: () => context.go('/cv/edit/${state.cvs[index].id}'),
               onDelete: () {
                 ref.read(dashboardControllerProvider.notifier)
                     .deleteCV(state.cvs[index].id);

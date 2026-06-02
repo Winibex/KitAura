@@ -90,27 +90,10 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/fonts/Arial.ttf
-    - assets/fonts/OpenSans.ttf
-    - assets/fonts/Poppins.ttf
-    - assets/fonts/Sekuya.ttf
-    - assets/images/logo_stacked_light.png
-    - assets/images/logo_stacked_dark.png
-    - assets/images/logo_horizontal_light.png
-    - assets/images/logo_horizontal_dark.png
-    - assets/images/logo_icon_light.png
-    - assets/images/logo_icon_dark.png
-    - assets/cv_templates/template_classic_navy.json
-    - assets/cv_templates/template_two_column.json
-    - assets/cv_templates/template_minimal.json
-    - assets/cv_templates/template_corporate_blue.json
-    - assets/cv_templates/template_creative_bold.json
-    - assets/cv_templates/template_executive_dark.json
-    - assets/cv_templates/template_modern_gradient.json
-    - assets/cv_templates/template_ats_classic.json
-    - assets/cv_templates/template_ats_executive.json
-    - assets/cv_templates/template_ats_modern.json
-    - assets/cv_templates/template_ats_tech.json
+    - assets/fonts/
+    - assets/images/
+    - assets/cv_templates/
+    - assets/cl_templates/
 
   fonts:
     - family: Poppins
