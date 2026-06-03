@@ -371,3 +371,67 @@ exports.aiRewrite = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", ti
 
   return { content: rewrittenText };
 });
+
+// ════════════════════════════════════════════════════════════════════════
+// 4. TRACK EXPORT — increment counter + paywall check
+// ════════════════════════════════════════════════════════════════════════
+
+exports.trackExport = onCall({ region: "us-central1", timeoutSeconds: 30 }, async (req) => {
+  if (!req.auth) throw new HttpsError("unauthenticated", "Sign in required.");
+  const uid = req.auth.uid;
+  const { tool = "cv", documentId = null, documentTitle = null } = req.data || {};
+
+  if (!documentId) throw new HttpsError("invalid-argument", "documentId is required.");
+
+  const { sub } = await getSubWithCycleCheck(uid);
+  await checkPaywall(sub, "exportCount", "exportsPerMonth");
+
+  const batch = db.batch();
+  const now = admin.firestore.Timestamp.fromDate(new Date());
+  const FV = admin.firestore.FieldValue;
+  const month = new Date().toISOString().slice(0, 7);
+
+  // 1. Increment subscription export counter
+  const subRef = db.doc(`users/${uid}/data/subscription`);
+  batch.update(subRef, { exportCount: FV.increment(1) });
+
+  // 2. Update the specific document's export count + lastExportedAt
+  const collectionMap = { cv: "cvs", coverLetter: "coverLetters", proposal: "proposals" };
+  const collection = collectionMap[tool] || "cvs";
+  const docRef = db.doc(`users/${uid}/${collection}/${documentId}`);
+  batch.update(docRef, {
+    exportCount: FV.increment(1),
+    lastExportedAt: now,
+  });
+
+  // 3. Analytics summary
+  const sumRef = db.doc(`users/${uid}/analytics/summary`);
+  batch.set(sumRef, { totalExports: FV.increment(1), lastActiveAt: now }, { merge: true });
+
+  // 4. Monthly analytics
+  const monRef = db.doc(`users/${uid}/analytics/${month}`);
+  const monData = {
+      month,
+      exports: FV.increment(1),
+      updatedAt: now,
+    };
+    if (documentId) {
+      monData.exportedDocIds = FV.arrayUnion(documentId);
+    }
+    batch.set(monRef, monData, { merge: true });
+
+  // 5. Transaction log
+  const txRef = db.collection(`users/${uid}/transactions`).doc();
+  batch.set(txRef, {
+    id: txRef.id,
+    type: "export",
+    tool,
+    documentId,
+    documentTitle,
+    metadata: {},
+    createdAt: now,
+  });
+
+  await batch.commit();
+  return { success: true };
+});
