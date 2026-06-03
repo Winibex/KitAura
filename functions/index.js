@@ -115,8 +115,15 @@ async function checkPaywall(sub, counterField, limitField) {
   const max = lim[limitField];
   if (max === -1) return;
   if ((sub[counterField] || 0) >= max) {
-    throw new HttpsError("resource-exhausted",
-      `You've reached your ${limitField.replace("PerMonth", "")} limit. Upgrade to Pro.`);
+    const friendlyNames = {
+          exportsPerMonth: "monthly export",
+          aiFillPerMonth: "monthly AI generation",
+          aiRewritePerMonth: "monthly AI rewrite",
+          aiDesignPerMonth: "monthly AI design",
+        };
+        const name = friendlyNames[limitField] || "usage";
+        throw new HttpsError("resource-exhausted",
+          `You've reached your ${name} limit on the free plan. Upgrade to Pro for unlimited access.`);
   }
 }
 
@@ -377,14 +384,41 @@ exports.aiRewrite = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", ti
 // ════════════════════════════════════════════════════════════════════════
 
 exports.trackExport = onCall({ region: "us-central1", timeoutSeconds: 30 }, async (req) => {
-  if (!req.auth) throw new HttpsError("unauthenticated", "Sign in required.");
+  if (!req.auth) throw new HttpsError("unauthenticated", "Please sign in to export.");
   const uid = req.auth.uid;
   const { tool = "cv", documentId = null, documentTitle = null } = req.data || {};
 
-  if (!documentId) throw new HttpsError("invalid-argument", "documentId is required.");
+  if (!documentId) throw new HttpsError("invalid-argument", "Please save your document before exporting.");
 
   const { sub } = await getSubWithCycleCheck(uid);
   await checkPaywall(sub, "exportCount", "exportsPerMonth");
+
+  // Resolve document path FIRST (before using it)
+  const collectionMap = { cv: "cvs", coverLetter: "coverLetters", proposal: "proposals" };
+  const collection = collectionMap[tool] || "cvs";
+  const docRef = db.doc(`users/${uid}/${collection}/${documentId}`);
+
+  // Check Pro template restriction on free plan
+  if (sub.plan === "free") {
+    try {
+      const limSnap = await db.doc("config/proTemplates").get();
+      const proTemplates = limSnap.exists ? (limSnap.data().proTemplates || []) : [];
+
+      if (proTemplates.length > 0) {
+        const docSnap = await docRef.get();
+        if (docSnap.exists) {
+          const templateId = docSnap.data().templateId;
+          if (proTemplates.includes(templateId)) {
+            throw new HttpsError("resource-exhausted",
+              "This template is available on the Pro plan. Upgrade to unlock premium templates and unlimited exports.");
+          }
+        }
+      }
+    } catch (e) {
+      if (e.code === "resource-exhausted") throw e; // Re-throw paywall errors
+      console.error("Pro template check failed:", e.message);
+    }
+  }
 
   const batch = db.batch();
   const now = admin.firestore.Timestamp.fromDate(new Date());
@@ -396,9 +430,6 @@ exports.trackExport = onCall({ region: "us-central1", timeoutSeconds: 30 }, asyn
   batch.update(subRef, { exportCount: FV.increment(1) });
 
   // 2. Update the specific document's export count + lastExportedAt
-  const collectionMap = { cv: "cvs", coverLetter: "coverLetters", proposal: "proposals" };
-  const collection = collectionMap[tool] || "cvs";
-  const docRef = db.doc(`users/${uid}/${collection}/${documentId}`);
   batch.update(docRef, {
     exportCount: FV.increment(1),
     lastExportedAt: now,
@@ -410,26 +441,15 @@ exports.trackExport = onCall({ region: "us-central1", timeoutSeconds: 30 }, asyn
 
   // 4. Monthly analytics
   const monRef = db.doc(`users/${uid}/analytics/${month}`);
-  const monData = {
-      month,
-      exports: FV.increment(1),
-      updatedAt: now,
-    };
-    if (documentId) {
-      monData.exportedDocIds = FV.arrayUnion(documentId);
-    }
-    batch.set(monRef, monData, { merge: true });
+  const monData = { month, exports: FV.increment(1), updatedAt: now };
+  if (documentId) monData.exportedDocIds = FV.arrayUnion(documentId);
+  batch.set(monRef, monData, { merge: true });
 
   // 5. Transaction log
   const txRef = db.collection(`users/${uid}/transactions`).doc();
   batch.set(txRef, {
-    id: txRef.id,
-    type: "export",
-    tool,
-    documentId,
-    documentTitle,
-    metadata: {},
-    createdAt: now,
+    id: txRef.id, type: "export", tool, documentId, documentTitle,
+    metadata: {}, createdAt: now,
   });
 
   await batch.commit();

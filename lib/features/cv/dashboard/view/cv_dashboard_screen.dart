@@ -29,7 +29,7 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
     super.initState();
     Future.microtask(() {
       if (mounted) {
-        ref.read(dashboardControllerProvider.notifier).loadDashboard();
+        ref.read(cvDashboardControllerProvider.notifier).loadDashboard();
       }
     });
   }
@@ -37,7 +37,7 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.lavenderBlush,
+      color: AppColors.warmGrey,
       child: ResponsiveBuilder(
         mobile: _buildMobileLayout(),
         desktop: _buildDesktopLayout(),
@@ -84,7 +84,7 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
   // ─── MAIN CONTENT ─────────────────────────────────────────────────────────
 
   Widget _buildScrollableContent() {
-    final state = ref.watch(dashboardControllerProvider);
+    final state = ref.watch(cvDashboardControllerProvider);
     return Column(
       children: [
         Expanded(
@@ -370,11 +370,11 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
               cv: state.cvs[index],
               onTap: () => context.go('/cv/edit/${state.cvs[index].id}'),
               onDelete: () {
-                ref.read(dashboardControllerProvider.notifier)
+                ref.read(cvDashboardControllerProvider.notifier)
                     .deleteCV(state.cvs[index].id);
               },
               onRename: (newTitle) {
-                ref.read(dashboardControllerProvider.notifier)
+                ref.read(cvDashboardControllerProvider.notifier)
                     .renameCV(state.cvs[index].id, newTitle);
               },
             );

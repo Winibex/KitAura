@@ -846,41 +846,73 @@ class CanvasController extends ChangeNotifier {
 
     switch (item.type) {
       case CanvasItemType.textSection:
-        final spans = <pw.InlineSpan>[];
+      // Build line-by-line rich text from Quill delta
+      // Each \n in the delta marks a new line
+        final lines = <pw.Widget>[];
+        List<pw.InlineSpan> currentLine = [];
+
         for (final op in item.controller!.document.toDelta().toList()) {
           if (!op.isInsert) continue;
-          final text = (op.data as String? ?? '').replaceAll('\n', ' ');
-          if (text.trim().isEmpty) continue;
+          final raw = op.data as String? ?? '';
+          if (raw.isEmpty) continue;
           final a = op.attributes;
-          spans.add(pw.TextSpan(
-            text: text,
-            style: pw.TextStyle(
-              font: getFont(a?['font'] as String? ?? globalFont),
-              fontSize: globalFontSize,
-              fontWeight: a?['bold'] == true ? pw.FontWeight.bold : pw.FontWeight.normal,
-              fontStyle: a?['italic'] == true ? pw.FontStyle.italic : pw.FontStyle.normal,
-            ),
+
+          // Parse font size from delta (stored as string like "13")
+          double fontSize = globalFontSize;
+          if (a?['size'] != null) {
+            fontSize = double.tryParse(a!['size'].toString()) ?? globalFontSize;
+          }
+
+          // Parse color from delta (stored as hex like "#1B2A4A")
+          PdfColor textColor = PdfColors.black;
+          if (a?['color'] != null) {
+            try {
+              final hex = (a!['color'] as String).replaceFirst('#', '');
+              final c = Color(int.parse('FF$hex', radix: 16));
+              textColor = PdfColor(c.r, c.g, c.b);
+            } catch (_) {}
+          }
+
+          // Split by newlines to handle line breaks
+          final parts = raw.split('\n');
+          for (int i = 0; i < parts.length; i++) {
+            final text = parts[i];
+            if (text.isNotEmpty) {
+              currentLine.add(pw.TextSpan(
+                text: text,
+                style: pw.TextStyle(
+                  font: getFont(a?['font'] as String? ?? globalFont),
+                  fontSize: fontSize,
+                  fontWeight: a?['bold'] == true ? pw.FontWeight.bold : pw.FontWeight.normal,
+                  fontStyle: a?['italic'] == true ? pw.FontStyle.italic : pw.FontStyle.normal,
+                  color: textColor,
+                ),
+              ));
+            }
+            // Newline encountered — flush current line
+            if (i < parts.length - 1) {
+              if (currentLine.isNotEmpty) {
+                lines.add(pw.RichText(
+                  text: pw.TextSpan(children: List.from(currentLine)),
+                ));
+              } else {
+                // Empty line — add spacing
+                lines.add(pw.SizedBox(height: fontSize * 0.3));
+              }
+              currentLine = [];
+            }
+          }
+        }
+        // Flush remaining line
+        if (currentLine.isNotEmpty) {
+          lines.add(pw.RichText(
+            text: pw.TextSpan(children: List.from(currentLine)),
           ));
         }
+
         content = pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Text(item.title.toUpperCase(),
-                style: pw.TextStyle(
-                    font: getFont('OpenSans'),
-                    fontSize: 8,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.grey600)),
-            pw.Divider(thickness: 0.5, color: PdfColors.grey400),
-            pw.SizedBox(height: 2),
-            if (spans.isNotEmpty)
-              pw.RichText(
-                text: pw.TextSpan(
-                  children: spans,
-                  style: pw.TextStyle(font: getFont(globalFont), fontSize: globalFontSize),
-                ),
-              ),
-          ],
+          children: lines,
         );
         break;
       case CanvasItemType.line:

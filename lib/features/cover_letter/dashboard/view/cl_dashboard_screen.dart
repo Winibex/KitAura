@@ -37,7 +37,7 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.lavenderBlush,
+      color: AppColors.warmGrey,
       child: ResponsiveBuilder(
         mobile: _buildMobileLayout(),
         desktop: _buildDesktopLayout(),

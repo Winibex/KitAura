@@ -265,7 +265,7 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
             focusNode: widget.item.focusNode!,
             scrollController: widget.item.scrollController!,
             config: QuillEditorConfig(
-              scrollable: false, expands: false, autoFocus: true,
+              scrollable: true, expands: false, autoFocus: true,
               padding: EdgeInsets.zero, placeholder: widget.item.title,
               customStyleBuilder: _styleBuilder,
             ),

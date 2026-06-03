@@ -1,266 +1,186 @@
-// lib/features/cv/view/cv_editor_screen.dart
+// lib/features/cv/editor/view/cv_editor_screen.dart
+//
+// MVC VIEW — UI only. All business logic is in CvEditorController.
+// Handles: canvas rendering, panel toggles, marquee, focus wiring,
+// keyboard shortcuts, and reacting to controller state.
 
 import 'dart:convert';
-import 'dart:async';
 import 'dart:js_interop';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kitaura/core/constants/app_routes.dart';
-import 'package:kitaura/features/cv/editor/view/spellcheck_panel.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:printing/printing.dart';
 import 'package:toastification/toastification.dart';
+import 'package:web/web.dart' as web;
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_fonts.dart';
+import '../../../../core/constants/app_routes.dart';
+import '../../../../shared/ai/claude_controller.dart';
+import '../../../../shared/ai/spellcheck_controller.dart';
 import '../../../../shared/canvas/editor_ui/editor_app_bar.dart';
 import '../../../../shared/canvas/editor_ui/editor_left_panel.dart';
 import '../../../../shared/canvas/editor_ui/editor_right_panel.dart';
 import '../../../../shared/canvas/editor_ui/editor_widgets.dart';
+import '../../../../shared/canvas/engine/canvas_controller.dart';
 import '../../../../shared/canvas/engine/canvas_item_widget.dart';
 import '../../../../shared/canvas/engine/shape_painter.dart';
 import '../../../../shared/canvas/engine/snap_guide.dart';
-import '../../../../shared/services/firebase_service.dart';
-import '../../../../shared/canvas/engine/canvas_controller.dart';
-import '../../../../shared/ai/claude_controller.dart';
-import 'package:web/web.dart' as web;
-
-import '../../../../shared/ai/spellcheck_controller.dart';
-
-import '../controller/section_autofill.dart';
-import '../../../../shared/models/ai_profile_model.dart';
-import '../../templates/data/cv_template_data.dart';
-
-// ──────────────────────────────────────────────────────────────────────────
-// CHANGED: StatefulWidget → ConsumerStatefulWidget for Riverpod access
-// ──────────────────────────────────────────────────────────────────────────
+import '../../../../shared/models/canvas_item.dart';
+import '../../../settings/view/upgrade_modal.dart';
+import '../controller/cv_editor_controller.dart';
+import 'spellcheck_panel.dart';
 
 class CvEditorScreen extends ConsumerStatefulWidget {
   final String docId;
   const CvEditorScreen({super.key, required this.docId});
 
   @override
-  ConsumerState<CvEditorScreen> createState() => _EditorScreenState();
+  ConsumerState<CvEditorScreen> createState() => _CvEditorScreenState();
 }
 
-class _EditorScreenState extends ConsumerState<CvEditorScreen> {
-  final CanvasController _ctrl = CanvasController();
+class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
+  late final CanvasController _canvas;
+  late final CvEditorController _editor;
 
+  // UI-only state
   Offset? _marqueeStart, _marqueeEnd;
   bool _isMarqueeActive = false;
   Key _toolbarKey = UniqueKey();
   bool _leftPanelOpen = true;
   bool _rightPanelOpen = true;
+  bool _showSpellcheckPanel = false;
+  bool _isEditingTitle = false;
+  List<GuideLine> _snapGuides = [];
 
   final ScrollController _verticalScrollCtrl = ScrollController();
-
-  String _cvTitle = 'Untitled CV';
-  String? _firestoreDocId; // actual Firestore doc ID for saving
-  bool _isEditingTitle = false;
   final _titleCtrl = TextEditingController();
+  final Map<String, VoidCallback> _focusListeners = {};
 
-  bool _showSpellcheckPanel = false;
-
-  List<GuideLine> _snapGuides = [];
-  bool _isTemplateLoading = true;
-
-  bool _isSaved = true;
-  bool _isSaving = false;
-  Timer? _autoSaveTimer;
+  String? _lastKnownDocId;
 
   @override
   void initState() {
     super.initState();
-    _ctrl.addListener(_onControllerUpdate);
 
-    // Resolve title: check CvTemplateData registry first, then fallback
-    final info = CvTemplateData.getInfo(widget.docId);
-    if (widget.docId == 'blank') {
-      _cvTitle = 'Untitled CV';
-    } else if (info != null) {
-      _cvTitle = '${info.label} CV';
-    } else {
-      // It's a Firestore document ID
-      _cvTitle = 'Untitled CV';
-      _firestoreDocId = widget.docId;
-    }
-    _titleCtrl.text = _cvTitle;
+    // Create controllers
+    _canvas = CanvasController();
+    _editor = CvEditorController(canvas: _canvas);
 
-    _loadInitialTemplate();
-    HardwareKeyboard.instance.addHandler(_ctrl.handleKeyEvent);
-  }
+    // Listen to canvas changes → rebuild toolbar + mark dirty
+    _canvas.addListener(_onCanvasUpdate);
 
-  void _markDirty() {
-    if (!mounted) return;
-    setState(() => _isSaved = false);
-    _autoSaveTimer?.cancel();
-    _autoSaveTimer = Timer(const Duration(seconds: 2), () {
-      _autoSave();
+    // Listen to editor state → handle paywall, errors
+    _editor.addListener(_onEditorStateChange);
+
+    // Keyboard shortcuts
+    HardwareKeyboard.instance.addHandler(_canvas.handleKeyEvent);
+
+    // Initialize (loads template, auto fills, preloads fonts)
+    _editor.initialize(widget.docId).then((_) {
+      if (mounted) {
+        _titleCtrl.text = _editor.state.title;
+        _wireFocusListeners();
+        setState(() {});
+      }
     });
   }
 
-  Future<void> _autoSave() async {
-    if (_isSaving || _isTemplateLoading) return;
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
+  void _onCanvasUpdate() {
+    if (!mounted) return;
+    setState(() => _toolbarKey = UniqueKey());
+    _editor.markDirty();
+  }
 
-    setState(() => _isSaving = true);
+  void _onEditorStateChange() {
+    if (!mounted) return;
+    final s = _editor.state;
 
-    try {
-      final data = _ctrl.toFirestoreJson(uid, _cvTitle);
-      data['title'] = _cvTitle;
+    // Show paywall dialog
+    if (s.paywallMessage != null) {
+      showDialog(context: context, builder: (_) => const UpgradeModal());
+      _editor.clearPaywallMessage();
+    }
 
-      if (_firestoreDocId != null) {
-        await FirebaseService.updateCV(uid, _firestoreDocId!, data);
-      } else {
-        final docRef = await FirebaseService.createCV(uid, data);
-        _firestoreDocId = docRef.id;
+    // URL update: after first save, replace template ID in URL with real doc ID
+    if (s.firestoreDocId != null && s.firestoreDocId != _lastKnownDocId) {
+      _lastKnownDocId = s.firestoreDocId;
+      // Only replace if current URL has a template ID (not already a Firestore ID)
+      if (widget.docId != s.firestoreDocId) {
+        GoRouter.of(context).replace('/cv/edit/${s.firestoreDocId}');
       }
-
-      if (mounted) setState(() { _isSaved = true; _isSaving = false; });
-    } catch (e) {
-      debugPrint('Auto-save failed: $e');
-      if (mounted) setState(() => _isSaving = false);
     }
+
+    setState(() {});
   }
 
-  void _loadInitialTemplate() async {
-    if (widget.docId == 'blank') {
-      _ctrl.init();
-    } else if (CvTemplateData.isTemplateId(widget.docId)) {
-      final json = await CvTemplateData.loadTemplateJson(widget.docId);
-      _ctrl.applyTemplateJson(json);
-    } else {
-      await _loadFromFirestore(widget.docId);
-    }
-
-    _wireFocusListeners();
-
-    // ── NEW: Autofill from saved profile ────────────────────────────
-    // If the user has a saved AI profile, fill matching sections
-    // with their real data instead of keeping template dummy text.
-    await _tryAutofillFromProfile();
-
-    await _ctrl.preloadFonts();
-    if (mounted) {
-      setState(() => _isTemplateLoading = false);
-      // Auto-save the initial state (creates Firestore doc if new)
-      _autoSave();
-    }
-  }
-
-  /// Wire focus listeners on all text items so tapping a text section
-  /// auto-selects it in the canvas controller.
   void _wireFocusListeners() {
-    for (final item in _ctrl.items) {
+    for (final item in _canvas.items) {
       if (item.isText && item.focusNode != null) {
-        item.focusNode!.addListener(() {
-          if (item.focusNode!.hasFocus && _ctrl.selectedId != item.id) {
-            _ctrl.select(item.id);
+        if (_focusListeners.containsKey(item.id)) {
+          item.focusNode!.removeListener(_focusListeners[item.id]!);
+        }
+        void listener() {
+          if (item.focusNode!.hasFocus && _canvas.selectedId != item.id) {
+            _canvas.select(item.id);
             setState(() => _toolbarKey = UniqueKey());
           }
-        });
+        }
+        _focusListeners[item.id] = listener;
+        item.focusNode!.addListener(listener);
       }
-    }
-  }
-
-  Future<void> _tryAutofillFromProfile() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-
-    try {
-      final doc = await FirebaseService.getAiProfile(uid);
-      if (!doc.exists) return; // no saved profile → keep dummy data
-
-      final profile = AiProfileModel.fromJson(
-        doc.data() as Map<String, dynamic>,
-      );
-
-      // Only autofill if the profile has meaningful data
-      if (profile.fullName.isEmpty && profile.experiences.isEmpty) return;
-
-      final filled = SectionAutofill.fillAll(_ctrl.items, profile);
-      if (filled > 0) {
-        debugPrint('Autofilled $filled sections from saved profile');
-      }
-    } catch (e) {
-      debugPrint('Profile autofill failed (non-critical): $e');
-      // Not critical — user keeps the template dummy text
-    }
-  }
-
-  Future<void> _loadFromFirestore(String docId) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) {
-      _ctrl.init();
-      return;
-    }
-
-    try {
-      final doc = await FirebaseService.getCV(uid, docId);
-      if (doc.exists) {
-        final data = doc.data() as Map<String, dynamic>;
-
-        // Update title
-        setState(() {
-          _cvTitle = data['title'] as String? ?? 'Untitled CV';
-        });
-
-        // Load canvas from saved JSON — same format as template JSON
-        final canvasData = <String, dynamic>{
-          'canvasBackground': data['canvasBackground'] ?? '#FFFFFF',
-          'items': data['items'] ?? [],
-        };
-
-        await _ctrl.loadFromJson(canvasData);
-      } else {
-        _ctrl.init();
-      }
-    } catch (e) {
-      debugPrint('Load from Firestore failed: $e');
-      _ctrl.init();
-    }
-  }
-
-  void _onControllerUpdate() {
-    if (mounted) {
-      setState(() => _toolbarKey = UniqueKey());
-      _markDirty();
     }
   }
 
   @override
   void dispose() {
-    HardwareKeyboard.instance.removeHandler(_ctrl.handleKeyEvent);
-    _ctrl.removeListener(_onControllerUpdate);
-    _ctrl.disposeAll();
+    HardwareKeyboard.instance.removeHandler(_canvas.handleKeyEvent);
+    _canvas.removeListener(_onCanvasUpdate);
+    _editor.removeListener(_onEditorStateChange);
+
+    // Clean up focus listeners
+    for (final entry in _focusListeners.entries) {
+      final item = _canvas.items.where((i) => i.id == entry.key).firstOrNull;
+      item?.focusNode?.removeListener(entry.value);
+    }
+    _focusListeners.clear();
+
+    _canvas.disposeAll();
+    _canvas.dispose();
+    _editor.dispose();
     _verticalScrollCtrl.dispose();
     _titleCtrl.dispose();
-    _autoSaveTimer?.cancel();
     super.dispose();
   }
 
+  // ─── ACTIONS (thin wrappers that call controller) ─────────────────────
+
   Future<void> _exportPdf() async {
-    if (!_ctrl.fontsLoaded) return;
+    if (!_canvas.fontsLoaded) return;
+
+    final allowed = await _editor.trackExport();
+    if (!allowed) return;
+
     try {
-      final bytes = await _ctrl.buildPdf();
+      final bytes = await _canvas.buildPdf();
       await Printing.sharePdf(bytes: bytes, filename: 'kitaura_cv.pdf');
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('PDF error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('PDF error: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
     }
   }
 
   void _exportTemplateJson() {
-    final json = _ctrl.exportTemplateJson();
+    final json = _canvas.exportTemplateJson();
     final jsonString = const JsonEncoder.withIndent('  ').convert(json);
     final bytes = utf8.encode(jsonString);
-
     final blob = web.Blob(
       [bytes.toJS].toJS,
       web.BlobPropertyBag(type: 'application/json'),
@@ -282,59 +202,33 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
     }
   }
 
-  Future<void> _saveToCloud() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-
-    try {
-      final data = _ctrl.toFirestoreJson(uid, _cvTitle);
-      // Add title explicitly
-      data['title'] = _cvTitle;
-
-      if (_firestoreDocId != null) {
-        // Update existing CV
-        await FirebaseService.updateCV(uid, _firestoreDocId!, data);
-      } else {
-        // Create new CV
-        final docRef = await FirebaseService.createCV(uid, data);
-        _firestoreDocId = docRef.id;
-      }
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('CV saved!'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-      }
-    } catch (e) {
-      debugPrint('Save error: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Save failed: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+  void _addTextAndWire() {
+    final item = _canvas.addTextSection();
+    void listener() {
+      if (item.focusNode!.hasFocus && _canvas.selectedId != item.id) {
+        _canvas.select(item.id);
+        setState(() => _toolbarKey = UniqueKey());
       }
     }
+    _focusListeners[item.id] = listener;
+    item.focusNode!.addListener(listener);
   }
 
   // ─── BUILD ────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    final selected = _ctrl.selected;
-    final isMulti = _ctrl.multiSelected.length > 1;
+    final s = _editor.state;
+    final selected = _canvas.selected;
+    final isMulti = _canvas.multiSelected.length > 1;
 
-    // ── NEW: Listen for AI Fill state changes → show toasts ──────────
+    // Listen for AI state changes → toasts
     ref.listen<ClaudeState>(claudeControllerProvider, (prev, next) {
       if (next.status == AiFillStatus.error && next.error != null) {
         toastification.show(
           context: context,
           type: ToastificationType.error,
-          title: const Text('AI Fill Failed'),
+          title: const Text('AI Failed'),
           description: Text(next.error!),
           autoCloseDuration: const Duration(seconds: 4),
         );
@@ -354,142 +248,52 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
       backgroundColor: AppColors.lavenderBlush,
       body: Column(
         children: [
-          EditorAppBar(
-            title: _cvTitle,
-            isEditingTitle: _isEditingTitle,
-            titleController: _titleCtrl,
-            onBack: (){
-                if (context.canPop()) {
-                  context.pop();
-                } else {
-                  context.go(AppRoutes.cvDashboard);
-                }
-              },
-            onTitleTap: () => setState(() {
-              _isEditingTitle = true;
-              _titleCtrl.text = _cvTitle;
-            }),
-            onTitleSubmitted: (val) {
-              setState(() {
-                _cvTitle = val.trim().isEmpty ? 'Untitled CV' : val.trim();
-                _isEditingTitle = false;
-              });
-              _markDirty();
-            },
-            canUndo: _ctrl.canUndo,
-            canRedo: _ctrl.canRedo,
-            onUndo: _ctrl.undo,
-            onRedo: _ctrl.redo,
-            showSavedBadge: _isSaved && !_isSaving,
-            isSaving: _isSaving,
-            actions: [
-              EditorAppBarAction(
-                icon: _isSaving ? LucideIcons.loader : (_isSaved ? LucideIcons.cloudCog : LucideIcons.cloud),
-                label: _isSaving ? 'Saving...' : (_isSaved ? 'Saved' : 'Save'),
-                color: _isSaved ? AppColors.success : AppColors.white,
-                bgColor: _isSaved
-                    ? AppColors.success.withValues(alpha: 0.2)
-                    : AppColors.white.withValues(alpha: 0.1),
-                onTap: _isSaving ? null : _saveToCloud,
-              ),
-              EditorAppBarAction(
-                icon: LucideIcons.fileJson,
-                label: 'Save JSON',
-                color: AppColors.white,
-                bgColor: AppColors.white.withValues(alpha: 0.1),
-                onTap: _exportTemplateJson,
-              ),
-              EditorAppBarAction(
-                icon: LucideIcons.download,
-                label: 'Export PDF',
-                color: AppColors.white,
-                bgColor: AppColors.magentaBloom,
-                onTap: _ctrl.fontsLoaded ? _exportPdf : null,
-              ),
-            ],
-          ),
+          _buildAppBar(s),
           Expanded(
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // Canvas always centered, full width
                 Positioned.fill(
-                  child: _isTemplateLoading
+                  child: s.isTemplateLoading
                       ? const Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(color: AppColors.darkRaspberry),
-                        SizedBox(height: 16),
-                        Text('Loading template...',
-                            style: TextStyle(
-                              color: AppColors.slateGrey,
-                              fontSize: 13,
-                              fontFamily: AppFonts.poppins,
-                            )),
-                      ],
-                    ),
-                  )
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircularProgressIndicator(
+                                color: AppColors.darkRaspberry,
+                              ),
+                              SizedBox(height: 16),
+                              Text(
+                                'Loading template...',
+                                style: TextStyle(
+                                  color: AppColors.slateGrey,
+                                  fontSize: 13,
+                                  fontFamily: AppFonts.poppins,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
                       : _buildCanvas(),
                 ),
-                // Left panel overlay
                 if (_leftPanelOpen)
                   Positioned(
                     left: 0,
                     top: 0,
                     bottom: 0,
                     child: EditorLeftPanel(
-                      ctrl: _ctrl,
+                      ctrl: _canvas,
                       onClose: () => setState(() => _leftPanelOpen = false),
                       onAddText: _addTextAndWire,
                     ),
                   ),
-                // Right panel overlay
                 if (_rightPanelOpen)
                   Positioned(
                     right: 0,
                     top: 0,
                     bottom: 0,
-                    child: EditorRightPanel(
-                      ctrl: _ctrl,
-                      selected: selected,
-                      isMultiSelected: isMulti,
-                      toolbarKey: _toolbarKey,
-                      onClose: () => setState(() => _rightPanelOpen = false),
-                      // NEW: AI Fill via dropdown
-                      onAiFill: (item) async {
-                        _ctrl.saveSnapshot();
-                        await ref.read(claudeControllerProvider.notifier).fillSection(
-                          itemId: item.id,
-                          sectionType: item.sectionType,
-                          sectionTitle: item.title,
-                          controller: item.controller!,
-                          cvId: _firestoreDocId,
-                          cvTitle: _cvTitle,
-                        );
-                      },
-                      isAiFilling: ref.watch(claudeControllerProvider).activeOperation == 'fill',
-                      isSpellchecking: ref.watch(spellcheckControllerProvider).isChecking,
-                      onSpellcheck: () {
-                        ref.read(spellcheckControllerProvider.notifier).checkAll(_ctrl.items);
-                        setState(() => _showSpellcheckPanel = true);
-                      },
-                      onRewrite: (item, mode, customInstruction) async {
-                        _ctrl.saveSnapshot();
-                        await ref.read(claudeControllerProvider.notifier).rewriteSection(
-                          itemId: item.id,
-                          sectionType: item.sectionType,
-                          sectionTitle: item.title,
-                          controller: item.controller!,
-                          mode: mode,
-                          customInstruction: customInstruction,
-                          cvId: _firestoreDocId,
-                          cvTitle: _cvTitle,
-                        );
-                      },
-                    ),
+                    child: _buildRightPanel(selected, isMulti),
                   ),
-                // Panel toggle buttons when panels are closed
                 if (!_leftPanelOpen)
                   Positioned(
                     left: 8,
@@ -508,14 +312,14 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
                       onTap: () => setState(() => _rightPanelOpen = true),
                     ),
                   ),
-                // Spellcheck results panel
                 if (_showSpellcheckPanel)
                   Positioned(
                     right: _rightPanelOpen ? 268 : 8,
                     top: 8,
                     child: SpellcheckPanel(
-                      items: _ctrl.items,
-                      onClose: () => setState(() => _showSpellcheckPanel = false),
+                      items: _canvas.items,
+                      onClose: () =>
+                          setState(() => _showSpellcheckPanel = false),
                     ),
                   ),
               ],
@@ -526,14 +330,109 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
     );
   }
 
-  void _addTextAndWire() {
-    final item = _ctrl.addTextSection();
-    item.focusNode!.addListener(() {
-      if (item.focusNode!.hasFocus && _ctrl.selectedId != item.id) {
-        _ctrl.select(item.id);
-        setState(() => _toolbarKey = UniqueKey());
-      }
-    });
+  // ─── APP BAR ──────────────────────────────────────────────────────────
+
+  Widget _buildAppBar(CvEditorState s) {
+    return EditorAppBar(
+      title: s.title,
+      isEditingTitle: _isEditingTitle,
+      titleController: _titleCtrl,
+      onBack: () {
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go(AppRoutes.cvDashboard);
+        }
+      },
+      onTitleTap: () => setState(() {
+        _isEditingTitle = true;
+        _titleCtrl.text = s.title;
+      }),
+      onTitleSubmitted: (val) {
+        _editor.updateTitle(val);
+        setState(() => _isEditingTitle = false);
+      },
+      canUndo: _canvas.canUndo,
+      canRedo: _canvas.canRedo,
+      onUndo: _canvas.undo,
+      onRedo: _canvas.redo,
+      showSavedBadge: s.isSaved && !s.isSaving,
+      isSaving: s.isSaving,
+      actions: [
+        EditorAppBarAction(
+          icon: s.isSaving
+              ? LucideIcons.loader
+              : (s.isSaved ? LucideIcons.cloudCog : LucideIcons.cloud),
+          label: s.isSaving ? 'Saving...' : (s.isSaved ? 'Saved' : 'Save'),
+          color: s.isSaved ? AppColors.success : AppColors.white,
+          bgColor: s.isSaved
+              ? AppColors.success.withValues(alpha: 0.2)
+              : AppColors.white.withValues(alpha: 0.1),
+          onTap: s.isSaving ? null : () => _editor.saveNow(),
+        ),
+        EditorAppBarAction(
+          icon: LucideIcons.fileJson,
+          label: 'Save JSON',
+          color: AppColors.white,
+          bgColor: AppColors.white.withValues(alpha: 0.1),
+          onTap: _exportTemplateJson,
+        ),
+        EditorAppBarAction(
+          icon: LucideIcons.download,
+          label: 'Export PDF',
+          color: AppColors.white,
+          bgColor: AppColors.magentaBloom,
+          onTap: _canvas.fontsLoaded ? _exportPdf : null,
+        ),
+      ],
+    );
+  }
+
+  // ─── RIGHT PANEL ──────────────────────────────────────────────────────
+
+  Widget _buildRightPanel(CanvasItem? selected, bool isMulti) {
+    return EditorRightPanel(
+      ctrl: _canvas,
+      selected: selected,
+      isMultiSelected: isMulti,
+      toolbarKey: _toolbarKey,
+      onClose: () => setState(() => _rightPanelOpen = false),
+      onAiFill: (item) async {
+        _canvas.saveSnapshot();
+        await ref
+            .read(claudeControllerProvider.notifier)
+            .fillSection(
+              itemId: item.id,
+              sectionType: item.sectionType,
+              sectionTitle: item.title,
+              controller: item.controller!,
+              cvId: _editor.state.firestoreDocId,
+              cvTitle: _editor.state.title,
+            );
+      },
+      isAiFilling:
+          ref.watch(claudeControllerProvider).activeOperation == 'fill',
+      isSpellchecking: ref.watch(spellcheckControllerProvider).isChecking,
+      onSpellcheck: () {
+        ref.read(spellcheckControllerProvider.notifier).checkAll(_canvas.items);
+        setState(() => _showSpellcheckPanel = true);
+      },
+      onRewrite: (item, mode, customInstruction) async {
+        _canvas.saveSnapshot();
+        await ref
+            .read(claudeControllerProvider.notifier)
+            .rewriteSection(
+              itemId: item.id,
+              sectionType: item.sectionType,
+              sectionTitle: item.title,
+              controller: item.controller!,
+              mode: mode,
+              customInstruction: customInstruction,
+              cvId: _editor.state.firestoreDocId,
+              cvTitle: _editor.state.title,
+            );
+      },
+    );
   }
 
   // ─── CANVAS ───────────────────────────────────────────────────────────
@@ -551,145 +450,55 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
               padding: const EdgeInsets.all(32),
               child: Column(
                 children: [
-                  // Page indicator + add page
                   _buildPageControls(),
                   const SizedBox(height: 16),
-                  // All pages stacked
                   SizedBox(
                     width: CanvasController.canvasW,
                     height:
-                    _ctrl.totalCanvasHeight + ((_ctrl.totalPages - 1) * 24),
+                        _canvas.totalCanvasHeight +
+                        ((_canvas.totalPages - 1) * 24),
                     child: Stack(
                       clipBehavior: Clip.none,
                       children: [
-                        // Page backgrounds
-                        ...List.generate(_ctrl.totalPages, (pageIdx) {
-                          final yOffset =
-                              pageIdx * (CanvasController.canvasH + 24);
-                          return Positioned(
-                            left: 0,
-                            top: yOffset,
-                            width: CanvasController.canvasW,
-                            height: CanvasController.canvasH,
-                            child: GestureDetector(
-                              onTapDown: (_) => _ctrl.deselect(),
-                              onPanStart: (d) {
-                                final yOffset = pageIdx * (CanvasController.canvasH + 24);
-                                // NEW: If multi-selected, start multi-drag instead of marquee
-                                if (_ctrl.multiSelected.isNotEmpty) {
-                                  _ctrl.startMultiDrag(Offset(
-                                    d.localPosition.dx,
-                                    d.localPosition.dy + yOffset,
-                                  ));
-                                  return;
-                                }
-                                setState(() {
-                                  _isMarqueeActive = true;
-                                  _marqueeStart = Offset(
-                                    d.localPosition.dx,
-                                    d.localPosition.dy + yOffset,
-                                  );
-                                  _marqueeEnd = _marqueeStart;
-                                });
-                              },
-                              onPanUpdate: (d) {
-                                final yOffset = pageIdx * (CanvasController.canvasH + 24);
-                                // NEW: Multi-drag update
-                                if (_ctrl.isMultiDragging) {
-                                  _ctrl.updateMultiDrag(Offset(
-                                    d.localPosition.dx,
-                                    d.localPosition.dy + yOffset,
-                                  ));
-                                  setState(() {}); // Force rebuild without notifyListeners
-                                  return;
-                                }
-                                if (_isMarqueeActive) {
-                                  setState(() {
-                                    _marqueeEnd = Offset(
-                                      d.localPosition.dx,
-                                      d.localPosition.dy + yOffset,
-                                    );
-                                  });
-                                }
-                              },
-                              onPanEnd: (_) {
-                                // NEW: End multi-drag
-                                if (_ctrl.isMultiDragging) {
-                                  _ctrl.endMultiDrag();
-                                  return;
-                                }
-                                if (_isMarqueeActive) _onMarqueeEnd();
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: _ctrl.canvasBackground,
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: Color(0x33000000),
-                                      blurRadius: 16,
-                                      offset: Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: Stack(
-                                  children: [
-                                    // Page number watermark
-                                    Positioned(
-                                      bottom: 8,
-                                      right: 12,
-                                      child: Text(
-                                        'Page ${pageIdx + 1}',
-                                        style: TextStyle(
-                                          color: AppColors.slateGrey.withValues(
-                                            alpha: 0.3,
-                                          ),
-                                          fontSize: 10,
-                                          fontFamily: AppFonts.poppins,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
-
-                        // Canvas items
-                        ..._ctrl.items.map(
-                              (item) => CanvasItemWidget(
+                        ...List.generate(
+                          _canvas.totalPages,
+                          (pageIdx) => _buildPageBackground(pageIdx),
+                        ),
+                        ..._canvas.items.map(
+                          (item) => CanvasItemWidget(
                             key: ValueKey(item.id),
                             item: item,
-                            isSelected: item.id == _ctrl.selectedId,
-                            isMultiSelected: _ctrl.multiSelected.contains(item.id),
+                            isSelected: item.id == _canvas.selectedId,
+                            isMultiSelected: _canvas.multiSelected.contains(
+                              item.id,
+                            ),
                             canvasW: CanvasController.canvasW,
-                            canvasH: _ctrl.totalCanvasHeight + ((_ctrl.totalPages - 1) * 24),
+                            canvasH:
+                                _canvas.totalCanvasHeight +
+                                ((_canvas.totalPages - 1) * 24),
                             onSelect: () {
-                              _ctrl.select(item.id);
+                              _canvas.select(item.id);
                               if (item.isText) {
                                 setState(() => _toolbarKey = UniqueKey());
                               }
                             },
-                                onMultiMoveUpdate:
-                                _ctrl.multiSelected.contains(item.id)
-                                    ? (delta) {
-                                  _ctrl.multiMoveUpdate(delta);
-                                  setState(() {}); // Force parent rebuild
-                                }
-                                    : null,
-                                onMultiMoveEnd:
-                                _ctrl.multiSelected.contains(item.id)
-                                    ? () => _ctrl.multiMoveEnd()
-                                    : null,
-                            onSaveSnapshot: _ctrl.saveSnapshot,
-                            allItems: _ctrl.items,                          // ← ADD THIS
-                            onSnapGuidesChanged: (guides) {                 // ← ADD THIS
-                              setState(() => _snapGuides = guides);
-                            },
+                            onMultiMoveUpdate:
+                                _canvas.multiSelected.contains(item.id)
+                                ? (delta) {
+                                    _canvas.multiMoveUpdate(delta);
+                                    setState(() {});
+                                  }
+                                : null,
+                            onMultiMoveEnd:
+                                _canvas.multiSelected.contains(item.id)
+                                ? () => _canvas.multiMoveEnd()
+                                : null,
+                            onSaveSnapshot: _canvas.saveSnapshot,
+                            allItems: _canvas.items,
+                            onSnapGuidesChanged: (guides) =>
+                                setState(() => _snapGuides = guides),
                           ),
                         ),
-
-                        // Marquee overlay
                         if (_isMarqueeActive &&
                             _marqueeStart != null &&
                             _marqueeEnd != null)
@@ -703,8 +512,6 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
                               ),
                             ),
                           ),
-
-                        // ← ADD THIS: Snap guide overlay
                         if (_snapGuides.isNotEmpty)
                           Positioned.fill(
                             child: IgnorePointer(
@@ -719,6 +526,87 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPageBackground(int pageIdx) {
+    final yOffset = pageIdx * (CanvasController.canvasH + 24);
+    return Positioned(
+      left: 0,
+      top: yOffset,
+      width: CanvasController.canvasW,
+      height: CanvasController.canvasH,
+      child: GestureDetector(
+        onTapDown: (_) => _canvas.deselect(),
+        onPanStart: (d) {
+          if (_canvas.multiSelected.isNotEmpty) {
+            _canvas.startMultiDrag(
+              Offset(d.localPosition.dx, d.localPosition.dy + yOffset),
+            );
+            return;
+          }
+          setState(() {
+            _isMarqueeActive = true;
+            _marqueeStart = Offset(
+              d.localPosition.dx,
+              d.localPosition.dy + yOffset,
+            );
+            _marqueeEnd = _marqueeStart;
+          });
+        },
+        onPanUpdate: (d) {
+          if (_canvas.isMultiDragging) {
+            _canvas.updateMultiDrag(
+              Offset(d.localPosition.dx, d.localPosition.dy + yOffset),
+            );
+            setState(() {});
+            return;
+          }
+          if (_isMarqueeActive) {
+            setState(
+              () => _marqueeEnd = Offset(
+                d.localPosition.dx,
+                d.localPosition.dy + yOffset,
+              ),
+            );
+          }
+        },
+        onPanEnd: (_) {
+          if (_canvas.isMultiDragging) {
+            _canvas.endMultiDrag();
+            return;
+          }
+          if (_isMarqueeActive) _onMarqueeEnd();
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            color: _canvas.canvasBackground,
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x33000000),
+                blurRadius: 16,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                bottom: 8,
+                right: 12,
+                child: Text(
+                  'Page ${pageIdx + 1}',
+                  style: TextStyle(
+                    color: AppColors.slateGrey.withValues(alpha: 0.3),
+                    fontSize: 10,
+                    fontFamily: AppFonts.poppins,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -742,19 +630,17 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Page navigation
-          ...List.generate(_ctrl.totalPages, (i) {
-            final isActive = _ctrl.currentPage == i;
+          ...List.generate(_canvas.totalPages, (i) {
+            final isActive = _canvas.currentPage == i;
             return Padding(
               padding: const EdgeInsets.only(right: 4),
               child: MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
                   onTap: () {
-                    _ctrl.goToPage(i);
-                    final targetY = i * (CanvasController.canvasH + 24) + 32;
+                    _canvas.goToPage(i);
                     _verticalScrollCtrl.animateTo(
-                      targetY,
+                      i * (CanvasController.canvasH + 24) + 32,
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeOut,
                     );
@@ -787,13 +673,12 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
             );
           }),
           const SizedBox(width: 4),
-          // Add page button
           MouseRegion(
             cursor: SystemMouseCursors.click,
             child: GestureDetector(
               onTap: () {
-                _ctrl.saveSnapshot();
-                _ctrl.addPage();
+                _canvas.saveSnapshot();
+                _canvas.addPage();
               },
               child: Container(
                 width: 32,
@@ -811,57 +696,12 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
               ),
             ),
           ),
-          // Remove page (only if more than 1)
-          if (_ctrl.totalPages > 1) ...[
+          if (_canvas.totalPages > 1) ...[
             const SizedBox(width: 4),
             MouseRegion(
               cursor: SystemMouseCursors.click,
               child: GestureDetector(
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      title: const Text(
-                        'Remove Page?',
-                        style: TextStyle(
-                          fontFamily: AppFonts.poppins,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.prussianBlue,
-                        ),
-                      ),
-                      content: Text(
-                        'Delete page ${_ctrl.currentPage + 1} and all its contents?',
-                        style: const TextStyle(
-                          fontFamily: AppFonts.openSans,
-                          color: AppColors.slateGrey,
-                        ),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          child: const Text(
-                            'Cancel',
-                            style: TextStyle(color: AppColors.slateGrey),
-                          ),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            _ctrl.saveSnapshot();
-                            _ctrl.removePage(_ctrl.currentPage);
-                            Navigator.pop(ctx);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.error,
-                          ),
-                          child: const Text('Delete'),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                onTap: () => _showRemovePageDialog(),
                 child: Container(
                   width: 32,
                   height: 32,
@@ -880,12 +720,54 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
           ],
           const SizedBox(width: 8),
           Text(
-            '${_ctrl.totalPages} ${_ctrl.totalPages == 1 ? 'page' : 'pages'}',
+            '${_canvas.totalPages} ${_canvas.totalPages == 1 ? 'page' : 'pages'}',
             style: const TextStyle(
               color: AppColors.slateGrey,
               fontSize: 11,
               fontFamily: AppFonts.poppins,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRemovePageDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Remove Page?',
+          style: TextStyle(
+            fontFamily: AppFonts.poppins,
+            fontWeight: FontWeight.bold,
+            color: AppColors.prussianBlue,
+          ),
+        ),
+        content: Text(
+          'Delete page ${_canvas.currentPage + 1} and all its contents?',
+          style: const TextStyle(
+            fontFamily: AppFonts.openSans,
+            color: AppColors.slateGrey,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.slateGrey),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              _canvas.saveSnapshot();
+              _canvas.removePage(_canvas.currentPage);
+              Navigator.pop(ctx);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -901,12 +783,12 @@ class _EditorScreenState extends ConsumerState<CvEditorScreen> {
       });
       return;
     }
-    _ctrl.marqueeSelect(Rect.fromPoints(_marqueeStart!, _marqueeEnd!));
+    _canvas.marqueeSelect(Rect.fromPoints(_marqueeStart!, _marqueeEnd!));
     setState(() {
       _isMarqueeActive = false;
       _marqueeStart = null;
       _marqueeEnd = null;
-      if (_ctrl.multiSelected.length == 1) _toolbarKey = UniqueKey();
+      if (_canvas.multiSelected.length == 1) _toolbarKey = UniqueKey();
     });
   }
 }

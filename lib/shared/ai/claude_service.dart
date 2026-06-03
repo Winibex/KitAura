@@ -186,4 +186,20 @@ class ClaudeService {
         return e.message ?? 'Something went wrong. Please try again.';
     }
   }
+
+  /// Tracks an export server-side (increments counter + paywall check).
+  /// Call BEFORE generating the PDF. Throws if over limit.
+  static Future<void> trackExport({
+    required String tool,
+    String? documentId,
+    String? documentTitle,
+  }) async {
+    final result = await FirebaseFunctions.instanceFor(region: 'us-central1')
+        .httpsCallable('trackExport')
+        .call({
+      'tool': tool,
+      'documentId': documentId,
+      'documentTitle': documentTitle,
+    });
+  }
 }

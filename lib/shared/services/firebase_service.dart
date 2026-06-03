@@ -430,6 +430,16 @@ class FirebaseService {
     await _cvsCollection(uid).doc(cvId).delete();
   }
 
+  /// Deletes a CV AND decrements cvCount atomically.
+  static Future<void> deleteCVWithCount(String uid, String cvId) async {
+    final batch = _db.batch();
+    batch.delete(_cvsCollection(uid).doc(cvId));
+    batch.update(_subscriptionDoc(uid), {
+      'cvCount': FieldValue.increment(-1),
+    });
+    await batch.commit();
+  }
+
   /// Fetches a single CV document snapshot.
   static Future<DocumentSnapshot> getCV(String uid, String cvId) async {
     return await _cvsCollection(uid).doc(cvId).get();
@@ -440,6 +450,20 @@ class FirebaseService {
     return await _cvsCollection(uid)
         .orderBy('updatedAt', descending: true)
         .get();
+  }
+
+  /// Creates a CV AND increments cvCount in subscription atomically.
+  static Future<DocumentReference> createCVWithCount(
+      String uid, Map<String, dynamic> data) async
+  {
+    final docRef = _cvsCollection(uid).doc();
+    final batch = _db.batch();
+    batch.set(docRef, data);
+    batch.update(_subscriptionDoc(uid), {
+      'cvCount': FieldValue.increment(1),
+    });
+    await batch.commit();
+    return docRef;
   }
 
   // ===========================================================================

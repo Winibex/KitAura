@@ -77,7 +77,8 @@ class DashboardState {
     List<RecentItem>? recentItems,
     int? maxExports,
     int? maxAiFills,
-  }) {
+  })
+  {
     return DashboardState(
       isLoading: isLoading ?? this.isLoading,
       error: error,
@@ -141,9 +142,12 @@ class RecentItem {
 class DashboardController extends StateNotifier<DashboardState> {
   DashboardController() : super(const DashboardState());
 
+  bool _hasLoaded = false;
+
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
 
-  Future<void> loadDashboard() async {
+  Future<void> loadDashboard({bool force = false}) async {
+    if (_hasLoaded && !force) return; // Skip if already loaded
     if (_uid == null) return;
     state = state.copyWith(isLoading: true, error: null);
 
@@ -188,10 +192,12 @@ class DashboardController extends StateNotifier<DashboardState> {
         );
       }
 
-      // ── Load recent CVs ─────────────────────────────────────────────
+      // ── Load CVs (count from actual collection, not subscription) ───
       final recentItems = <RecentItem>[];
+      int actualCvCount = 0;
       try {
         final cvsSnapshot = await FirebaseService.getUserCVs(_uid!);
+        actualCvCount = cvsSnapshot.docs.length;
         for (final doc in cvsSnapshot.docs.take(4)) {
           final data = doc.data() as Map<String, dynamic>;
           recentItems.add(RecentItem(
@@ -213,8 +219,10 @@ class DashboardController extends StateNotifier<DashboardState> {
       maxAiFills = limits['aiFillPerMonth']!;
 
       // Load recent cover letters too
+      int actualClCount = 0;
       try {
         final clsSnapshot = await FirebaseService.getUserCoverLetters(_uid!);
+        actualClCount = clsSnapshot.docs.length;
         for (final doc in clsSnapshot.docs.take(4)) {
           final data = doc.data() as Map<String, dynamic>;
           recentItems.add(RecentItem(
@@ -232,10 +240,13 @@ class DashboardController extends StateNotifier<DashboardState> {
       // Sort recent items by date
       recentItems.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
 
+      _hasLoaded = true;
       state = state.copyWith(
         isLoading: false,
         displayName: name,
         recentItems: recentItems.take(5).toList(),
+        cvCount: actualCvCount,
+        coverLetterCount: actualClCount,
         maxExports: maxExports == -1 ? 999 : maxExports,
         maxAiFills: maxAiFills == -1 ? 999 : maxAiFills,
       );

@@ -16,6 +16,7 @@ import 'features/auth/view/verify_email_screen.dart';
 import 'features/auth/view/reset_password_screen.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import '../shared/widgets/no_internet_overlay.dart';
 
 final _router = GoRouter(
   initialLocation: AppRoutes.dashboard,
@@ -112,6 +113,9 @@ class KitAuraApp extends ConsumerWidget {
         FlutterQuillLocalizations.delegate,
       ],
       supportedLocales: const [Locale('en')],
+      builder: (context, child) {
+        return NoInternetOverlay(child: child ?? const SizedBox.shrink());
+      },
     );
   }
 }

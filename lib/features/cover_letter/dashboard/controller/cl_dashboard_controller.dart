@@ -46,7 +46,8 @@ class ClDashboardState {
     int? maxCoverLetters,
     int? exportsPerMonth,
     int? aiFillsPerMonth,
-  }) {
+  })
+  {
     return ClDashboardState(
       isLoading: isLoading ?? this.isLoading,
       error: error,
@@ -64,9 +65,12 @@ class ClDashboardState {
 class ClDashboardController extends StateNotifier<ClDashboardState> {
   ClDashboardController() : super(ClDashboardState());
 
+  bool _hasLoaded = false;
+
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
 
-  Future<void> loadDashboard() async {
+  Future<void> loadDashboard({bool force = false}) async {
+    if (_hasLoaded && !force) return; // Skip if already loaded
     if (_uid == null) return;
     state = state.copyWith(isLoading: true, error: null);
 
@@ -102,6 +106,7 @@ class ClDashboardController extends StateNotifier<ClDashboardState> {
         debugPrint('Cover letters query failed: $e');
       }
 
+      _hasLoaded = true;
       state = state.copyWith(
         isLoading: false,
         coverLetters: cls,

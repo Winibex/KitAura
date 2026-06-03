@@ -45,7 +45,8 @@ class DashboardState {
     int? maxCvs,
     int? exportsPerMonth,
     int? aiFillsPerMonth,
-  }) {
+  })
+  {
     return DashboardState(
       isLoading: isLoading ?? this.isLoading,
       error: error,
@@ -63,11 +64,14 @@ class DashboardState {
 class DashboardController extends StateNotifier<DashboardState> {
   DashboardController() : super(DashboardState());
 
+  bool _hasLoaded = false;
+
   final _auth = FirebaseAuth.instance;
 
   String? get _uid => _auth.currentUser?.uid;
 
-  Future<void> loadDashboard() async {
+  Future<void> loadDashboard({bool force = false}) async {
+    if (_hasLoaded && !force) return; // Skip if already loaded
     if (_uid == null) return;
     state = state.copyWith(isLoading: true, error: null);
     try {
@@ -114,13 +118,7 @@ class DashboardController extends StateNotifier<DashboardState> {
         debugPrint('Firestore CVs query failed: $e');
       }
 
-      // Show dummy CVs if user has none
-      if (cvs.isEmpty) {
-        debugPrint('No CVs found, showing dummy CVs');
-      }else{
-        debugPrint('CVs loaded successfully');
-      }
-
+      _hasLoaded = true;
       state = state.copyWith(isLoading: false, cvs: cvs);
     } catch (e, stack) {
       debugPrint('loadDashboard error: $e\n$stack');
@@ -131,12 +129,18 @@ class DashboardController extends StateNotifier<DashboardState> {
   }
 
   Future<void> deleteCV(String cvId) async {
+    // Optimistic delete — remove from UI immediately
+    final backup = List<CvSummaryModel>.from(state.cvs);
+    final updated = state.cvs.where((cv) => cv.id != cvId).toList();
+    state = state.copyWith(cvs: updated);
+
     try {
       await FirebaseService.deleteCV(_uid!, cvId);
-      final updated = state.cvs.where((cv) => cv.id != cvId).toList();
-      state = state.copyWith(cvs: updated);
+      debugPrint('✅ CV deleted: $cvId');
     } catch (e) {
-      debugPrint('deleteCV error: $e');
+      debugPrint('❌ deleteCV error: $e');
+      // Restore on failure
+      state = state.copyWith(cvs: backup);
     }
   }
 
@@ -167,7 +171,7 @@ class DashboardController extends StateNotifier<DashboardState> {
 }
 
 // Providers
-final dashboardControllerProvider =
+final cvDashboardControllerProvider =
 StateNotifierProvider<DashboardController, DashboardState>(
       (ref) => DashboardController(),
 );

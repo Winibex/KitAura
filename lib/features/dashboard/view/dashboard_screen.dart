@@ -38,7 +38,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final state = ref.watch(dashboardControllerProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F5F2),
+      backgroundColor: AppColors.warmGrey,
       body: Stack(
         children: [
           // Main content
@@ -140,7 +140,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             icon: LucideIcons.fileText,
             label: 'Documents',
             value: '${state.totalDocuments}',
-            subtitle: '${state.totalCvsCreated} total created',
+            subtitle: '${state.totalDocuments} total created',
             color: AppColors.magentaBloom,
           ),
           _StatCardData(
@@ -153,7 +153,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
           _StatCardData(
             icon: LucideIcons.sparkles,
-            label: 'AI Fills',
+            label: 'AI Use',
             value: state.isPro ? '∞' : '${state.aiFillCount} / ${state.maxAiFills}',
             subtitle: state.isPro ? 'Unlimited' : '${state.maxAiFills - state.aiFillCount} remaining',
             color: AppColors.dustyMauve,

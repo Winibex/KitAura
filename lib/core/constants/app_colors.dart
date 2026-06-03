@@ -8,6 +8,7 @@ class AppColors {
   static const Color petalFrost    = Color(0xFFFFE4EC);
   static const Color prussianBlue  = Color(0xFF0F172A);
   static const Color darkRaspberry = Color(0xFF831843);
+  static const Color warmGrey = Color(0xFFF8F5F2);
 
   // SECONDARY
   static const Color almondSilk    = Color(0xFFC5AFA4);
