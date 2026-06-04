@@ -8,6 +8,8 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout code
@@ -38,8 +40,6 @@ jobs:
             --tree-shake-icons \
             --source-maps
 
-      # Push the built web output to a separate branch "hostinger-deploy"
-      # Hostinger GIT will pull from this branch automatically
       - name: Push build output to deploy branch
         run: |
           cd build/web
