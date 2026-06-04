@@ -2,8 +2,8 @@ name: Build and Deploy Flutter Web to Hostinger
 
 on:
   push:
-    branches: [ main ]   # change if your default branch is different
-  workflow_dispatch:      # allows manual trigger
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
@@ -38,14 +38,17 @@ jobs:
             --tree-shake-icons \
             --source-maps
 
-      - name: Deploy to Hostinger via SFTP
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
-        with:
-          username: ${{ secrets.SSH_USERNAME }}
-          server: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          local_path: ./build/web/*
-          remote_path: ${{ secrets.FTP_SERVER_DIR }}
-          sftp_only: true
-          delete_remote_files: true
+      # Push the built web output to a separate branch "hostinger-deploy"
+      # Hostinger GIT will pull from this branch automatically
+      - name: Push build output to deploy branch
+        run: |
+          cd build/web
+          git init
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git checkout -b hostinger-deploy
+          git add -A
+          git commit -m "deploy: $(date +'%Y-%m-%d %H:%M:%S')"
+          git push --force \
+            https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git \
+            hostinger-deploy
