@@ -135,8 +135,7 @@ class _CVTemplatePreviewModalState extends State<CVTemplatePreviewModal> {
                   height: 48,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: const BoxDecoration(
-                    color: Color(0xFFEDE8E3),
-                    border: Border(bottom: BorderSide(color: Color(0xFFDDD5CB))),
+                    color: AppColors.prussianBlue,
                   ),
                   child: Row(
                     children: [
@@ -146,7 +145,7 @@ class _CVTemplatePreviewModalState extends State<CVTemplatePreviewModal> {
                           fontSize: 12,
                           fontFamily: AppFonts.poppins,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.slateGrey,
+                          color: AppColors.white,
                         ),
                       ),
                       const Spacer(),
@@ -468,21 +467,23 @@ class _CVTemplatePreviewModalState extends State<CVTemplatePreviewModal> {
             ),
           ),
         ),
-        const SizedBox(height: 10),
-        SizedBox(
-          width: double.infinity,
-          height: 44,
-          child: TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              widget.onStartBlank();
-            },
-            child: const Text(
-              'or Start from Scratch',
-              style: TextStyle(
-                fontSize: 13,
-                fontFamily: AppFonts.poppins,
-                color: AppColors.slateGrey,
+        const SizedBox(height: 15),
+        Center(
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.pop(context);
+                widget.onStartBlank();
+              },
+              child: Text(
+                'or Start from Scratch',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontFamily: AppFonts.openSans,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.slateGrey,
+                ),
               ),
             ),
           ),
@@ -542,12 +543,14 @@ class _CVTemplatePreviewModalState extends State<CVTemplatePreviewModal> {
           width: 28,
           height: 28,
           decoration: BoxDecoration(
-            color: enabled ? AppColors.white : const Color(0xFFE8E0D8),
+            color: enabled
+                ? AppColors.white.withValues(alpha: 0.15)
+                : AppColors.white.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(6),
           ),
           child: Icon(icon,
               size: 14,
-              color: enabled ? AppColors.prussianBlue : AppColors.slateGrey),
+              color: enabled ? AppColors.white : AppColors.white.withValues(alpha: 0.3)),
         ),
       ),
     );

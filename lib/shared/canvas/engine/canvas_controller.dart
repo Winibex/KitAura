@@ -1064,7 +1064,6 @@ class CanvasController extends ChangeNotifier {
         return map;
       }).toList(),
       'updatedAt': FieldValue.serverTimestamp(),
-      'createdAt': FieldValue.serverTimestamp(),
     };
   }
 

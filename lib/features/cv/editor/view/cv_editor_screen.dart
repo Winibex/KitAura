@@ -29,6 +29,7 @@ import '../../../../shared/canvas/engine/shape_painter.dart';
 import '../../../../shared/canvas/engine/snap_guide.dart';
 import '../../../../shared/models/canvas_item.dart';
 import '../../../settings/view/upgrade_modal.dart';
+import '../../dashboard/controller/cv_dashboard_controller.dart';
 import '../controller/cv_editor_controller.dart';
 import 'spellcheck_panel.dart';
 
@@ -57,6 +58,7 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
   final ScrollController _verticalScrollCtrl = ScrollController();
   final _titleCtrl = TextEditingController();
   final Map<String, VoidCallback> _focusListeners = {};
+  final Map<String, VoidCallback> _docListeners = {};
 
   String? _lastKnownDocId;
 
@@ -117,18 +119,29 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
 
   void _wireFocusListeners() {
     for (final item in _canvas.items) {
-      if (item.isText && item.focusNode != null) {
+      if (item.isText && item.focusNode != null && item.controller != null) {
+        // Focus listener
         if (_focusListeners.containsKey(item.id)) {
           item.focusNode!.removeListener(_focusListeners[item.id]!);
         }
-        void listener() {
+        void focusListener() {
           if (item.focusNode!.hasFocus && _canvas.selectedId != item.id) {
             _canvas.select(item.id);
             setState(() => _toolbarKey = UniqueKey());
           }
         }
-        _focusListeners[item.id] = listener;
-        item.focusNode!.addListener(listener);
+        _focusListeners[item.id] = focusListener;
+        item.focusNode!.addListener(focusListener);
+
+        // Document change listener — marks dirty on any text edit
+        if (_docListeners.containsKey(item.id)) {
+          item.controller!.removeListener(_docListeners[item.id]!);
+        }
+        void docListener() {
+          _editor.markDirty();
+        }
+        _docListeners[item.id] = docListener;
+        item.controller!.addListener(docListener);
       }
     }
   }
@@ -145,6 +158,13 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
       item?.focusNode?.removeListener(entry.value);
     }
     _focusListeners.clear();
+
+    // Clean up document listeners
+    for (final entry in _docListeners.entries) {
+      final item = _canvas.items.where((i) => i.id == entry.key).firstOrNull;
+      item?.controller?.removeListener(entry.value);
+    }
+    _docListeners.clear();
 
     _canvas.disposeAll();
     _canvas.dispose();
@@ -204,14 +224,20 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
 
   void _addTextAndWire() {
     final item = _canvas.addTextSection();
-    void listener() {
+    // Focus listener
+    void focusListener() {
       if (item.focusNode!.hasFocus && _canvas.selectedId != item.id) {
         _canvas.select(item.id);
         setState(() => _toolbarKey = UniqueKey());
       }
     }
-    _focusListeners[item.id] = listener;
-    item.focusNode!.addListener(listener);
+    _focusListeners[item.id] = focusListener;
+    item.focusNode!.addListener(focusListener);
+
+    // Document change listener
+    void docListener() => _editor.markDirty();
+    _docListeners[item.id] = docListener;
+    item.controller!.addListener(docListener);
   }
 
   // ─── BUILD ────────────────────────────────────────────────────────────
@@ -338,6 +364,7 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
       isEditingTitle: _isEditingTitle,
       titleController: _titleCtrl,
       onBack: () {
+        ref.read(cvDashboardControllerProvider.notifier).loadDashboard(force: true);
         if (context.canPop()) {
           context.pop();
         } else {
@@ -378,11 +405,11 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
           onTap: _exportTemplateJson,
         ),
         EditorAppBarAction(
-          icon: LucideIcons.download,
-          label: 'Export PDF',
+          icon: s.isExporting ? LucideIcons.loader : LucideIcons.download,
+          label: s.isExporting ? 'Exporting...' : 'Export PDF',
           color: AppColors.white,
-          bgColor: AppColors.magentaBloom,
-          onTap: _canvas.fontsLoaded ? _exportPdf : null,
+          bgColor: s.isExporting ? AppColors.slateGrey : AppColors.magentaBloom,
+          onTap: (_canvas.fontsLoaded && !s.isExporting) ? _exportPdf : null,
         ),
       ],
     );

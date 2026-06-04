@@ -194,7 +194,7 @@ class ClaudeService {
     String? documentId,
     String? documentTitle,
   }) async {
-    final result = await FirebaseFunctions.instanceFor(region: 'us-central1')
+    await FirebaseFunctions.instanceFor(region: 'us-central1')
         .httpsCallable('trackExport')
         .call({
       'tool': tool,

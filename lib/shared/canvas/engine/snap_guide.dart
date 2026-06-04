@@ -14,6 +14,8 @@
 //   // result.snappedPosition → use instead of raw drag position
 //   // result.guides → list of lines to paint on the canvas overlay
 
+// ignore_for_file: unused_local_variable
+
 import 'package:flutter/material.dart';
 import '../../models/canvas_item.dart';
 

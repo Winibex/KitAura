@@ -5,6 +5,7 @@
 // export tracking, title management. View only builds UI.
 
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -101,12 +102,18 @@ class CvEditorController extends ChangeNotifier {
       final json = await CvTemplateData.loadTemplateJson(docId);
       canvas.applyTemplateJson(json);
     } else {
-      // Firestore document
+      // Firestore document — already has user's content, skip autofill
       state = state.copyWith(firestoreDocId: docId);
       await _loadFromFirestore(docId);
+
+      // Preload fonts and finish — NO autofill for existing docs
+      await canvas.preloadFonts();
+      state = state.copyWith(isTemplateLoading: false);
+      debugPrint('📝 [CvEditor] Initialization complete (existing doc, no autofill)');
+      return;
     }
 
-    // Autofill from saved profile
+    // Autofill only runs for NEW templates (blank or from template picker)
     await _tryAutofillFromProfile();
 
     // Preload fonts
@@ -178,6 +185,9 @@ class CvEditorController extends ChangeNotifier {
   // ─── AUTO-SAVE ────────────────────────────────────────────────────────
 
   void markDirty() {
+    if (state.isSaved) {
+      debugPrint('📝 [CvEditor] Marked dirty — will auto-save in 2s');
+    }
     state = state.copyWith(isSaved: false);
     _autoSaveTimer?.cancel();
     _autoSaveTimer = Timer(const Duration(seconds: 2), _autoSave);
@@ -206,6 +216,7 @@ class CvEditorController extends ChangeNotifier {
           );
           return;
         }
+        data['createdAt'] = FieldValue.serverTimestamp();
         final docRef = await FirebaseService.createCV(_uid!, data);
         state = state.copyWith(firestoreDocId: docRef.id);
         debugPrint('📝 [CvEditor] Created new CV: ${docRef.id}');
@@ -213,6 +224,11 @@ class CvEditorController extends ChangeNotifier {
 
       state = state.copyWith(isSaved: true, isSaving: false, error: null);
       debugPrint('📝 [CvEditor] Auto-save complete');
+
+      // If user edited during save, schedule another save
+      if (!state.isSaved) {
+        _autoSaveTimer = Timer(const Duration(seconds: 2), _autoSave);
+      }
     } catch (e) {
       debugPrint('📝 [CvEditor] Auto-save failed: $e');
       state = state.copyWith(isSaving: false, error: 'Save failed: $e');
