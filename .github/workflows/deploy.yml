@@ -46,7 +46,7 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           server-dir: ${{ secrets.FTP_SERVER_DIR }}
           protocol: ftps
-          port: 21
+          port: 990
           local-dir: ./build/web/
           dangerous-clean-slate: false
           timeout: 240000
