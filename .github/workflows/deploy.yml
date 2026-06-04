@@ -38,15 +38,14 @@ jobs:
             --tree-shake-icons \
             --source-maps
 
-      - name: Deploy to Hostinger via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: Deploy to Hostinger via SFTP
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ${{ secrets.FTP_SERVER_DIR }}
-          protocol: ftps
-          port: 990
-          local-dir: ./build/web/
-          dangerous-clean-slate: false
-          timeout: 240000
+          username: ${{ secrets.SSH_USERNAME }}
+          server: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          local_path: ./build/web/*
+          remote_path: ${{ secrets.FTP_SERVER_DIR }}
+          sftp_only: true
+          delete_remote_files: true
