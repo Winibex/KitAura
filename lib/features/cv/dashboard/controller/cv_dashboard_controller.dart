@@ -7,7 +7,7 @@ import '../../../../shared/services/firebase_service.dart';
 import '../model/cv_summary_model.dart';
 
 // Dashboard state
-class DashboardState {
+class CvDashboardState {
   final bool isLoading;
   final String? error;
   final List<CvSummaryModel> cvs;
@@ -20,7 +20,7 @@ class DashboardState {
   final int exportsPerMonth;
   final int aiFillsPerMonth;
 
-  DashboardState({
+  CvDashboardState({
     this.isLoading = false,
     this.error,
     this.cvs = const [],
@@ -36,7 +36,7 @@ class DashboardState {
   bool get canExport => isPro || exportCount < exportsPerMonth;
   bool get canCreateCV => isPro || cvs.length < maxCvs;
 
-  DashboardState copyWith({
+  CvDashboardState copyWith({
     bool? isLoading,
     String? error,
     List<CvSummaryModel>? cvs,
@@ -48,7 +48,7 @@ class DashboardState {
     int? aiFillsPerMonth,
   })
   {
-    return DashboardState(
+    return CvDashboardState(
       isLoading: isLoading ?? this.isLoading,
       error: error,
       cvs: cvs ?? this.cvs,
@@ -62,8 +62,8 @@ class DashboardState {
   }
 }
 
-class DashboardController extends StateNotifier<DashboardState> {
-  DashboardController() : super(DashboardState());
+class DashboardController extends StateNotifier<CvDashboardState> {
+  DashboardController() : super(CvDashboardState());
 
   bool _hasLoaded = false;
 
@@ -183,6 +183,6 @@ class DashboardController extends StateNotifier<DashboardState> {
 
 // Providers
 final cvDashboardControllerProvider =
-StateNotifierProvider<DashboardController, DashboardState>(
+StateNotifierProvider<DashboardController, CvDashboardState>(
       (ref) => DashboardController(),
 );

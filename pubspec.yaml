@@ -69,6 +69,7 @@ dependencies:
 
   # LOADING
   shimmer: ^3.0.0
+  skeletonizer: ^2.1.3
 
   # UTILITIES
   uuid: ^4.5.3

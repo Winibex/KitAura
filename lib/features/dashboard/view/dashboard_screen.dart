@@ -8,11 +8,13 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_fonts.dart';
 import '../../../core/constants/app_routes.dart';
 import '../../../shared/widgets/app_sidebar.dart';
 import '../../../shared/widgets/app_top_bar.dart';
+import '../../../shared/widgets/go_pro_banners.dart';
 import '../../settings/view/upgrade_modal.dart';
 import '../controller/dashboard_controller.dart';
 
@@ -26,10 +28,11 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
+  @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      if (mounted) ref.read(dashboardControllerProvider.notifier).loadDashboard();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(dashboardControllerProvider.notifier).loadDashboard(force: true);
     });
   }
 
@@ -64,29 +67,35 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildContent(DashboardState state) {
-    if (state.isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppColors.darkRaspberry),
-      );
-    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildGreeting(state),
-          const SizedBox(height: 28),
-          _buildStatCards(state),
-          const SizedBox(height: 32),
-          _buildQuickStart(),
-          const SizedBox(height: 32),
-          _buildRecentActivity(state),
-          const SizedBox(height: 32),
-          if (!state.isPro)
-            _buildUpgradeBanner(),
-          const SizedBox(height: 40),
-        ],
+      child: Skeletonizer(
+        enabled: state.isLoading,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildGreeting(state),
+            const SizedBox(height: 28),
+            _buildStatCards(state),
+            const SizedBox(height: 32),
+            _buildQuickStart(state),
+            const SizedBox(height: 32),
+            _buildRecentActivity(state),
+            const SizedBox(height: 32),
+              GoProDashboardBanner(
+                plan: state.plan,
+                trialActive: state.trialActive,
+                trialDaysRemaining: state.trialDaysRemaining,
+                onStartTrial: () => showTrialDialog(context, ref),
+                onUpgrade: () => showDialog(
+                  context: context,
+                  builder: (_) => const UpgradeModal(),
+                ),
+              ),
+            const SizedBox(height: 40),
+          ],
+        ),
       ),
     );
   }
@@ -96,6 +105,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget _buildGreeting(DashboardState state) {
     final hour = DateTime.now().hour;
     final greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
 
     return Row(
       children: [
@@ -131,6 +141,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   // ─── STAT CARDS ────────────────────────────────────────────────────────
 
   Widget _buildStatCards(DashboardState state) {
+
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final isNarrow = constraints.maxWidth < 800;
@@ -271,7 +283,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   // ─── QUICK START CARDS ─────────────────────────────────────────────────
 
-  Widget _buildQuickStart() {
+  Widget _buildQuickStart(DashboardState state) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -294,71 +306,72 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final isNarrow = constraints.maxWidth < 700;
-            final cards = [
-              _QuickStartData(
-                icon: LucideIcons.filePlus,
-                title: 'Create CV',
-                subtitle: 'Professional resume builder',
-                color: AppColors.darkRaspberry,
-                onTap: () => context.go(AppRoutes.cvTemplates),
-              ),
-              _QuickStartData(
-                icon: LucideIcons.fileText,
-                title: 'Write Proposal',
-                subtitle: 'Win more clients',
-                color: AppColors.dustyMauve,
-                onTap: () {}, // TODO
-                comingSoon: true,
-              ),
-              _QuickStartData(
-                icon: LucideIcons.mail,
-                title: 'Cover Letter',
-                subtitle: 'Stand out from the crowd',
-                color: AppColors.magentaBloom,
-                onTap: () => context.go(AppRoutes.clTemplates),
-                comingSoon: false,
-              ),
-              _QuickStartData(
-                icon: LucideIcons.linkedin,
-                title: 'LinkedIn Summary',
-                subtitle: 'Optimize your profile',
-                color: AppColors.dustyRose,
-                onTap: () {}, // TODO
-                comingSoon: true,
-              ),
-            ];
 
-            if (isNarrow) {
-              return Column(
-                children: [
-                  Row(children: [
-                    Expanded(child: _buildQuickStartCard(cards[0])),
-                    const SizedBox(width: 12),
-                    Expanded(child: _buildQuickStartCard(cards[1])),
-                  ]),
-                  const SizedBox(height: 12),
-                  Row(children: [
-                    Expanded(child: _buildQuickStartCard(cards[2])),
-                    const SizedBox(width: 12),
-                    Expanded(child: _buildQuickStartCard(cards[3])),
-                  ]),
-                ],
-              );
-            }
-
-            return Row(
-              children: cards.map((c) => Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(right: c == cards.last ? 0 : 12),
-                  child: _buildQuickStartCard(c),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 700;
+              final cards = [
+                _QuickStartData(
+                  icon: LucideIcons.filePlus,
+                  title: 'Create CV',
+                  subtitle: 'Professional resume builder',
+                  color: AppColors.darkRaspberry,
+                  onTap: () => context.go(AppRoutes.cvTemplates),
                 ),
-              )).toList(),
-            );
-          },
-        ),
+                _QuickStartData(
+                  icon: LucideIcons.fileText,
+                  title: 'Write Proposal',
+                  subtitle: 'Win more clients',
+                  color: AppColors.dustyMauve,
+                  onTap: () {}, // TODO
+                  comingSoon: true,
+                ),
+                _QuickStartData(
+                  icon: LucideIcons.mail,
+                  title: 'Cover Letter',
+                  subtitle: 'Stand out from the crowd',
+                  color: AppColors.magentaBloom,
+                  onTap: () => context.go(AppRoutes.clTemplates),
+                  comingSoon: false,
+                ),
+                _QuickStartData(
+                  icon: LucideIcons.linkedin,
+                  title: 'LinkedIn Summary',
+                  subtitle: 'Optimize your profile',
+                  color: AppColors.dustyRose,
+                  onTap: () {}, // TODO
+                  comingSoon: true,
+                ),
+              ];
+
+              if (isNarrow) {
+                return Column(
+                  children: [
+                    Row(children: [
+                      Expanded(child: _buildQuickStartCard(cards[0])),
+                      const SizedBox(width: 12),
+                      Expanded(child: _buildQuickStartCard(cards[1])),
+                    ]),
+                    const SizedBox(height: 12),
+                    Row(children: [
+                      Expanded(child: _buildQuickStartCard(cards[2])),
+                      const SizedBox(width: 12),
+                      Expanded(child: _buildQuickStartCard(cards[3])),
+                    ]),
+                  ],
+                );
+              }
+
+              return Row(
+                children: cards.map((c) => Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(right: c == cards.last ? 0 : 12),
+                    child: _buildQuickStartCard(c),
+                  ),
+                )).toList(),
+              );
+            },
+          ),
       ],
     ).animate().fadeIn(duration: 300.ms, delay: 200.ms);
   }
@@ -528,6 +541,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ],
             ),
           )
+
         else
           Container(
             decoration: BoxDecoration(
@@ -670,82 +684,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
       ),
     );
-  }
-
-  // ─── UPGRADE BANNER ────────────────────────────────────────────────────
-
-  Widget _buildUpgradeBanner() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.darkRaspberry.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(LucideIcons.crown, color: AppColors.white, size: 22),
-          ),
-          const SizedBox(width: 20),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Unlock the full KitAura experience',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontFamily: AppFonts.poppins,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.white,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Unlimited exports · Unlimited AI · No watermark · All CV templates',
-                  style: TextStyle(fontSize: 13, color: Color(0xAAFFFFFF)),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 20),
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: () => showDialog(
-                context: context,
-                builder: (_) => const UpgradeModal(),
-              ),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Text(
-                  'Upgrade — \$7/mo',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontFamily: AppFonts.poppins,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.darkRaspberry,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    ).animate().fadeIn(duration: 300.ms, delay: 400.ms);
   }
 }
 

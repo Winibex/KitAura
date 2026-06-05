@@ -63,7 +63,8 @@ class ClaudeService {
     String? templateId,
     String? sectionTitle,
     String beforeText = '',
-  }) async {
+  }) async
+  {
     debugPrint('🤖 [ClaudeService] aiFillSection(section=$sectionType, tone=$tone)');
     try {
       final result = await _fn.httpsCallable('aiFill').call<Map<String, dynamic>>({
@@ -112,7 +113,8 @@ class ClaudeService {
     String? documentId,
     String? documentTitle,
     String? templateId,
-  }) async {
+  }) async
+  {
     debugPrint('🤖 [ClaudeService] aiRewriteSection(section=$sectionType, mode=$mode)');
     try {
       final result = await _fn.httpsCallable('aiRewrite').call<Map<String, dynamic>>({
@@ -143,7 +145,8 @@ class ClaudeService {
         String tool = 'cv',
         String? documentId,
         String? documentTitle,
-      }) async {
+      }) async
+  {
     if (sections.isEmpty) return const SpellcheckResult(corrections: []);
     debugPrint('🤖 [ClaudeService] spellcheckCV(${sections.length} sections)');
     try {
@@ -175,7 +178,8 @@ class ClaudeService {
   static Future<void> updateSpellcheckResult({
     required String activityId,
     required List<Map<String, dynamic>> corrections,
-  }) async {
+  }) async
+  {
     try {
       await _fn.httpsCallable('updateSpellcheckResult').call({
         'activityId': activityId,
@@ -209,7 +213,8 @@ class ClaudeService {
     required String tool,
     String? documentId,
     String? documentTitle,
-  }) async {
+  }) async
+  {
     await FirebaseFunctions.instanceFor(region: 'us-central1')
         .httpsCallable('trackExport')
         .call({
@@ -241,7 +246,8 @@ class ClaudeService {
     required String tool,
     required String documentId,
     String? documentTitle,
-  }) async {
+  }) async
+  {
     try {
       await _fn.httpsCallable('trackDocCreated').call({
         'tool': tool,
@@ -263,7 +269,8 @@ class ClaudeService {
     required String tool,
     required String documentId,
     String? documentTitle,
-  }) async {
+  }) async
+  {
     try {
       await _fn.httpsCallable('trackDocDeleted').call({
         'tool': tool,
@@ -275,4 +282,26 @@ class ClaudeService {
       debugPrint('🤖 [ClaudeService] trackDocDeleted failed (non-critical): $e');
     }
   }
+
+  /// Activates a 7-day free trial for the current user.
+  /// Cloud Function checks if trial was already used.
+  ///
+  /// Returns a map with: success, plan, trialEndDate, daysRemaining
+  /// Throws if trial already used or user is already Pro.
+  static Future<Map<String, dynamic>> activateTrial() async {
+    debugPrint('🤖 [ClaudeService] activateTrial');
+    try {
+      final result = await _fn.httpsCallable('activateTrial').call();
+      final data = Map<String, dynamic>.from(result.data as Map);
+      debugPrint('🤖 [ClaudeService] activateTrial OK — plan: ${data['plan']}');
+      return data;
+    } on FirebaseFunctionsException catch (e) {
+      debugPrint('🤖 [ClaudeService] activateTrial FAILED: ${e.code} ${e.message}');
+      throw _mapError(e);
+    } catch (e) {
+      debugPrint('🤖 [ClaudeService] activateTrial unexpected: $e');
+      throw 'Failed to activate trial. Please try again.';
+    }
+  }
+
 }

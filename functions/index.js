@@ -86,9 +86,10 @@ async function getSubWithCycleCheck(uid) {
 
   // Trial expiry check
   if (sub.plan === "trial" && sub.trialEndDate && now > sub.trialEndDate.toDate()) {
-    await ref.update({ trialActive: false });
-    sub.trialActive = false;
-  }
+       await ref.update({ plan: "free", trialActive: false });
+       sub.plan = "free";
+       sub.trialActive = false;
+     }
 
   // Billing cycle reset
   if (sub.cycleEndDate && now > sub.cycleEndDate.toDate()) {
@@ -207,7 +208,7 @@ exports.aiFill = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", timeo
 
   const sys = [{
     type: "text",
-    text: "You are an expert CV writer. Transform raw profile data into polished CV content.\n\n" +
+    text: `You are an expert ${tool === 'coverLetter' ? 'cover letter' : tool === 'proposal' ? 'proposal' : 'CV'} writer. Transform raw profile data into polished ${tool === 'coverLetter' ? 'cover letter' : tool === 'proposal' ? 'proposal' : 'CV'} content.\n\n` +
       "OUTPUT: Return ONLY a JSON object: {\"heading\":\"UPPERCASE TITLE\",\"entries\":[{\"title\":\"line\",\"lines\":[\"bullet\"]}]}\n\n" +
       "RULES: No markdown/code fences. Start bullets with '• '. Never invent data. Max ~120 words.\n" +
       "Tone: " + tone + ". Level: " + experienceLevel + ".\n\n" +
@@ -320,7 +321,7 @@ exports.aiRewrite = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", ti
   const uid = req.auth.uid;
   const t0 = Date.now();
   const { text="", sectionType="custom", mode="professional", customInstruction=null,
-    tool="cv", documentId=null, documentTitle=null, templateId=null } = req.data || {};
+    tool="cv", documentId=null, documentTitle=null, templateId=null, sectionTitle=null } = req.data || {};
 
   if (!text || !sectionType) throw new HttpsError("invalid-argument", "Missing text or sectionType");
 
@@ -366,7 +367,7 @@ exports.aiRewrite = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", ti
   const cost = calculateCost(usage, rates);
   const actId = await writeTracking({ uid,
     data: { tool, type:"aiRewrite", status:"success", model:MODEL_SONNET,
-      documentId, documentTitle, templateId, sectionType, sectionTitle:null,
+      documentId, documentTitle, templateId, sectionType, sectionTitle:sectionTitle,
       rewriteOptions:{ mode, scope:"section" },
       spellcheckSummary:null, errorMessage:null, durationMs:Date.now()-t0 },
     counterField:"aiRewriteCount", summaryField:"totalAiRewrites",

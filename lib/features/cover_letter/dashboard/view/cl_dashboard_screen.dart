@@ -4,13 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_fonts.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../../../shared/widgets/app_sidebar.dart';
 import '../../../../shared/widgets/app_top_bar.dart';
-import '../../../../shared/widgets/shimmer_card.dart';
+import '../../../../shared/widgets/go_pro_banners.dart';
 import '../../../../shared/widgets/stat_card.dart';
 import '../../../settings/view/upgrade_modal.dart';
 import '../controller/cl_dashboard_controller.dart';
@@ -78,25 +79,35 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
 
   Widget _buildScrollableContent() {
     final state = ref.watch(clDashboardControllerProvider);
-    return Column(
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildStatCards(state),
-                const SizedBox(height: 24),
-                _buildCLSection(state),
-                const SizedBox(height: 24),
-                _buildUpgradeBanner(state),
-                const SizedBox(height: 40),
-              ],
+    return Skeletonizer(
+      enabled: state.isLoading,
+      child: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildStatCards(state),
+                  const SizedBox(height: 24),
+                  _buildCLSection(state),
+                  const SizedBox(height: 24),
+                    GoProToolBanner(
+                      toolLabel: 'CVs',  // or 'cover letters' for CL dashboard
+                      onStartTrial: () => showTrialDialog(context, ref),
+                      onUpgrade: () => showDialog(
+                        context: context,
+                        builder: (_) => const UpgradeModal(),
+                      ),
+                    ),
+                  const SizedBox(height: 40),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -131,7 +142,13 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
                 ? 'Unlimited'
                 : '${state.aiFillsPerMonth - state.aiUsageCount} remaining',
           ),
-          _buildGoProCard(),
+            GoProStatCard(
+              onStartTrial: () => showTrialDialog(context, ref),
+              onUpgrade: () => showDialog(
+                context: context,
+                builder: (_) => const UpgradeModal(),
+              ),
+            ),
         ];
 
         if (constraints.maxWidth < 700) {
@@ -156,50 +173,6 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
           ],
         );
       },
-    );
-  }
-
-  Widget _buildGoProCard() {
-    return Container(
-      height: 140,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.darkRaspberry, AppColors.magentaBloom],
-        ),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Icon(LucideIcons.crown, color: AppColors.white, size: 18),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Go Pro',
-                  style: TextStyle(color: AppColors.white, fontSize: 18,
-                      fontFamily: AppFonts.poppins, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 2),
-              const Text('Unlimited everything',
-                  style: TextStyle(color: Color(0xAAFFFFFF), fontSize: 11, fontFamily: AppFonts.openSans)),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () => showDialog(context: context, builder: (_) => const UpgradeModal()),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                  decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(999)),
-                  child: const Text('Upgrade — \$7/mo',
-                      style: TextStyle(color: AppColors.darkRaspberry, fontSize: 11,
-                          fontFamily: AppFonts.poppins, fontWeight: FontWeight.w700)),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 
@@ -233,25 +206,14 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
           ],
         ),
         const SizedBox(height: 20),
-        if (state.isLoading)
-          _buildShimmerGrid()
-        else if (state.coverLetters.isEmpty)
+        // if (state.isLoading)
+        //   _buildShimmerGrid()
+        // else
+          if (state.coverLetters.isEmpty)
           _buildEmptyState()
         else
           RepaintBoundary(child: _buildCLGrid(state)),
       ],
-    );
-  }
-
-  Widget _buildShimmerGrid() {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4, crossAxisSpacing: 16, mainAxisSpacing: 16, childAspectRatio: 0.85,
-      ),
-      itemCount: 4,
-      itemBuilder: (_, _) => const CvCardShimmer(),
     );
   }
 
@@ -335,55 +297,4 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
     );
   }
 
-  // ─── UPGRADE BANNER ───────────────────────────────────────────────────
-
-  Widget _buildUpgradeBanner(ClDashboardState state) {
-    if (state.isPro) return const SizedBox.shrink();
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 28),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.centerLeft, end: Alignment.centerRight,
-          colors: [AppColors.darkRaspberry, AppColors.magentaBloom],
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          const Icon(LucideIcons.crown, color: AppColors.white, size: 22),
-          const SizedBox(width: 16),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Unlock unlimited cover letters',
-                    style: TextStyle(color: AppColors.white, fontSize: 20,
-                        fontFamily: AppFonts.poppins, fontWeight: FontWeight.bold)),
-                SizedBox(height: 4),
-                Text('Unlimited exports · AI Design · Priority generation',
-                    style: TextStyle(color: Color(0xAAFFFFFF), fontSize: 13, fontFamily: AppFonts.openSans)),
-              ],
-            ),
-          ),
-          const SizedBox(width: 24),
-          GestureDetector(
-            onTap: () => showDialog(context: context, builder: (_) => const UpgradeModal()),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(999),
-                boxShadow: const [BoxShadow(color: Color(0x22000000), blurRadius: 8, offset: Offset(0, 2))],
-              ),
-              child: const Text('Upgrade to Pro — \$7/mo',
-                  style: TextStyle(color: AppColors.darkRaspberry, fontSize: 14,
-                      fontFamily: AppFonts.poppins, fontWeight: FontWeight.bold)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

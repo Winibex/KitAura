@@ -10,7 +10,9 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_fonts.dart';
 import '../../core/constants/app_routes.dart';
+import '../../features/dashboard/controller/dashboard_controller.dart';
 import '../../features/settings/view/upgrade_modal.dart';
+import 'go_pro_banners.dart';
 
 enum AppPage { dashboard, cvDashboard, cvTemplates, proposal, coverLetter, linkedin, settings }
 
@@ -84,16 +86,23 @@ class AppSidebar extends ConsumerWidget {
                     isActive: active == AppPage.settings,
                     onTap: () => context.go(AppRoutes.settings),
                   ),
-                  _SidebarItem(
-                    icon: LucideIcons.crown,
-                    label: 'Upgrade to Pro',
-                    isActive: false,
-                    isUpgrade: true,
-                    onTap: () => showDialog(
-                      context: context,
-                      builder: (_) => const UpgradeModal(),
-                    ),
-                  ),
+                  Builder(builder: (context) {
+                    final state = ref.watch(dashboardControllerProvider);
+                    if (state.isPro) return const SizedBox.shrink();
+                    final canTrial = !state.trialUsed && state.plan == 'free';
+                    return _SidebarItem(
+                      icon: canTrial ? LucideIcons.sparkles : LucideIcons.crown,
+                      label: canTrial ? 'Start Free Trial' : 'Upgrade to Pro',
+                      isActive: false,
+                      isUpgrade: true,
+                      onTap: canTrial
+                          ? () => showTrialDialog(context, ref)
+                          : () => showDialog(
+                        context: context,
+                        builder: (_) => const UpgradeModal(),
+                      ),
+                    );
+                  }),
                 ],
               ),
             ),

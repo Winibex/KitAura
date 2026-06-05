@@ -11,6 +11,7 @@ class DashboardState {
   final String displayName;
   final String plan;
   final bool trialActive;
+  final bool trialUsed;
   final int? trialDaysRemaining;
   final int exportCount;
   final int aiFillCount;
@@ -34,6 +35,7 @@ class DashboardState {
     this.displayName = '',
     this.plan = 'free',
     this.trialActive = false,
+    this.trialUsed = false,
     this.trialDaysRemaining,
     this.exportCount = 0,
     this.aiFillCount = 0,
@@ -62,6 +64,7 @@ class DashboardState {
     String? displayName,
     String? plan,
     bool? trialActive,
+    bool? trialUsed,
     int? trialDaysRemaining,
     int? exportCount,
     int? aiFillCount,
@@ -85,6 +88,7 @@ class DashboardState {
       displayName: displayName ?? this.displayName,
       plan: plan ?? this.plan,
       trialActive: trialActive ?? this.trialActive,
+      trialUsed: trialUsed ?? this.trialUsed,
       trialDaysRemaining: trialDaysRemaining ?? this.trialDaysRemaining,
       exportCount: exportCount ?? this.exportCount,
       aiFillCount: aiFillCount ?? this.aiFillCount,
@@ -170,6 +174,7 @@ class DashboardController extends StateNotifier<DashboardState> {
         state = state.copyWith(
           plan: data['plan'] ?? 'free',
           trialActive: data['trialActive'] ?? false,
+          trialUsed: data['trialUsed'] ?? false,
           trialDaysRemaining: trialDays,
           exportCount: data['exportCount'] ?? 0,
           aiFillCount: data['aiFillCount'] ?? 0,
