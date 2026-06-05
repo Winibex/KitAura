@@ -455,3 +455,165 @@ exports.trackExport = onCall({ region: "us-central1", timeoutSeconds: 30 }, asyn
   await batch.commit();
   return { success: true };
 });
+
+// ════════════════════════════════════════════════════════════════════════
+// 5. TRACK LOGIN — increment login counters
+// ════════════════════════════════════════════════════════════════════════
+//
+// Called by frontend on every sign-in (email, Google).
+// Updates: analytics/summary.loginCount + lastLoginAt + lastActiveAt
+//          analytics/{YYYY-MM}.logins
+
+exports.trackLogin = onCall({ region: "us-central1", timeoutSeconds: 15 }, async (req) => {
+  if (!req.auth) throw new HttpsError("unauthenticated", "Sign in required.");
+  const uid = req.auth.uid;
+
+  const batch = db.batch();
+  const now = admin.firestore.Timestamp.fromDate(new Date());
+  const FV = admin.firestore.FieldValue;
+  const month = new Date().toISOString().slice(0, 7);
+
+  // 1. Lifetime summary
+  const sumRef = db.doc(`users/${uid}/analytics/summary`);
+  batch.set(sumRef, {
+    lastLoginAt: now,
+    loginCount: FV.increment(1),
+    lastActiveAt: now,
+  }, { merge: true });
+
+  // 2. Monthly analytics
+  const monRef = db.doc(`users/${uid}/analytics/${month}`);
+  batch.set(monRef, {
+    month,
+    logins: FV.increment(1),
+    updatedAt: now,
+  }, { merge: true });
+
+  await batch.commit();
+  return { success: true };
+});
+
+// ════════════════════════════════════════════════════════════════════════
+// 6. TRACK DOC CREATED — increment counters when CV/CL/Proposal is created
+// ════════════════════════════════════════════════════════════════════════
+//
+// Called by frontend AFTER successfully creating a document.
+// Updates: subscription.{cvCount|coverLetterCount|proposalCount} (+1)
+//          analytics/summary.total{Cvs|CoverLetters|Proposals}Created (+1)
+//          analytics/{YYYY-MM}.{cvs|coverLetters|proposals}Created (+1)
+//          transactions/{txId} (type: cvCreated|coverLetterCreated|proposalCreated)
+
+exports.trackDocCreated = onCall({ region: "us-central1", timeoutSeconds: 30 }, async (req) => {
+  if (!req.auth) throw new HttpsError("unauthenticated", "Sign in required.");
+  const uid = req.auth.uid;
+  const { tool = "cv", documentId = null, documentTitle = null } = req.data || {};
+
+  // Validate tool
+  const toolMap = {
+    cv:          { sub: "cvCount",          sum: "totalCvsCreated",          mon: "cvsCreated",          tx: "cvCreated" },
+    coverLetter: { sub: "coverLetterCount", sum: "totalCoverLettersCreated", mon: "coverLettersCreated", tx: "coverLetterCreated" },
+    proposal:    { sub: "proposalCount",    sum: "totalProposalsCreated",    mon: "proposalsCreated",    tx: "proposalCreated" },
+  };
+  const fields = toolMap[tool];
+  if (!fields) throw new HttpsError("invalid-argument", `Unknown tool: ${tool}`);
+
+  const batch = db.batch();
+  const now = admin.firestore.Timestamp.fromDate(new Date());
+  const FV = admin.firestore.FieldValue;
+  const month = new Date().toISOString().slice(0, 7);
+
+  // 1. Subscription doc counter
+  const subRef = db.doc(`users/${uid}/data/subscription`);
+  batch.update(subRef, { [fields.sub]: FV.increment(1) });
+
+  // 2. Analytics summary
+  const sumRef = db.doc(`users/${uid}/analytics/summary`);
+  batch.set(sumRef, {
+    [fields.sum]: FV.increment(1),
+    lastActiveAt: now,
+  }, { merge: true });
+
+  // 3. Monthly analytics
+  const monRef = db.doc(`users/${uid}/analytics/${month}`);
+  batch.set(monRef, {
+    month,
+    [fields.mon]: FV.increment(1),
+    updatedAt: now,
+  }, { merge: true });
+
+  // 4. Transaction log
+  const txRef = db.collection(`users/${uid}/transactions`).doc();
+  batch.set(txRef, {
+    id: txRef.id,
+    type: fields.tx,
+    tool,
+    documentId,
+    documentTitle,
+    metadata: {},
+    createdAt: now,
+  });
+
+  await batch.commit();
+  return { success: true };
+});
+
+// ════════════════════════════════════════════════════════════════════════
+// 7. TRACK DOC DELETED — decrement counter + log deletion
+// ════════════════════════════════════════════════════════════════════════
+//
+// Called by frontend BEFORE deleting a document (or right after).
+// Option A behavior: deleting frees up a slot so user can create another.
+//
+// Updates: subscription.{cvCount|coverLetterCount|proposalCount} (-1, min 0)
+//          transactions/{txId} (type: cvDeleted|coverLetterDeleted|proposalDeleted)
+//
+// NOTE: We do NOT decrement lifetime totals in analytics/summary —
+//       those reflect "how many were ever created" and shouldn't go down.
+
+exports.trackDocDeleted = onCall({ region: "us-central1", timeoutSeconds: 30 }, async (req) => {
+  if (!req.auth) throw new HttpsError("unauthenticated", "Sign in required.");
+  const uid = req.auth.uid;
+  const { tool = "cv", documentId = null, documentTitle = null } = req.data || {};
+
+  const toolMap = {
+    cv:          { sub: "cvCount",          tx: "cvDeleted" },
+    coverLetter: { sub: "coverLetterCount", tx: "coverLetterDeleted" },
+    proposal:    { sub: "proposalCount",    tx: "proposalDeleted" },
+  };
+  const fields = toolMap[tool];
+  if (!fields) throw new HttpsError("invalid-argument", `Unknown tool: ${tool}`);
+
+  // Read current count first so we don't go negative
+  const subRef = db.doc(`users/${uid}/data/subscription`);
+  const subSnap = await subRef.get();
+  if (!subSnap.exists) throw new HttpsError("not-found", "No subscription.");
+  const currentCount = subSnap.data()[fields.sub] || 0;
+
+  const batch = db.batch();
+  const now = admin.firestore.Timestamp.fromDate(new Date());
+  const FV = admin.firestore.FieldValue;
+
+  // 1. Decrement subscription counter (clamp to 0 — defensive)
+  if (currentCount > 0) {
+    batch.update(subRef, { [fields.sub]: FV.increment(-1) });
+  }
+
+  // 2. Update last active timestamp on summary
+  const sumRef = db.doc(`users/${uid}/analytics/summary`);
+  batch.set(sumRef, { lastActiveAt: now }, { merge: true });
+
+  // 3. Transaction log
+  const txRef = db.collection(`users/${uid}/transactions`).doc();
+  batch.set(txRef, {
+    id: txRef.id,
+    type: fields.tx,
+    tool,
+    documentId,
+    documentTitle,
+    metadata: {},
+    createdAt: now,
+  });
+
+  await batch.commit();
+  return { success: true };
+});
