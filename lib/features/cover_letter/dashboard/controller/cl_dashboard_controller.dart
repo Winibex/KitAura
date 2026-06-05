@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import '../../../../shared/ai/claude_service.dart';
 import '../../../../shared/services/firebase_service.dart';
 import '../model/cl_summary_model.dart';
 
@@ -124,12 +125,26 @@ class ClDashboardController extends StateNotifier<ClDashboardState> {
   }
 
   Future<void> deleteCL(String clId) async {
+    String title = 'Untitled';
     try {
+      final cl = state.coverLetters.firstWhere((c) => c.id == clId);
+      title = cl.title;
+    } catch (_) {}
+
+    try {
+      state = state.copyWith(
+        coverLetters: state.coverLetters.where((c) => c.id != clId).toList(),
+      );
       await FirebaseService.deleteCoverLetter(_uid!, clId);
-      final updated = state.coverLetters.where((cl) => cl.id != clId).toList();
-      state = state.copyWith(coverLetters: updated);
+
+      ClaudeService.trackDocDeleted(
+        tool: 'coverLetter',
+        documentId: clId,
+        documentTitle: title,
+      );
     } catch (e) {
-      debugPrint('deleteCL error: $e');
+      debugPrint('Delete cover letter failed: $e');
+      await loadDashboard(force: true);
     }
   }
 

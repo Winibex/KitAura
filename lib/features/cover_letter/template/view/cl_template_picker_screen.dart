@@ -56,93 +56,31 @@ class ClTemplatePickerScreen extends ConsumerWidget {
   // ─── HEADER ───────────────────────────────────────────────────────────
 
   Widget _buildHeader(BuildContext context) {
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Choose a Cover Letter Template',
-                style: TextStyle(
-                  color: AppColors.prussianBlue,
-                  fontSize: 26,
-                  fontFamily: AppFonts.poppins,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 6),
-              Text(
-                'Start with a professionally designed layout or use AI to generate one',
-                style: TextStyle(
-                  color: AppColors.slateGrey,
-                  fontSize: 14,
-                  fontFamily: AppFonts.openSans,
-                ),
-              ),
-            ],
+        Text(
+          'Choose a Cover Letter Template',
+          style: TextStyle(
+            color: AppColors.prussianBlue,
+            fontSize: 26,
+            fontFamily: AppFonts.poppins,
+            fontWeight: FontWeight.bold,
           ),
         ),
-        MouseRegion(
-          cursor: SystemMouseCursors.click,
-          child: GestureDetector(
-            onTap: () => _showAiDesignDialog(context),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-              decoration: BoxDecoration(
-                color: AppColors.darkRaspberry,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(LucideIcons.sparkles, size: 16, color: AppColors.white),
-                  SizedBox(width: 8),
-                  Text(
-                    'AI Design',
-                    style: TextStyle(
-                      color: AppColors.white,
-                      fontSize: 13,
-                      fontFamily: AppFonts.poppins,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+        SizedBox(height: 6),
+        Text(
+          'Start with a professionally designed layout or use AI to generate one',
+          style: TextStyle(
+            color: AppColors.slateGrey,
+            fontSize: 14,
+            fontFamily: AppFonts.openSans,
           ),
         ),
       ],
     );
   }
 
-  void _showAiDesignDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(LucideIcons.sparkles, size: 20, color: AppColors.darkRaspberry),
-            SizedBox(width: 8),
-            Text('AI Design',
-                style: TextStyle(fontFamily: AppFonts.poppins, fontWeight: FontWeight.bold, color: AppColors.prussianBlue)),
-          ],
-        ),
-        content: const Text(
-          'AI Design will generate a complete cover letter tailored to your target role and company. This feature is coming soon!',
-          style: TextStyle(fontFamily: AppFonts.openSans, color: AppColors.slateGrey),
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
 
   // ─── FILTERS ──────────────────────────────────────────────────────────
 
@@ -281,7 +219,6 @@ class ClTemplatePickerScreen extends ConsumerWidget {
       builder: (_) => ClTemplatePreviewModal(
         info: info,
         onUse: () {
-          Navigator.pop(context);
           context.go('/cover-letters/edit/${info.id}');
         },
       ),

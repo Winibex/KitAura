@@ -16,7 +16,7 @@
       "flipY": false,
       "delta": [
         {
-          "insert": "Your Full Name\n",
+          "insert": "Your Full Name",
           "attributes": {
             "bold": true,
             "size": "18",
@@ -24,18 +24,27 @@
           }
         },
         {
-          "insert": "Senior Software Engineer\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "Senior Software Engineer",
           "attributes": {
             "size": "12",
             "color": "#0F766E"
           }
         },
         {
-          "insert": "email@example.com | github.com/you | linkedin.com/in/you | yoursite.com\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "email@example.com | github.com/you | linkedin.com/in/you | yoursite.com",
           "attributes": {
             "size": "10",
             "color": "#555555"
           }
+        },
+        {
+          "insert": "\n"
         }
       ],
       "sectionType": "senderAddress"
@@ -69,11 +78,14 @@
       "flipY": false,
       "delta": [
         {
-          "insert": "January 15, 2026\n",
+          "insert": "January 15, 2026",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
+        },
+        {
+          "insert": "\n"
         }
       ],
       "sectionType": "dateLine"
@@ -93,7 +105,7 @@
       "flipY": false,
       "delta": [
         {
-          "insert": "Hiring Team\n",
+          "insert": "Hiring Team",
           "attributes": {
             "bold": true,
             "size": "11",
@@ -101,18 +113,27 @@
           }
         },
         {
-          "insert": "[Company Name]\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "[Company Name]",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "[City, State]\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "[City, State]",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
+        },
+        {
+          "insert": "\n"
         }
       ],
       "sectionType": "recipientAddress"
@@ -132,11 +153,14 @@
       "flipY": false,
       "delta": [
         {
-          "insert": "Hi [Company Name] Team,\n",
+          "insert": "Hi [Company Name] Team,",
           "attributes": {
             "size": "12",
             "color": "#1A1A1A"
           }
+        },
+        {
+          "insert": "\n"
         }
       ],
       "sectionType": "salutation"
@@ -156,74 +180,83 @@
       "flipY": false,
       "delta": [
         {
-          "insert": "I'm applying for the [Position Title] role at [Company Name]. After exploring your [product/tech blog/github], I'm excited about the engineering challenges you're solving — particularly [specific technical area or problem].\n",
+          "insert": "I'm applying for the [Position Title] role at [Company Name]. After exploring your [product/tech blog/github], I'm excited about the engineering challenges you're solving \u2014 particularly [specific technical area or problem].",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "\n"
+        },
+        {
+          "insert": "A bit about what I bring to the table:",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "A bit about what I bring to the table:\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "\u2022 [X years] building [type of systems \u2014 e.g., distributed systems at scale, mobile apps with millions of users]",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "• [X years] building [type of systems — e.g., distributed systems at scale, mobile apps with millions of users]\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "\u2022 Deep experience with [Tech 1, Tech 2, Tech 3] \u2014 your stack matches my strengths",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "• Deep experience with [Tech 1, Tech 2, Tech 3] — your stack matches my strengths\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "\u2022 Led [specific project] that [measurable outcome \u2014 e.g., reduced latency by 60%, scaled to 1M users]",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "• Led [specific project] that [measurable outcome — e.g., reduced latency by 60%, scaled to 1M users]\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "\n"
+        },
+        {
+          "insert": "Beyond the code, I care about [engineering culture/practices]. I've open-sourced [project name] (link) which has [stars/users], and I write about [topic] at [blog/medium].",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "\n"
+        },
+        {
+          "insert": "I'd love to chat about how I can contribute. Code samples and references available on request.",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "Beyond the code, I care about [engineering culture/practices]. I've open-sourced [project name] (link) which has [stars/users], and I write about [topic] at [blog/medium].\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
-        },
-        {
-          "insert": "\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
-        },
-        {
-          "insert": "I'd love to chat about how I can contribute. Code samples and references available on request.\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
+          "insert": "\n"
         }
       ],
       "sectionType": "coverLetterBody"
@@ -243,11 +276,14 @@
       "flipY": false,
       "delta": [
         {
-          "insert": "Thanks,\n",
+          "insert": "Thanks,",
           "attributes": {
             "size": "12",
             "color": "#1A1A1A"
           }
+        },
+        {
+          "insert": "\n"
         }
       ],
       "sectionType": "closing"
@@ -267,12 +303,15 @@
       "flipY": false,
       "delta": [
         {
-          "insert": "Your Name\n",
+          "insert": "Your Name",
           "attributes": {
             "bold": true,
             "size": "12",
             "color": "#0F766E"
           }
+        },
+        {
+          "insert": "\n"
         }
       ],
       "sectionType": "signature"

@@ -29,6 +29,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:web/web.dart' as web;
 
 class FirebaseService {
   // Private constructor — this class is a pure static utility; never instantiate it.
@@ -187,8 +188,8 @@ class FirebaseService {
       'totalCvsCreated': 0,
       'lastActiveAt':    now,
       'signupSource':    signupSource,
-      'device':          null,
-      'browser':         null,
+      'device':          _detectDevice(),
+      'browser':         _detectBrowser(),
     });
 
     // 4. ── Preferences — sensible defaults ───────────────────────────────────
@@ -209,7 +210,8 @@ class FirebaseService {
         'exports':        0,
         'aiFills':        0,
         'cvsCreated':     0,
-        'exportedCvIds':  <String>[],
+        'exportedDocIds': <String>[],
+        // 'exportedCvIds':  <String>[],
         'updatedAt':      now,
       },
     );
@@ -344,43 +346,6 @@ class FirebaseService {
   static Future<DocumentSnapshot> getAnalyticsSummary(String uid) async =>
       await _analyticsSummaryDoc(uid).get();
 
-  // ---------------------------------------------------------------------------
-  // trackLogin
-  //
-  // Updates both the lifetime summary and the current-month document in a
-  // single batch. Called on every sign-in (including Google).
-  // Uses merge:true so the monthly document is created automatically if it
-  // doesn't exist yet (e.g. first login of a new month).
-  // ---------------------------------------------------------------------------
-
-  static Future<void> trackLogin(String uid) async {
-    final batch = _db.batch();
-    final now   = Timestamp.fromDate(DateTime.now());
-
-    // Lifetime summary — increment login counter and update last-seen timestamps.
-    batch.set(
-      _analyticsSummaryDoc(uid),
-      {
-        'lastLoginAt':  now,
-        'loginCount':   FieldValue.increment(1),
-        'lastActiveAt': now,
-      },
-      SetOptions(merge: true),
-    );
-
-    // Current-month document — increment this month's login tally.
-    batch.set(
-      _monthlyAnalyticsDoc(uid, _currentMonth),
-      {
-        'month':     _currentMonth,
-        'logins':    FieldValue.increment(1),
-        'updatedAt': now,
-      },
-      SetOptions(merge: true),
-    );
-
-    await batch.commit();
-  }
 
   // ===========================================================================
   // MONTHLY ANALYTICS  —  users/{uid}/analytics/{YYYY-MM}
@@ -430,16 +395,6 @@ class FirebaseService {
     await _cvsCollection(uid).doc(cvId).delete();
   }
 
-  /// Deletes a CV AND decrements cvCount atomically.
-  static Future<void> deleteCVWithCount(String uid, String cvId) async {
-    final batch = _db.batch();
-    batch.delete(_cvsCollection(uid).doc(cvId));
-    batch.update(_subscriptionDoc(uid), {
-      'cvCount': FieldValue.increment(-1),
-    });
-    await batch.commit();
-  }
-
   /// Fetches a single CV document snapshot.
   static Future<DocumentSnapshot> getCV(String uid, String cvId) async {
     return await _cvsCollection(uid).doc(cvId).get();
@@ -450,20 +405,6 @@ class FirebaseService {
     return await _cvsCollection(uid)
         .orderBy('updatedAt', descending: true)
         .get();
-  }
-
-  /// Creates a CV AND increments cvCount in subscription atomically.
-  static Future<DocumentReference> createCVWithCount(
-      String uid, Map<String, dynamic> data) async
-  {
-    final docRef = _cvsCollection(uid).doc();
-    final batch = _db.batch();
-    batch.set(docRef, data);
-    batch.update(_subscriptionDoc(uid), {
-      'cvCount': FieldValue.increment(1),
-    });
-    await batch.commit();
-    return docRef;
   }
 
   // ===========================================================================
@@ -603,4 +544,35 @@ class FirebaseService {
     return v == -1 ? 999 : v;
   }
 
+  /// Detects the browser name from the user agent string.
+  /// Returns "Chrome", "Edge", "Firefox", "Safari", or "Unknown".
+  static String _detectBrowser() {
+    try {
+      final ua = web.window.navigator.userAgent;
+      if (ua.contains('Edg/'))      return 'Edge';
+      if (ua.contains('OPR/') || ua.contains('Opera')) return 'Opera';
+      if (ua.contains('Chrome/'))   return 'Chrome';
+      if (ua.contains('Firefox/'))  return 'Firefox';
+      if (ua.contains('Safari/'))   return 'Safari';
+      return 'Unknown';
+    } catch (_) {
+      return 'Unknown';
+    }
+  }
+
+  /// Detects the OS/platform from the user agent string.
+  /// Returns "Windows", "macOS", "Linux", "Android", "iOS", or "Unknown".
+  static String _detectDevice() {
+    try {
+      final ua = web.window.navigator.userAgent;
+      if (ua.contains('Windows'))    return 'Windows';
+      if (ua.contains('Macintosh'))  return 'macOS';
+      if (ua.contains('Android'))    return 'Android';
+      if (ua.contains('iPhone') || ua.contains('iPad') || ua.contains('iPod')) return 'iOS';
+      if (ua.contains('Linux'))      return 'Linux';
+      return 'Unknown';
+    } catch (_) {
+      return 'Unknown';
+    }
+  }
 }

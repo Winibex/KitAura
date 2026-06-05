@@ -172,6 +172,22 @@ class ClaudeService {
     }
   }
 
+  static Future<void> updateSpellcheckResult({
+    required String activityId,
+    required List<Map<String, dynamic>> corrections,
+  }) async {
+    try {
+      await _fn.httpsCallable('updateSpellcheckResult').call({
+        'activityId': activityId,
+        'corrections': corrections,
+      });
+      debugPrint('🤖 [ClaudeService] updateSpellcheckResult OK');
+    } catch (e) {
+      // Non-critical — UI already updated, tracking is best-effort
+      debugPrint('🤖 [ClaudeService] updateSpellcheckResult failed: $e');
+    }
+  }
+
   static String _mapError(FirebaseFunctionsException e) {
     switch (e.code) {
       case 'unauthenticated':
@@ -201,5 +217,62 @@ class ClaudeService {
       'documentId': documentId,
       'documentTitle': documentTitle,
     });
+  }
+
+  /// Tracks a login server-side.
+  /// Updates analytics/summary.loginCount + monthly.logins.
+  /// Call this AFTER every successful sign-in.
+  static Future<void> trackLogin() async {
+    try {
+      await _fn.httpsCallable('trackLogin').call();
+      debugPrint('🤖 [ClaudeService] trackLogin OK');
+    } catch (e) {
+      // Don't block sign-in flow if tracking fails
+      debugPrint('🤖 [ClaudeService] trackLogin failed (non-critical): $e');
+    }
+  }
+
+  /// Tracks document creation server-side.
+  /// Increments subscription.{tool}Count + analytics totals + writes transaction.
+  /// Call AFTER createCV/createCoverLetter/createProposal succeeds.
+  ///
+  /// [tool] must be one of: 'cv' | 'coverLetter' | 'proposal'
+  static Future<void> trackDocCreated({
+    required String tool,
+    required String documentId,
+    String? documentTitle,
+  }) async {
+    try {
+      await _fn.httpsCallable('trackDocCreated').call({
+        'tool': tool,
+        'documentId': documentId,
+        'documentTitle': documentTitle,
+      });
+      debugPrint('🤖 [ClaudeService] trackDocCreated OK (tool=$tool)');
+    } catch (e) {
+      debugPrint('🤖 [ClaudeService] trackDocCreated failed (non-critical): $e');
+    }
+  }
+
+  /// Tracks document deletion server-side.
+  /// Decrements subscription.{tool}Count + writes transaction.
+  /// Call AFTER deleteCV/deleteCoverLetter/deleteProposal succeeds.
+  ///
+  /// [tool] must be one of: 'cv' | 'coverLetter' | 'proposal'
+  static Future<void> trackDocDeleted({
+    required String tool,
+    required String documentId,
+    String? documentTitle,
+  }) async {
+    try {
+      await _fn.httpsCallable('trackDocDeleted').call({
+        'tool': tool,
+        'documentId': documentId,
+        'documentTitle': documentTitle,
+      });
+      debugPrint('🤖 [ClaudeService] trackDocDeleted OK (tool=$tool)');
+    } catch (e) {
+      debugPrint('🤖 [ClaudeService] trackDocDeleted failed (non-critical): $e');
+    }
   }
 }

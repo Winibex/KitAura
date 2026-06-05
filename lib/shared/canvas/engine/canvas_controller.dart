@@ -717,12 +717,48 @@ class CanvasController extends ChangeNotifier {
 
     if (item.isText && map['delta'] != null) {
       try {
-        item.controller!.document =
-            Document.fromJson(map['delta'] as List<dynamic>);
+        final rawDelta = _sanitizeDelta(map['delta'] as List<dynamic>);
+        item.controller!.document = Document.fromJson(rawDelta);
       } catch (_) {}
     }
 
     return item;
+  }
+
+  /// Strips inline attributes from \n ops.
+  /// flutter_quill asserts `after.isPlain` — newlines must NEVER carry
+  /// inline attrs (color, size, bold, font, italic).
+  static List<dynamic> _sanitizeDelta(List<dynamic> ops) {
+    final result = <dynamic>[];
+    for (final raw in ops) {
+      if (raw is! Map) { result.add(raw); continue; }
+      final op = Map<String, dynamic>.from(raw);
+      final insert = op['insert'];
+      if (insert is! String || !insert.contains('\n')) {
+        result.add(op);
+        continue;
+      }
+      // Split any "text\n" into "text" + attrs, then plain "\n"
+      if (insert == '\n') {
+        result.add({'insert': '\n'});
+        continue;
+      }
+      final attrs = op['attributes'] as Map?;
+      final parts = insert.split('\n');
+      for (int i = 0; i < parts.length; i++) {
+        if (parts[i].isNotEmpty) {
+          final entry = <String, dynamic>{'insert': parts[i]};
+          if (attrs != null && attrs.isNotEmpty) {
+            entry['attributes'] = Map<String, dynamic>.from(attrs);
+          }
+          result.add(entry);
+        }
+        if (i < parts.length - 1) {
+          result.add({'insert': '\n'});
+        }
+      }
+    }
+    return result;
   }
 
   void applyTemplateJson(Map<String, dynamic> json) {

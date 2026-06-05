@@ -6,6 +6,7 @@ import 'core/constants/app_routes.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/view/auth_screen.dart';
 import 'features/cover_letter/dashboard/view/cl_dashboard_screen.dart';
+import 'features/cover_letter/editor/view/cl_editor_screen.dart';
 import 'features/cover_letter/template/view/cl_template_picker_screen.dart';
 import 'features/cv/dashboard/view/cv_dashboard_screen.dart';
 import 'features/cv/editor/view/cv_editor_screen.dart';
@@ -63,10 +64,9 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/cover-letters/edit/:docId',
-      builder: (ctx, state) {
+      builder: (context, state) {
         final docId = state.pathParameters['docId']!;
-        return Scaffold(body: Center(child: Text('CL Editor — $docId — Phase 3')));
-        // Will be: ClEditorScreen(docId: docId);
+        return ClEditorScreen(docId: docId);
       },
     ),
     // Settings

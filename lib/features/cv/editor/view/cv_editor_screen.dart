@@ -344,8 +344,10 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
                     top: 8,
                     child: SpellcheckPanel(
                       items: _canvas.items,
-                      onClose: () =>
-                          setState(() => _showSpellcheckPanel = false),
+                      onClose: () {
+                        ref.read(spellcheckControllerProvider.notifier).reset();
+                        setState(() => _showSpellcheckPanel = false);
+                      },
                     ),
                   ),
               ],

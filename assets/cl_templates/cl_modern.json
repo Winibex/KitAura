@@ -30,7 +30,7 @@
       "flipY": false,
       "delta": [
         {
-          "insert": "YOUR FULL NAME\n",
+          "insert": "YOUR FULL NAME",
           "attributes": {
             "bold": true,
             "size": "22",
@@ -38,18 +38,27 @@
           }
         },
         {
-          "insert": "Senior Software Engineer\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "Senior Software Engineer",
           "attributes": {
             "size": "12",
             "color": "#0066CC"
           }
         },
         {
-          "insert": "email@example.com  •  +1 234 567 890  •  San Francisco, CA\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "email@example.com  \u2022  +1 234 567 890  \u2022  San Francisco, CA",
           "attributes": {
             "size": "10",
             "color": "#666666"
           }
+        },
+        {
+          "insert": "\n"
         }
       ],
       "sectionType": "senderAddress"
@@ -83,11 +92,14 @@
       "flipY": false,
       "delta": [
         {
-          "insert": "January 15, 2026\n",
+          "insert": "January 15, 2026",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
+        },
+        {
+          "insert": "\n"
         }
       ],
       "sectionType": "dateLine"
@@ -107,7 +119,7 @@
       "flipY": false,
       "delta": [
         {
-          "insert": "Hiring Manager\n",
+          "insert": "Hiring Manager",
           "attributes": {
             "bold": true,
             "size": "11",
@@ -115,18 +127,27 @@
           }
         },
         {
-          "insert": "Company Name\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "Company Name",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "City, State\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "City, State",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
+        },
+        {
+          "insert": "\n"
         }
       ],
       "sectionType": "recipientAddress"
@@ -146,11 +167,14 @@
       "flipY": false,
       "delta": [
         {
-          "insert": "Dear Hiring Manager,\n",
+          "insert": "Dear Hiring Manager,",
           "attributes": {
             "size": "12",
             "color": "#1A1A1A"
           }
+        },
+        {
+          "insert": "\n"
         }
       ],
       "sectionType": "salutation"
@@ -170,74 +194,83 @@
       "flipY": false,
       "delta": [
         {
-          "insert": "I am excited to apply for the [Position Title] role at [Company Name]. As a [your current title] with [X years] of experience, I am drawn to [Company Name]'s commitment to [company value or mission].\n",
+          "insert": "I am excited to apply for the [Position Title] role at [Company Name]. As a [your current title] with [X years] of experience, I am drawn to [Company Name]'s commitment to [company value or mission].",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "\n"
+        },
+        {
+          "insert": "Throughout my career, I have:",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "Throughout my career, I have:\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "\u2022 Achievement 1 with measurable impact (e.g., increased revenue by 30%)",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "• Achievement 1 with measurable impact (e.g., increased revenue by 30%)\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "\u2022 Achievement 2 demonstrating leadership or technical skills",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "• Achievement 2 demonstrating leadership or technical skills\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "\u2022 Achievement 3 relevant to the target role",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "• Achievement 3 relevant to the target role\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "\n"
+        },
+        {
+          "insert": "I am particularly excited about [specific aspect of the role/company]. My experience with [relevant skill] makes me well-positioned to contribute immediately while continuing to grow with your team.",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "\n"
+        },
+        {
+          "insert": "Thank you for considering my application. I look forward to discussing how I can contribute to [Company Name]'s success.",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "I am particularly excited about [specific aspect of the role/company]. My experience with [relevant skill] makes me well-positioned to contribute immediately while continuing to grow with your team.\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
-        },
-        {
-          "insert": "\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
-        },
-        {
-          "insert": "Thank you for considering my application. I look forward to discussing how I can contribute to [Company Name]'s success.\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
+          "insert": "\n"
         }
       ],
       "sectionType": "coverLetterBody"
@@ -257,11 +290,14 @@
       "flipY": false,
       "delta": [
         {
-          "insert": "Best regards,\n",
+          "insert": "Best regards,",
           "attributes": {
             "size": "12",
             "color": "#1A1A1A"
           }
+        },
+        {
+          "insert": "\n"
         }
       ],
       "sectionType": "closing"
@@ -281,12 +317,15 @@
       "flipY": false,
       "delta": [
         {
-          "insert": "Your Full Name\n",
+          "insert": "Your Full Name",
           "attributes": {
             "bold": true,
             "size": "12",
             "color": "#0066CC"
           }
+        },
+        {
+          "insert": "\n"
         }
       ],
       "sectionType": "signature"

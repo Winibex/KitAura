@@ -1,7 +1,7 @@
-// lib/shared/canvas/editor_right_panel.dart
+// lib/shared/canvas/editor_ui/editor_right_panel.dart
 //
 // Right sidebar panel for canvas editors.
-// Adds: section-type dropdown (text items), AI spellcheck button (page settings).
+// Uses EditorPanelConfig to control which features are shown.
 
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -15,6 +15,7 @@ import '../../models/canvas_item_type.dart';
 import '../../models/section_type.dart';
 import '../engine/canvas_controller.dart';
 import 'editor_dialogs.dart';
+import 'editor_panel_config.dart';
 import 'editor_widgets.dart';
 
 class EditorRightPanel extends StatefulWidget {
@@ -23,6 +24,7 @@ class EditorRightPanel extends StatefulWidget {
   final bool isMultiSelected;
   final Key toolbarKey;
   final VoidCallback onClose;
+  final EditorPanelConfig config;
 
   /// Tool-specific content (e.g. AI Fill button) shown below the toolbar.
   final Widget Function(CanvasItem item)? extraContentBuilder;
@@ -31,7 +33,12 @@ class EditorRightPanel extends StatefulWidget {
   final VoidCallback? onSpellcheck;
   final bool isSpellchecking;
 
-  final Future<void> Function(CanvasItem item, String mode, String? customInstruction)? onRewrite;
+  final Future<void> Function(
+    CanvasItem item,
+    String mode,
+    String? customInstruction,
+  )?
+  onRewrite;
   final Future<void> Function(CanvasItem item)? onAiFill;
   final bool isAiFilling;
 
@@ -42,6 +49,7 @@ class EditorRightPanel extends StatefulWidget {
     required this.isMultiSelected,
     required this.toolbarKey,
     required this.onClose,
+    this.config = const EditorPanelConfig(),
     this.extraContentBuilder,
     this.onSpellcheck,
     this.isSpellchecking = false,
@@ -52,8 +60,9 @@ class EditorRightPanel extends StatefulWidget {
   @override
   State<EditorRightPanel> createState() => _EditorRightPanelState();
 }
+
 class _EditorRightPanelState extends State<EditorRightPanel> {
-  String _aiMode = 'generate'; // 'generate' | 'professional' | 'concise' | 'detailed' | 'creative'
+  String _aiMode = 'generate';
   final _rewriteInstructionCtrl = TextEditingController();
   bool _isRewriting = false;
 
@@ -71,9 +80,10 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
         color: AppColors.white,
         boxShadow: [
           BoxShadow(
-              color: Color(0x1A000000),
-              blurRadius: 12,
-              offset: Offset(-2, 0)),
+            color: Color(0x1A000000),
+            blurRadius: 12,
+            offset: Offset(-2, 0),
+          ),
         ],
       ),
       child: Column(
@@ -119,8 +129,11 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
           const Spacer(),
           GestureDetector(
             onTap: widget.onClose,
-            child: const Icon(LucideIcons.panelRightClose,
-                size: 16, color: AppColors.slateGrey),
+            child: const Icon(
+              LucideIcons.panelRightClose,
+              size: 16,
+              color: AppColors.slateGrey,
+            ),
           ),
         ],
       ),
@@ -149,7 +162,8 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
                 toolbarSize: 36,
                 buttonOptions: QuillSimpleToolbarButtonOptions(
                   fontFamily: QuillToolbarFontFamilyButtonOptions(
-                      items: CanvasController.fontItems),
+                    items: CanvasController.fontItems,
+                  ),
                 ),
               ),
             ),
@@ -171,8 +185,11 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
                 isExpanded: true,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 borderRadius: BorderRadius.circular(8),
-                icon: const Icon(LucideIcons.chevronDown,
-                    size: 16, color: AppColors.slateGrey),
+                icon: const Icon(
+                  LucideIcons.chevronDown,
+                  size: 16,
+                  color: AppColors.slateGrey,
+                ),
                 items: SectionType.values.map((t) {
                   return DropdownMenuItem(
                     value: t,
@@ -209,7 +226,6 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
           if (widget.onAiFill != null || widget.onRewrite != null) ...[
             const EditorSectionLabel('AI CONTENT'),
             const SizedBox(height: 6),
-            // Mode dropdown
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
@@ -222,18 +238,72 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
                   isExpanded: true,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   borderRadius: BorderRadius.circular(8),
-                  icon: const Icon(LucideIcons.chevronDown, size: 16, color: AppColors.slateGrey),
+                  icon: const Icon(
+                    LucideIcons.chevronDown,
+                    size: 16,
+                    color: AppColors.slateGrey,
+                  ),
                   items: const [
-                    DropdownMenuItem(value: 'generate', child: Text('Generate from my profile',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.normal, fontFamily: AppFonts.openSans, color: AppColors.prussianBlue))),
-                    DropdownMenuItem(value: 'professional', child: Text('Rewrite as Professional',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.normal, fontFamily: AppFonts.openSans, color: AppColors.prussianBlue))),
-                    DropdownMenuItem(value: 'concise', child: Text('Rewrite as Concise',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.normal, fontFamily: AppFonts.openSans, color: AppColors.prussianBlue))),
-                    DropdownMenuItem(value: 'detailed', child: Text('Rewrite as Detailed',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.normal, fontFamily: AppFonts.openSans, color: AppColors.prussianBlue))),
-                    DropdownMenuItem(value: 'creative', child: Text('Rewrite as Creative',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.normal, fontFamily: AppFonts.openSans, color: AppColors.prussianBlue))),
+                    DropdownMenuItem(
+                      value: 'generate',
+                      child: Text(
+                        'Generate from my profile',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.normal,
+                          fontFamily: AppFonts.openSans,
+                          color: AppColors.prussianBlue,
+                        ),
+                      ),
+                    ),
+                    DropdownMenuItem(
+                      value: 'professional',
+                      child: Text(
+                        'Rewrite as Professional',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.normal,
+                          fontFamily: AppFonts.openSans,
+                          color: AppColors.prussianBlue,
+                        ),
+                      ),
+                    ),
+                    DropdownMenuItem(
+                      value: 'concise',
+                      child: Text(
+                        'Rewrite as Concise',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.normal,
+                          fontFamily: AppFonts.openSans,
+                          color: AppColors.prussianBlue,
+                        ),
+                      ),
+                    ),
+                    DropdownMenuItem(
+                      value: 'detailed',
+                      child: Text(
+                        'Rewrite as Detailed',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.normal,
+                          fontFamily: AppFonts.openSans,
+                          color: AppColors.prussianBlue,
+                        ),
+                      ),
+                    ),
+                    DropdownMenuItem(
+                      value: 'creative',
+                      child: Text(
+                        'Rewrite as Creative',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.normal,
+                          fontFamily: AppFonts.openSans,
+                          color: AppColors.prussianBlue,
+                        ),
+                      ),
+                    ),
                   ],
                   onChanged: (v) => setState(() => _aiMode = v ?? 'generate'),
                 ),
@@ -244,18 +314,28 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
               _aiMode == 'generate'
                   ? 'Generates new content from your saved profile'
                   : 'Rewrites the existing text in this section',
-              style: const TextStyle(fontSize: 10, fontFamily: AppFonts.openSans, color: AppColors.slateGrey),
+              style: const TextStyle(
+                fontSize: 10,
+                fontFamily: AppFonts.openSans,
+                color: AppColors.slateGrey,
+              ),
             ),
             const SizedBox(height: 6),
-            // Custom instruction (only show for rewrite modes)
             if (_aiMode != 'generate') ...[
               TextField(
                 controller: _rewriteInstructionCtrl,
                 maxLines: 2,
-                style: const TextStyle(fontSize: 12, fontFamily: AppFonts.openSans),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontFamily: AppFonts.openSans,
+                ),
                 decoration: InputDecoration(
-                  hintText: 'Custom instruction (optional)...\ne.g. "focus on metrics"',
-                  hintStyle: const TextStyle(color: AppColors.slateGrey, fontSize: 10),
+                  hintText:
+                      'Custom instruction (optional)...\ne.g. "focus on metrics"',
+                  hintStyle: const TextStyle(
+                    color: AppColors.slateGrey,
+                    fontSize: 10,
+                  ),
                   contentPadding: const EdgeInsets.all(8),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -267,42 +347,54 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: AppColors.darkRaspberry),
+                    borderSide: const BorderSide(
+                      color: AppColors.darkRaspberry,
+                    ),
                   ),
                 ),
               ),
               const SizedBox(height: 6),
             ],
-            // Apply button
             SizedBox(
               width: double.infinity,
               height: 38,
               child: ElevatedButton.icon(
-                onPressed: (_isRewriting || widget.isAiFilling) ? null : () async {
-                  if (_aiMode == 'generate') {
-                    // Trigger AI Fill
-                    if (widget.onAiFill != null) {
-                      await widget.onAiFill!(item);
-                    }
-                  } else {
-                    // Trigger AI Rewrite
-                    if (widget.onRewrite != null) {
-                      setState(() => _isRewriting = true);
-                      await widget.onRewrite!(
-                        item,
-                        _aiMode,
-                        _rewriteInstructionCtrl.text.trim().isEmpty
-                            ? null
-                            : _rewriteInstructionCtrl.text.trim(),
-                      );
-                      if (mounted) setState(() => _isRewriting = false);
-                    }
-                  }
-                },
+                onPressed: (_isRewriting || widget.isAiFilling)
+                    ? null
+                    : () async {
+                        if (_aiMode == 'generate') {
+                          if (widget.onAiFill != null) {
+                            await widget.onAiFill!(item);
+                          }
+                        } else {
+                          if (widget.onRewrite != null) {
+                            setState(() => _isRewriting = true);
+                            await widget.onRewrite!(
+                              item,
+                              _aiMode,
+                              _rewriteInstructionCtrl.text.trim().isEmpty
+                                  ? null
+                                  : _rewriteInstructionCtrl.text.trim(),
+                            );
+                            if (mounted) setState(() => _isRewriting = false);
+                          }
+                        }
+                      },
                 icon: (_isRewriting || widget.isAiFilling)
-                    ? const SizedBox(width: 14, height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white))
-                    : Icon(_aiMode == 'generate' ? LucideIcons.sparkles : LucideIcons.pencil, size: 14),
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.white,
+                        ),
+                      )
+                    : Icon(
+                        _aiMode == 'generate'
+                            ? LucideIcons.sparkles
+                            : LucideIcons.pencil,
+                        size: 14,
+                      ),
                 label: Text(
                   _isRewriting
                       ? 'Rewriting...'
@@ -319,7 +411,9 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
                       ? AppColors.slateGrey
                       : AppColors.darkRaspberry,
                   foregroundColor: AppColors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                 ),
               ),
@@ -327,7 +421,7 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
             const SizedBox(height: 12),
           ],
 
-          // ── TEXT CLIPBOARD (copy/paste with formatting) ─────────
+          // ── TEXT CLIPBOARD ─────────────────────────────────────────
           const EditorSectionLabel('TEXT CLIPBOARD'),
           const SizedBox(height: 4),
           Row(
@@ -337,11 +431,24 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
                   onPressed: () {
                     widget.ctrl.copySelectedText();
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Text copied with formatting'), duration: Duration(seconds: 1)),
+                      const SnackBar(
+                        content: Text('Text copied with formatting'),
+                        duration: Duration(seconds: 1),
+                      ),
                     );
                   },
-                  icon: const Icon(LucideIcons.copy, size: 12, color: AppColors.prussianBlue),
-                  label: const Text('Copy Text', style: TextStyle(color: AppColors.prussianBlue, fontSize: 10)),
+                  icon: const Icon(
+                    LucideIcons.copy,
+                    size: 12,
+                    color: AppColors.prussianBlue,
+                  ),
+                  label: const Text(
+                    'Copy Text',
+                    style: TextStyle(
+                      color: AppColors.prussianBlue,
+                      fontSize: 10,
+                    ),
+                  ),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppColors.almondSilk),
                     padding: const EdgeInsets.symmetric(vertical: 4),
@@ -352,16 +459,33 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: widget.ctrl.hasClipboardDelta
-                      ? () { widget.ctrl.pasteFormattedText(); setState(() {}); }
+                      ? () {
+                          widget.ctrl.pasteFormattedText();
+                          setState(() {});
+                        }
                       : null,
-                  icon: Icon(LucideIcons.clipboardPaste, size: 12,
-                      color: widget.ctrl.hasClipboardDelta ? AppColors.prussianBlue : AppColors.slateGrey),
-                  label: Text('Paste Text',
-                      style: TextStyle(
-                          color: widget.ctrl.hasClipboardDelta ? AppColors.prussianBlue : AppColors.slateGrey,
-                          fontSize: 10)),
+                  icon: Icon(
+                    LucideIcons.clipboardPaste,
+                    size: 12,
+                    color: widget.ctrl.hasClipboardDelta
+                        ? AppColors.prussianBlue
+                        : AppColors.slateGrey,
+                  ),
+                  label: Text(
+                    'Paste Text',
+                    style: TextStyle(
+                      color: widget.ctrl.hasClipboardDelta
+                          ? AppColors.prussianBlue
+                          : AppColors.slateGrey,
+                      fontSize: 10,
+                    ),
+                  ),
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: widget.ctrl.hasClipboardDelta ? AppColors.almondSilk : AppColors.petalFrost),
+                    side: BorderSide(
+                      color: widget.ctrl.hasClipboardDelta
+                          ? AppColors.almondSilk
+                          : AppColors.petalFrost,
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 4),
                   ),
                 ),
@@ -369,7 +493,6 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
             ],
           ),
           const SizedBox(height: 12),
-
         ],
 
         // Item title
@@ -384,21 +507,29 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
         ),
         const SizedBox(height: 12),
 
-        // Duplicate button
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: widget.ctrl.duplicateSelected,
-            icon: const Icon(LucideIcons.copy, size: 14, color: AppColors.prussianBlue),
-            label: const Text('Duplicate',
-                style: TextStyle(color: AppColors.prussianBlue, fontSize: 12)),
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AppColors.almondSilk),
-              padding: const EdgeInsets.symmetric(vertical: 6),
+        // Duplicate button (config-controlled)
+        if (widget.config.showDuplicate) ...[
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: widget.ctrl.duplicateSelected,
+              icon: const Icon(
+                LucideIcons.copy,
+                size: 14,
+                color: AppColors.prussianBlue,
+              ),
+              label: const Text(
+                'Duplicate',
+                style: TextStyle(color: AppColors.prussianBlue, fontSize: 12),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: AppColors.almondSilk),
+                padding: const EdgeInsets.symmetric(vertical: 6),
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 8),
+          const SizedBox(height: 8),
+        ],
 
         // Delete button
         SizedBox(
@@ -408,10 +539,15 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
               widget.ctrl.saveSnapshot();
               widget.ctrl.deleteSelected();
             },
-            icon: const Icon(LucideIcons.trash2,
-                size: 14, color: AppColors.error),
-            label: const Text('Delete',
-                style: TextStyle(color: AppColors.error, fontSize: 12)),
+            icon: const Icon(
+              LucideIcons.trash2,
+              size: 14,
+              color: AppColors.error,
+            ),
+            label: const Text(
+              'Delete',
+              style: TextStyle(color: AppColors.error, fontSize: 12),
+            ),
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: AppColors.error),
               padding: const EdgeInsets.symmetric(vertical: 6),
@@ -426,24 +562,28 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
         Row(
           children: [
             EditorLayerButton(
-                icon: LucideIcons.arrowUpToLine,
-                tooltip: 'Front',
-                onTap: widget.ctrl.bringToFront),
+              icon: LucideIcons.arrowUpToLine,
+              tooltip: 'Front',
+              onTap: widget.ctrl.bringToFront,
+            ),
             const SizedBox(width: 4),
             EditorLayerButton(
-                icon: LucideIcons.arrowUp,
-                tooltip: 'Up',
-                onTap: widget.ctrl.bringForward),
+              icon: LucideIcons.arrowUp,
+              tooltip: 'Up',
+              onTap: widget.ctrl.bringForward,
+            ),
             const SizedBox(width: 4),
             EditorLayerButton(
-                icon: LucideIcons.arrowDown,
-                tooltip: 'Down',
-                onTap: widget.ctrl.sendBackward),
+              icon: LucideIcons.arrowDown,
+              tooltip: 'Down',
+              onTap: widget.ctrl.sendBackward,
+            ),
             const SizedBox(width: 4),
             EditorLayerButton(
-                icon: LucideIcons.arrowDownToLine,
-                tooltip: 'Back',
-                onTap: widget.ctrl.sendToBack),
+              icon: LucideIcons.arrowDownToLine,
+              tooltip: 'Back',
+              onTap: widget.ctrl.sendToBack,
+            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -456,16 +596,18 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
             children: [
               Expanded(
                 child: EditorActionButton(
-                    label: 'Horizontal',
-                    icon: LucideIcons.flipHorizontal,
-                    onTap: widget.ctrl.flipHorizontal),
+                  label: 'Horizontal',
+                  icon: LucideIcons.flipHorizontal,
+                  onTap: widget.ctrl.flipHorizontal,
+                ),
               ),
               const SizedBox(width: 4),
               Expanded(
                 child: EditorActionButton(
-                    label: 'Vertical',
-                    icon: LucideIcons.flipVertical,
-                    onTap: widget.ctrl.flipVertical),
+                  label: 'Vertical',
+                  icon: LucideIcons.flipVertical,
+                  onTap: widget.ctrl.flipVertical,
+                ),
               ),
             ],
           ),
@@ -576,8 +718,7 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
                 }
               },
               icon: const Icon(LucideIcons.upload, size: 14),
-              label:
-              const Text('Upload Image', style: TextStyle(fontSize: 12)),
+              label: const Text('Upload Image', style: TextStyle(fontSize: 12)),
             ),
           ),
           const SizedBox(height: 8),
@@ -596,8 +737,7 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
                 if (ic != null) widget.ctrl.updateIcon(ic);
               },
               icon: const Icon(LucideIcons.smile, size: 14),
-              label:
-              const Text('Change Icon', style: TextStyle(fontSize: 12)),
+              label: const Text('Change Icon', style: TextStyle(fontSize: 12)),
             ),
           ),
           EditorColorRow(
@@ -640,10 +780,15 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
                 widget.ctrl.saveSnapshot();
                 widget.ctrl.deleteSelected();
               },
-              icon: const Icon(LucideIcons.trash2,
-                  size: 14, color: AppColors.error),
-              label: const Text('Delete All',
-                  style: TextStyle(color: AppColors.error, fontSize: 12)),
+              icon: const Icon(
+                LucideIcons.trash2,
+                size: 14,
+                color: AppColors.error,
+              ),
+              label: const Text(
+                'Delete All',
+                style: TextStyle(color: AppColors.error, fontSize: 12),
+              ),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: AppColors.error),
               ),
@@ -654,71 +799,90 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
     );
   }
 
-  // ─── PAGE SETTINGS (nothing widget.selected) ─────────────────────────────────
+  // ─── PAGE SETTINGS (nothing selected) ─────────────────────────────────
 
   Widget _buildPageSettings(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const EditorSectionLabel('PAGE SETTINGS'),
-        const SizedBox(height: 8),
-        const Text('Page Size',
+        // Page Size (config-controlled)
+        if (widget.config.showPageSize) ...[
+          const EditorSectionLabel('PAGE SETTINGS'),
+          const SizedBox(height: 8),
+          const Text(
+            'Page Size',
             style: TextStyle(
-                fontSize: 12,
-                fontFamily: AppFonts.openSans,
-                color: AppColors.prussianBlue)),
-        const SizedBox(height: 4),
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.almondSilk),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: 'a4',
-              isExpanded: true,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              borderRadius: BorderRadius.circular(8),
-              items: const [
-                DropdownMenuItem(
-                    value: 'a4',
-                    child: Text('A4 (595 × 842)',
-                        style: TextStyle(fontSize: 12))),
-                DropdownMenuItem(
-                    value: 'letter',
-                    child: Text('Letter (612 × 792)',
-                        style: TextStyle(fontSize: 12))),
-                DropdownMenuItem(
-                    value: 'legal',
-                    child: Text('Legal (612 × 1008)',
-                        style: TextStyle(fontSize: 12))),
-              ],
-              onChanged: (v) {},
+              fontSize: 12,
+              fontFamily: AppFonts.openSans,
+              color: AppColors.prussianBlue,
             ),
           ),
-        ),
-        const SizedBox(height: 12),
-        EditorColorRow(
-          label: 'Background',
-          color: widget.ctrl.canvasBackground,
-          onTap: () async {
-            final c = await EditorDialogs.showColorPicker(
-              context: context,
-              title: 'Canvas Background',
-              currentColor: widget.ctrl.canvasBackground,
-              enableAlpha: false,
-            );
-            if (c != null) {
-              widget.ctrl.saveSnapshot();
-              widget.ctrl.canvasBackground = c;
-              widget.ctrl.notify();
-            }
-          },
-        ),
-        const SizedBox(height: 16),
+          const SizedBox(height: 4),
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.almondSilk),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: 'a4',
+                isExpanded: true,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                borderRadius: BorderRadius.circular(8),
+                items: const [
+                  DropdownMenuItem(
+                    value: 'a4',
+                    child: Text(
+                      'A4 (595 × 842)',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: 'letter',
+                    child: Text(
+                      'Letter (612 × 792)',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: 'legal',
+                    child: Text(
+                      'Legal (612 × 1008)',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ],
+                onChanged: (v) {},
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
 
-        // ── AI SPELLCHECK BUTTON ────────────────────────────────────
+        // Background color (config-controlled)
+        if (widget.config.showBackground) ...[
+          EditorColorRow(
+            label: 'Background',
+            color: widget.ctrl.canvasBackground,
+            onTap: () async {
+              final c = await EditorDialogs.showColorPicker(
+                context: context,
+                title: 'Canvas Background',
+                currentColor: widget.ctrl.canvasBackground,
+                enableAlpha: false,
+              );
+              if (c != null) {
+                widget.ctrl.saveSnapshot();
+                widget.ctrl.canvasBackground = c;
+                widget.ctrl.notify();
+              }
+            },
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // AI Spellcheck
         if (widget.onSpellcheck != null) ...[
           const EditorSectionLabel('AI TOOLS'),
           const SizedBox(height: 8),
@@ -729,13 +893,13 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
               onPressed: widget.isSpellchecking ? null : widget.onSpellcheck,
               icon: widget.isSpellchecking
                   ? const SizedBox(
-                width: 14,
-                height: 14,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.white,
-                ),
-              )
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.white,
+                      ),
+                    )
                   : const Icon(LucideIcons.spellCheck, size: 16),
               label: Text(
                 widget.isSpellchecking ? 'Checking...' : 'AI Spellcheck',

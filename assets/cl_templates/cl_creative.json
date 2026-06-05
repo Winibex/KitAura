@@ -30,7 +30,7 @@
       "flipY": false,
       "delta": [
         {
-          "insert": "YOUR\n",
+          "insert": "YOUR",
           "attributes": {
             "bold": true,
             "size": "22",
@@ -38,7 +38,10 @@
           }
         },
         {
-          "insert": "NAME\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "NAME",
           "attributes": {
             "bold": true,
             "size": "22",
@@ -46,46 +49,53 @@
           }
         },
         {
-          "insert": "\n",
-          "attributes": {
-            "size": "11",
-            "color": "#FFFFFF"
-          }
+          "insert": "\n"
         },
         {
-          "insert": "Creative Director\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "Creative Director",
           "attributes": {
             "size": "12",
             "color": "#FFD9E6"
           }
         },
         {
-          "insert": "\n",
-          "attributes": {
-            "size": "11",
-            "color": "#FFFFFF"
-          }
+          "insert": "\n"
         },
         {
-          "insert": "hello@example.com\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "hello@example.com",
           "attributes": {
             "size": "10",
             "color": "#FFD9E6"
           }
         },
         {
-          "insert": "+1 234 567 890\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "+1 234 567 890",
           "attributes": {
             "size": "10",
             "color": "#FFD9E6"
           }
         },
         {
-          "insert": "Los Angeles, CA\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "Los Angeles, CA",
           "attributes": {
             "size": "10",
             "color": "#FFD9E6"
           }
+        },
+        {
+          "insert": "\n"
         }
       ],
       "sectionType": "senderAddress"
@@ -105,11 +115,14 @@
       "flipY": false,
       "delta": [
         {
-          "insert": "January 15, 2026\n",
+          "insert": "January 15, 2026",
           "attributes": {
             "size": "11",
             "color": "#666666"
           }
+        },
+        {
+          "insert": "\n"
         }
       ],
       "sectionType": "dateLine"
@@ -129,7 +142,7 @@
       "flipY": false,
       "delta": [
         {
-          "insert": "Hiring Manager\n",
+          "insert": "Hiring Manager",
           "attributes": {
             "bold": true,
             "size": "12",
@@ -137,18 +150,27 @@
           }
         },
         {
-          "insert": "Company Name\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "Company Name",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "City, State\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "City, State",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
+        },
+        {
+          "insert": "\n"
         }
       ],
       "sectionType": "recipientAddress"
@@ -168,12 +190,15 @@
       "flipY": false,
       "delta": [
         {
-          "insert": "Dear Hiring Manager,\n",
+          "insert": "Dear Hiring Manager,",
           "attributes": {
             "bold": true,
             "size": "14",
             "color": "#E91E63"
           }
+        },
+        {
+          "insert": "\n"
         }
       ],
       "sectionType": "salutation"
@@ -193,53 +218,53 @@
       "flipY": false,
       "delta": [
         {
-          "insert": "Creativity isn't just my profession — it's how I see the world. I'm thrilled to apply for the [Position Title] role at [Company Name] because your work in [specific area] resonates with everything I believe great design should be.\n",
+          "insert": "Creativity isn't just my profession \u2014 it's how I see the world. I'm thrilled to apply for the [Position Title] role at [Company Name] because your work in [specific area] resonates with everything I believe great design should be.",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "\n"
+        },
+        {
+          "insert": "Over the past [X years], I've had the privilege of [achievement] for clients like [client examples]. My recent project on [project name] resulted in [specific outcome], and I'm proud to have contributed to [larger impact].",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "Over the past [X years], I've had the privilege of [achievement] for clients like [client examples]. My recent project on [project name] resulted in [specific outcome], and I'm proud to have contributed to [larger impact].\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "\n"
+        },
+        {
+          "insert": "What draws me to [Company Name] is [specific reason \u2014 culture, mission, work]. I'd love to bring my background in [your expertise] to help shape the next chapter of your creative journey.",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "\n",
+          "insert": "\n"
+        },
+        {
+          "insert": "\n"
+        },
+        {
+          "insert": "My portfolio at [link] shows the full range of my work. I'd be honored to discuss how I can contribute to your team.",
           "attributes": {
             "size": "11",
             "color": "#333333"
           }
         },
         {
-          "insert": "What draws me to [Company Name] is [specific reason — culture, mission, work]. I'd love to bring my background in [your expertise] to help shape the next chapter of your creative journey.\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
-        },
-        {
-          "insert": "\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
-        },
-        {
-          "insert": "My portfolio at [link] shows the full range of my work. I'd be honored to discuss how I can contribute to your team.\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
+          "insert": "\n"
         }
       ],
       "sectionType": "coverLetterBody"
@@ -259,11 +284,14 @@
       "flipY": false,
       "delta": [
         {
-          "insert": "Warmly,\n",
+          "insert": "Warmly,",
           "attributes": {
             "size": "12",
             "color": "#1A1A1A"
           }
+        },
+        {
+          "insert": "\n"
         }
       ],
       "sectionType": "closing"
@@ -283,12 +311,15 @@
       "flipY": false,
       "delta": [
         {
-          "insert": "Your Full Name\n",
+          "insert": "Your Full Name",
           "attributes": {
             "bold": true,
             "size": "13",
             "color": "#E91E63"
           }
+        },
+        {
+          "insert": "\n"
         }
       ],
       "sectionType": "signature"

@@ -220,6 +220,7 @@ class CvEditorController extends ChangeNotifier {
         final docRef = await FirebaseService.createCV(_uid!, data);
         state = state.copyWith(firestoreDocId: docRef.id);
         debugPrint('📝 [CvEditor] Created new CV: ${docRef.id}');
+        ClaudeService.trackDocCreated(tool: 'cv', documentId: docRef.id, documentTitle: state.title);
       }
 
       state = state.copyWith(isSaved: true, isSaving: false, error: null);

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import '../../../../shared/ai/claude_service.dart';
 import '../../../../shared/services/firebase_service.dart';
 import '../model/cv_summary_model.dart';
 
@@ -128,19 +129,29 @@ class DashboardController extends StateNotifier<DashboardState> {
     }
   }
 
+  // REPLACE the `empty()` lookup with this:
   Future<void> deleteCV(String cvId) async {
-    // Optimistic delete — remove from UI immediately
-    final backup = List<CvSummaryModel>.from(state.cvs);
-    final updated = state.cvs.where((cv) => cv.id != cvId).toList();
-    state = state.copyWith(cvs: updated);
+    // Capture title BEFORE removing from state (for transaction log)
+    String title = 'Untitled';
+    try {
+      final cv = state.cvs.firstWhere((c) => c.id == cvId);
+      title = cv.title;
+    } catch (_) {
+      // CV not in state — fall through with default title
+    }
 
     try {
+      state = state.copyWith(cvs: state.cvs.where((c) => c.id != cvId).toList());
       await FirebaseService.deleteCV(_uid!, cvId);
-      debugPrint('✅ CV deleted: $cvId');
+
+      ClaudeService.trackDocDeleted(
+        tool: 'cv',
+        documentId: cvId,
+        documentTitle: title,
+      );
     } catch (e) {
-      debugPrint('❌ deleteCV error: $e');
-      // Restore on failure
-      state = state.copyWith(cvs: backup);
+      debugPrint('Delete CV failed: $e');
+      await loadDashboard(force: true);
     }
   }
 

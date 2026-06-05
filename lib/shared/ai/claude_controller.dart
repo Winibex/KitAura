@@ -139,6 +139,12 @@ class ClaudeController extends StateNotifier<ClaudeState> {
 
       // Apply old styles + new text
       try {
+        // Reset cursor to position 0 BEFORE swapping document
+        // (prevents flutter_quill from trying to paint cursor at stale offset)
+        controller.updateSelection(
+          const TextSelection.collapsed(offset: 0),
+          ChangeSource.local,
+        );
         controller.document = Document.fromJson(_buildStyledDelta(content, styles));
       } catch (e) {
         debugPrint('🤖 [ClaudeController] Delta apply failed: $e');
@@ -286,6 +292,10 @@ class ClaudeController extends StateNotifier<ClaudeState> {
 
       if (ops.isEmpty) ops.add({'insert': '\n'});
 
+      controller.updateSelection(
+        const TextSelection.collapsed(offset: 0),
+        ChangeSource.local,
+      );
       controller.document = Document.fromJson(ops);
       debugPrint('🤖 [ClaudeController] Rewrite applied (${ops.length} ops)');
     } catch (e) {
@@ -381,6 +391,10 @@ class ClaudeController extends StateNotifier<ClaudeState> {
       buf.writeln();
     }
     final len = controller.document.length;
+    controller.updateSelection(
+      const TextSelection.collapsed(offset: 0),
+      ChangeSource.local,
+    );
     if (len > 1) controller.replaceText(0, len - 1, '', null);
     controller.document.insert(0, buf.toString().trimRight());
   }

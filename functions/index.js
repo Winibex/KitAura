@@ -617,3 +617,177 @@ exports.trackDocDeleted = onCall({ region: "us-central1", timeoutSeconds: 30 }, 
   await batch.commit();
   return { success: true };
 });
+
+// ════════════════════════════════════════════════════════════════════════
+// 8. UPDATE SPELLCHECK RESULT — track accept/dismiss decisions
+// ════════════════════════════════════════════════════════════════════════
+//
+// Called after user clicks Accept/Dismiss on spellcheck corrections.
+// Updates: aiActivity/{activityId}.spellcheckSummary counts
+//          Storage: ai_details/{activityId}.json corrections[].userAction
+
+exports.updateSpellcheckResult = onCall({ region: "us-central1", timeoutSeconds: 30 }, async (req) => {
+  if (!req.auth) throw new HttpsError("unauthenticated", "Sign in required.");
+  const uid = req.auth.uid;
+  const { activityId, corrections } = req.data || {};
+
+  if (!activityId) throw new HttpsError("invalid-argument", "activityId required");
+  if (!Array.isArray(corrections)) throw new HttpsError("invalid-argument", "corrections array required");
+
+  // Verify activity belongs to this user
+  const actRef = db.doc(`users/${uid}/aiActivity/${activityId}`);
+  const actSnap = await actRef.get();
+  if (!actSnap.exists) throw new HttpsError("not-found", "Activity not found");
+
+  // Count accepted / dismissed
+  let accepted = 0;
+  let dismissed = 0;
+  for (const c of corrections) {
+    if (c.userAction === "accepted") accepted++;
+    else if (c.userAction === "dismissed") dismissed++;
+  }
+
+  // 1. Update aiActivity spellcheckSummary
+  await actRef.update({
+    "spellcheckSummary.correctionsAccepted": accepted,
+    "spellcheckSummary.correctionsDismissed": dismissed,
+  });
+
+  // 2. Update Storage JSON with per-correction userAction
+  try {
+    const bucket = admin.storage().bucket();
+    const path = `users/${uid}/ai_details/${activityId}.json`;
+    const file = bucket.file(path);
+    const [exists] = await file.exists();
+    if (exists) {
+      const [content] = await file.download();
+      const detail = JSON.parse(content.toString());
+      detail.corrections = corrections; // Replace with updated array
+      await file.save(JSON.stringify(detail, null, 2), {
+        contentType: "application/json",
+      });
+    }
+  } catch (e) {
+    console.error("Spellcheck detail update failed:", e.message);
+    // Non-critical — Firestore counts are the source of truth
+  }
+
+  return { success: true, accepted, dismissed };
+});
+
+// ════════════════════════════════════════════════════════════════════════
+// 9. ACTIVATE TRIAL — 7-day free trial, no credit card
+// ════════════════════════════════════════════════════════════════════════
+//
+// APPEND THIS TO functions/index.js
+//
+// Checks: user hasn't already used trial (trialUsed flag on subscription
+// AND hasUsedTrial on user profile — double check prevents abuse).
+// Sets: plan='trial', trialActive=true, trialUsed=true, new 7-day cycle.
+// Resets all usage counters to 0 for the trial period.
+
+exports.activateTrial = onCall({ region: "us-central1", timeoutSeconds: 30 }, async (req) => {
+  if (!req.auth) throw new HttpsError("unauthenticated", "Sign in required.");
+  const uid = req.auth.uid;
+
+  const batch = db.batch();
+  const now = admin.firestore.Timestamp.fromDate(new Date());
+  const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+  const FV = admin.firestore.FieldValue;
+  const month = new Date().toISOString().slice(0, 7);
+
+  // ── Read subscription ────────────────────────────────────────────
+  const subRef = db.doc(`users/${uid}/data/subscription`);
+  const subSnap = await subRef.get();
+  if (!subSnap.exists) throw new HttpsError("not-found", "No subscription found.");
+  const sub = subSnap.data();
+
+  // ── Guard: already used trial ────────────────────────────────────
+  if (sub.trialUsed === true) {
+    throw new HttpsError("already-exists",
+      "You've already used your free trial. Upgrade to Pro for unlimited access.");
+  }
+
+  // ── Guard: already on trial or pro ───────────────────────────────
+  if (sub.plan === "trial" && sub.trialActive === true) {
+    throw new HttpsError("already-exists", "Your trial is already active.");
+  }
+  if (sub.plan === "pro") {
+    throw new HttpsError("already-exists", "You're already on the Pro plan.");
+  }
+
+  // ── Double-check via user profile flag ───────────────────────────
+  const userRef = db.doc(`users/${uid}`);
+  const userSnap = await userRef.get();
+  if (userSnap.exists && userSnap.data().hasUsedTrial === true) {
+    // Sync the flag back to subscription (in case it got out of sync)
+    batch.update(subRef, { trialUsed: true });
+    await batch.commit();
+    throw new HttpsError("already-exists",
+      "You've already used your free trial. Upgrade to Pro for unlimited access.");
+  }
+
+  // ── Activate trial ───────────────────────────────────────────────
+
+  // 1. Update subscription
+  batch.update(subRef, {
+    plan: "trial",
+    trialStartDate: now,
+    trialEndDate: admin.firestore.Timestamp.fromDate(trialEnd),
+    trialActive: true,
+    trialUsed: true,
+
+    // Reset billing cycle to trial period (7 days)
+    cycleStartDate: now,
+    cycleEndDate: admin.firestore.Timestamp.fromDate(trialEnd),
+    lastResetDate: now,
+
+    // Reset all usage counters for fresh trial
+    aiFillCount: 0,
+    aiRewriteCount: 0,
+    aiDesignCount: 0,
+    exportCount: 0,
+    spellcheckCount: 0,
+  });
+
+  // 2. Mark user profile (survives subscription changes)
+  batch.update(userRef, {
+    hasUsedTrial: true,
+    updatedAt: now,
+  });
+
+  // 3. Analytics summary
+  const sumRef = db.doc(`users/${uid}/analytics/summary`);
+  batch.set(sumRef, { lastActiveAt: now }, { merge: true });
+
+  // 4. Transaction log
+  const txRef = db.collection(`users/${uid}/transactions`).doc();
+  batch.set(txRef, {
+    id: txRef.id,
+    type: "trialActivated",
+    tool: null,
+    documentId: null,
+    documentTitle: null,
+    metadata: {
+      trialDays: 7,
+      trialEndDate: admin.firestore.Timestamp.fromDate(trialEnd),
+    },
+    createdAt: now,
+  });
+
+  // 5. Monthly analytics
+  const monRef = db.doc(`users/${uid}/analytics/${month}`);
+  batch.set(monRef, {
+    month,
+    updatedAt: now,
+  }, { merge: true });
+
+  await batch.commit();
+
+  return {
+    success: true,
+    plan: "trial",
+    trialEndDate: trialEnd.toISOString(),
+    daysRemaining: 7,
+  };
+});

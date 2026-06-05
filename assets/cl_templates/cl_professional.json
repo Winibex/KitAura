@@ -15,35 +15,14 @@
       "flipX": false,
       "flipY": false,
       "delta": [
-        {
-          "insert": "Your Full Name\n",
-          "attributes": {
-            "bold": true,
-            "size": "14",
-            "color": "#1A1A1A"
-          }
-        },
-        {
-          "insert": "Your Street Address\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
-        },
-        {
-          "insert": "City, State ZIP\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
-        },
-        {
-          "insert": "email@example.com  |  +1 234 567 890\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
-        }
+        {"insert": "Your Full Name", "attributes": {"bold": true, "size": "14", "color": "#1A1A1A"}},
+        {"insert": "\n"},
+        {"insert": "Your Street Address", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "City, State ZIP", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "email@example.com  |  +1 234 567 890", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"}
       ],
       "sectionType": "senderAddress"
     },
@@ -61,13 +40,8 @@
       "flipX": false,
       "flipY": false,
       "delta": [
-        {
-          "insert": "January 15, 2026\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
-        }
+        {"insert": "January 15, 2026", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"}
       ],
       "sectionType": "dateLine"
     },
@@ -85,35 +59,14 @@
       "flipX": false,
       "flipY": false,
       "delta": [
-        {
-          "insert": "Hiring Manager Name\n",
-          "attributes": {
-            "bold": true,
-            "size": "11",
-            "color": "#1A1A1A"
-          }
-        },
-        {
-          "insert": "Company Name\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
-        },
-        {
-          "insert": "Company Street Address\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
-        },
-        {
-          "insert": "City, State ZIP\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
-        }
+        {"insert": "Hiring Manager Name", "attributes": {"bold": true, "size": "11", "color": "#1A1A1A"}},
+        {"insert": "\n"},
+        {"insert": "Company Name", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "Company Street Address", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "City, State ZIP", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"}
       ],
       "sectionType": "recipientAddress"
     },
@@ -131,13 +84,8 @@
       "flipX": false,
       "flipY": false,
       "delta": [
-        {
-          "insert": "Dear Hiring Manager,\n",
-          "attributes": {
-            "size": "12",
-            "color": "#1A1A1A"
-          }
-        }
+        {"insert": "Dear Hiring Manager,", "attributes": {"size": "12", "color": "#1A1A1A"}},
+        {"insert": "\n"}
       ],
       "sectionType": "salutation"
     },
@@ -155,55 +103,17 @@
       "flipX": false,
       "flipY": false,
       "delta": [
-        {
-          "insert": "I am writing to express my strong interest in the [Position Title] role at [Company Name]. With [X years] of experience in [your field], I am confident that my skills and passion align perfectly with what your team is looking for.\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
-        },
-        {
-          "insert": "\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
-        },
-        {
-          "insert": "In my current role at [Current Company], I have [key achievement with metric]. I have also [second achievement] which resulted in [measurable outcome]. These experiences have prepared me to contribute meaningfully to [Company Name]'s mission of [company mission].\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
-        },
-        {
-          "insert": "\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
-        },
-        {
-          "insert": "What particularly excites me about this opportunity is [specific reason — company values, project, growth potential]. I would welcome the chance to bring my expertise in [your specialty] to your team and help drive [specific company goal].\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
-        },
-        {
-          "insert": "\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
-        },
-        {
-          "insert": "I have attached my resume for your review and would greatly appreciate the opportunity to discuss how my background can contribute to [Company Name]'s continued success. Thank you for considering my application.\n",
-          "attributes": {
-            "size": "11",
-            "color": "#333333"
-          }
-        }
+        {"insert": "I am writing to express my strong interest in the [Position Title] role at [Company Name]. With [X years] of experience in [your field], I am confident that my skills and passion align perfectly with what your team is looking for.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "In my current role at [Current Company], I have [key achievement with metric]. I have also [second achievement] which resulted in [measurable outcome]. These experiences have prepared me to contribute meaningfully to [Company Name]'s mission of [company mission].", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "What particularly excites me about this opportunity is [specific reason — company values, project, growth potential]. I would welcome the chance to bring my expertise in [your specialty] to your team and help drive [specific company goal].", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "I have attached my resume for your review and would greatly appreciate the opportunity to discuss how my background can contribute to [Company Name]'s continued success. Thank you for considering my application.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"}
       ],
       "sectionType": "coverLetterBody"
     },
@@ -221,13 +131,8 @@
       "flipX": false,
       "flipY": false,
       "delta": [
-        {
-          "insert": "Sincerely,\n",
-          "attributes": {
-            "size": "12",
-            "color": "#1A1A1A"
-          }
-        }
+        {"insert": "Sincerely,", "attributes": {"size": "12", "color": "#1A1A1A"}},
+        {"insert": "\n"}
       ],
       "sectionType": "closing"
     },
@@ -245,14 +150,8 @@
       "flipX": false,
       "flipY": false,
       "delta": [
-        {
-          "insert": "Your Full Name\n",
-          "attributes": {
-            "bold": true,
-            "size": "12",
-            "color": "#1A1A1A"
-          }
-        }
+        {"insert": "Your Full Name", "attributes": {"bold": true, "size": "12", "color": "#1A1A1A"}},
+        {"insert": "\n"}
       ],
       "sectionType": "signature"
     }

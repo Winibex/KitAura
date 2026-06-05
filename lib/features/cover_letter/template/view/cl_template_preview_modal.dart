@@ -316,7 +316,10 @@ class _ClTemplatePreviewModalState extends State<ClTemplatePreviewModal> {
                 SizedBox(
                   width: double.infinity, height: 50,
                   child: ElevatedButton(
-                    onPressed: () { Navigator.pop(context); widget.onUse(); },
+                    onPressed: () {
+                      Navigator.pop(context);
+                      widget.onUse();
+                      },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.darkRaspberry,
                       foregroundColor: AppColors.white,

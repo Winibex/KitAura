@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
+import '../../../shared/ai/claude_service.dart';
 import '../../../shared/services/firebase_service.dart';
 
 // =============================================================================
@@ -106,7 +107,7 @@ class AuthController extends StateNotifier<AuthState> {
       if (user != null) {
         // Track the login event without blocking navigation — analytics
         // failures should never prevent the user from reaching the dashboard.
-        FirebaseService.trackLogin(user.uid);
+        ClaudeService.trackLogin();
 
         state = AuthState(
           navigate: user.emailVerified ? AuthNav.dashboard : AuthNav.verifyEmail,
@@ -134,7 +135,8 @@ class AuthController extends StateNotifier<AuthState> {
       String password,
       String confirmPassword,
       String displayName,
-      ) async {
+      ) async
+  {
     // Validate inputs before hitting the network.
     final validationError =
     _validateSignUp(email, password, confirmPassword, displayName);
@@ -187,18 +189,19 @@ class AuthController extends StateNotifier<AuthState> {
       final user = credential.user!;
 
       // Only initialise Firestore documents on the very first sign-in.
-      if (credential.additionalUserInfo?.isNewUser == true) {
+      final isNewUser = credential.additionalUserInfo?.isNewUser == true;
+      if (isNewUser) {
         await FirebaseService.createNewUserDocuments(
-          uid:          user.uid,
-          email:        user.email        ?? '',
-          displayName:  user.displayName  ?? '',
-          photoUrl:     user.photoURL,
+          uid: user.uid,
+          email: user.email ?? '',
+          displayName: user.displayName ?? '',
+          photoUrl: user.photoURL,
           signupSource: 'google',
         );
+        // Skip trackLogin — createNewUserDocuments already seeded loginCount=1
+      } else {
+        ClaudeService.trackLogin();
       }
-
-      // Fire-and-forget analytics — don't block navigation.
-      FirebaseService.trackLogin(user.uid);
 
       // Google accounts arrive pre-verified, but we still check the flag so
       // any edge cases (e.g. custom domain policy) are handled correctly.
