@@ -58,22 +58,22 @@ class AppSidebar extends ConsumerWidget {
                     onTap: () => context.go(AppRoutes.cvDashboard),
                   ),
                   _SidebarItem(
-                    icon: LucideIcons.fileText,
-                    label: 'Create Proposal',
-                    isActive: active == AppPage.proposal,
-                    onTap: () {}, // TODO: context.go(AppRoutes.proposal)
-                  ),
-                  _SidebarItem(
                     icon: LucideIcons.mail,
                     label: 'Cover Letter',
                     isActive: active == AppPage.coverLetter,
                     onTap: () => context.go(AppRoutes.clDashboard),
                   ),
                   _SidebarItem(
+                    icon: LucideIcons.fileText,
+                    label: 'Create Proposal',
+                    isActive: active == AppPage.proposal,
+                    onTap: () {}, // TODO: context.go(AppRoutes.proposal)
+                  ),
+                  _SidebarItem(
                     icon: LucideIcons.linkedin,
                     label: 'LinkedIn Summary',
                     isActive: active == AppPage.linkedin,
-                    onTap: () {}, // TODO: context.go(AppRoutes.linkedin)
+                    onTap: () => context.go(AppRoutes.linkedin),
                   ),
                   const SizedBox(height: 8),
                   const Divider(color: AppColors.petalFrost),

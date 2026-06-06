@@ -12,6 +12,7 @@ import 'features/cv/dashboard/view/cv_dashboard_screen.dart';
 import 'features/cv/editor/view/cv_editor_screen.dart';
 import 'features/cv/templates/view/cv_template_picker_screen.dart';
 import 'features/dashboard/view/dashboard_screen.dart';
+import 'features/linkedin/view/linkedin_screen.dart';
 import 'features/settings/view/settings_screen.dart';
 import 'features/auth/view/verify_email_screen.dart';
 import 'features/auth/view/reset_password_screen.dart';
@@ -69,6 +70,10 @@ final _router = GoRouter(
         return ClEditorScreen(docId: docId);
       },
     ),
+    GoRoute(
+      path: AppRoutes.linkedin,
+      builder: (_, _) => const LinkedInScreen(),
+    ),
     // Settings
     GoRoute(
       path: AppRoutes.settings,
@@ -79,8 +84,7 @@ final _router = GoRouter(
     final user = FirebaseAuth.instance.currentUser;
     final isLoggedIn = user != null;
     final isAuthRoute =
-        state.matchedLocation == AppRoutes.auth ||
-        state.matchedLocation == AppRoutes.resetPassword;
+        state.matchedLocation == AppRoutes.auth;
     final isVerify = state.matchedLocation == AppRoutes.verifyEmail;
 
     if (isLoggedIn && isAuthRoute) {

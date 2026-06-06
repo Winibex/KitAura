@@ -214,8 +214,14 @@ class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen>
 
     bool hasSavedProfile = false;
     try {
-      final doc = await FirebaseService.getAiProfile(uid);
-      hasSavedProfile = doc.exists;
+      final count = await FirebaseService.getAiProfileCount(uid);
+      if (count == 0) {
+        // Try migration from old path
+        final migrated = await FirebaseService.getDefaultAiProfile(uid);
+        hasSavedProfile = migrated != null;
+      } else {
+        hasSavedProfile = true;
+      }
     } catch (_) {}
 
     if (!mounted) return;
@@ -234,8 +240,8 @@ class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen>
 
     Map<String, dynamic>? profileData;
     try {
-      final doc = await FirebaseService.getAiProfile(uid);
-      if (doc.exists) profileData = doc.data() as Map<String, dynamic>;
+      final defaultProfile = await FirebaseService.getDefaultAiProfile(uid);
+      if (defaultProfile != null) profileData = defaultProfile.toJson();
     } catch (_) {}
 
     if (!mounted) return;
@@ -382,9 +388,15 @@ class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen>
                 width: double.infinity,
                 height: 44,
                 child: OutlinedButton.icon(
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.pop(dialogContext);
-                    _openAiSetupWizard(templateId);
+                    // Load default profile ID for editing
+                    String? profileId;
+                    try {
+                      final def = await FirebaseService.getDefaultAiProfile(uid!);
+                      profileId = def?.id;
+                    } catch (_) {}
+                    _openAiSetupWizard(templateId, profileId: profileId);
                   },
                   icon: const Icon(LucideIcons.pencil, size: 16),
                   label: const Text('Edit My Details'),
@@ -408,7 +420,7 @@ class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen>
               TextButton(
                 onPressed: () {
                   Navigator.pop(dialogContext);
-                  _openAiSetupWizard(templateId);
+                  _openAiSetupWizardFresh(templateId);
                 },
                 child: const Text(
                   'Start from scratch',
@@ -421,6 +433,26 @@ class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen>
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _openAiSetupWizardFresh(String templateId) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.transparent,
+      barrierDismissible: false,
+      builder: (dialogContext) => AiSetupPanel(
+        startFresh: true,
+        onContinue: () {
+          Navigator.pop(dialogContext);
+          context.go('/cv/edit/$templateId');
+        },
+        onSkip: () {
+          Navigator.pop(dialogContext);
+          context.go('/cv/edit/$templateId');
+        },
+        onClose: () => Navigator.pop(dialogContext),
       ),
     );
   }
@@ -450,12 +482,13 @@ class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen>
     );
   }
 
-  void _openAiSetupWizard(String templateId) {
+  void _openAiSetupWizard(String templateId, {String? profileId}) {
     showDialog(
       context: context,
       barrierColor: Colors.transparent,
       barrierDismissible: false,
       builder: (dialogContext) => AiSetupPanel(
+        profileId: profileId,
         onContinue: () {
           Navigator.pop(dialogContext);
           context.go('/cv/edit/$templateId');

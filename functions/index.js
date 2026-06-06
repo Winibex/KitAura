@@ -198,7 +198,8 @@ exports.aiFill = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", timeo
   const uid = req.auth.uid;
   const t0 = Date.now();
   const { sectionType="custom", tone="professional", experienceLevel="mid", profile={},
-    tool="cv", documentId=null, documentTitle=null, templateId=null, sectionTitle=null, beforeText="" } = req.data || {};
+    tool="cv", documentId=null, documentTitle=null, templateId=null, sectionTitle=null,
+    beforeText="", jobDetails=null, cvContent=null } = req.data || {};
 
   const { sub } = await getSubWithCycleCheck(uid);
   await checkPaywall(sub, "aiFillCount", "aiFillPerMonth");
@@ -206,25 +207,162 @@ exports.aiFill = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", timeo
   const pSnap = await db.doc("config/pricing").get();
   const rates = pSnap.exists ? pSnap.data().models[MODEL_SONNET] : { inputPerMTok:3, outputPerMTok:15, cacheReadMultiplier:0.1 };
 
-  const sys = [{
-    type: "text",
-    text: `You are an expert ${tool === 'coverLetter' ? 'cover letter' : tool === 'proposal' ? 'proposal' : 'CV'} writer. Transform raw profile data into polished ${tool === 'coverLetter' ? 'cover letter' : tool === 'proposal' ? 'proposal' : 'CV'} content.\n\n` +
-      "OUTPUT: Return ONLY a JSON object: {\"heading\":\"UPPERCASE TITLE\",\"entries\":[{\"title\":\"line\",\"lines\":[\"bullet\"]}]}\n\n" +
-      "RULES: No markdown/code fences. Start bullets with '• '. Never invent data. Max ~120 words.\n" +
-      "Tone: " + tone + ". Level: " + experienceLevel + ".\n\n" +
-      "FORMATS: summary→heading='PROFESSIONAL SUMMARY',1 entry,title='',lines=['paragraph']. " +
-      "experience→1 entry/role,title='Role — Company | Dates',lines=['• Achievement']. " +
-      "education→title='Degree — School | Dates'. skills→lines=['Skill1 • Skill2']. " +
-      "certifications→lines=['Cert1','Cert2']. languages→title='Lang — Level'. " +
-      "contact→heading='',lines=['email | phone | location']. name→title='Full Name'. jobTitle→title='Title'.",
-    cache_control: { type: "ephemeral" },
-  }];
+  // ── Build system prompt based on tool ────────────────────────────
+  let sys;
+
+  if (tool === "coverLetter" && sectionType === "all") {
+    // ── COVER LETTER: GENERATE ALL SECTIONS ──────────────────────
+    sys = [{
+      type: "text",
+      text: `You are an expert cover letter writer. Generate a complete, professional cover letter.
+
+OUTPUT: Return ONLY a JSON object with these keys:
+{
+  "senderAddress": { "heading": "", "entries": [{"title": "", "lines": ["name", "address", "contact info"]}] },
+  "recipientAddress": { "heading": "", "entries": [{"title": "", "lines": ["hiring manager name", "title", "company", "address"]}] },
+  "dateLine": { "heading": "", "entries": [{"title": "", "lines": ["formatted date"]}] },
+  "salutation": { "heading": "", "entries": [{"title": "", "lines": ["Dear ..."]}] },
+  "coverLetterBody": { "heading": "", "entries": [{"title": "", "lines": ["paragraph1", "paragraph2", "paragraph3", "paragraph4"]}] },
+  "closing": { "heading": "", "entries": [{"title": "", "lines": ["Sincerely,"]}] },
+  "signature": { "heading": "", "entries": [{"title": "", "lines": ["Full Name"]}] }
+}
+
+RULES:
+- No markdown or code fences. JSON only.
+- The cover letter body should have 3-4 paragraphs.
+- Paragraph 1: Express interest in the role and company.
+- Paragraph 2: Highlight relevant experience and achievements from the CV.
+- Paragraph 3: Show knowledge of the company and why you're a good fit.
+- Paragraph 4: Call to action and thank you.
+- Use the job description to tailor content specifically.
+- Use the CV content to reference real achievements, skills, and experience.
+- Never invent facts — only use what's in the CV and profile.
+- Tone: ${tone}. Experience level: ${experienceLevel}.
+- Keep total body under 350 words.`,
+      cache_control: { type: "ephemeral" },
+    }];
+  } else if (tool === "coverLetter") {
+    // ── COVER LETTER: SINGLE SECTION ─────────────────────────────
+    sys = [{
+      type: "text",
+      text: `You are an expert cover letter writer. Generate content for a specific cover letter section.
+
+OUTPUT: Return ONLY a JSON object: {"heading":"","entries":[{"title":"","lines":["content"]}]}
+
+SECTION FORMATS:
+- senderAddress → lines: [full name, address, email | phone]
+- recipientAddress → lines: [hiring manager name, title, company, address, city]
+- dateLine → lines: [formatted date like "June 6, 2026"]
+- salutation → lines: ["Dear [name],"] or "Dear Hiring Manager,"
+- coverLetterBody → lines: [paragraph1, paragraph2, paragraph3, paragraph4] (3-4 paragraphs, under 300 words total)
+- closing → lines: ["Sincerely,"]
+- signature → lines: [full name]
+
+RULES:
+- No markdown or code fences. JSON only.
+- Never invent facts — only use data from profile and job details.
+- Tone: ${tone}. Level: ${experienceLevel}.`,
+      cache_control: { type: "ephemeral" },
+    }];
+
+    } else if (tool === "linkedin" && sectionType === "all") {
+        // ── LINKEDIN: GENERATE ALL SECTIONS ──────────────────────
+        const selectedSections = (jobDetails?.selectedSections || []).join(", ");
+        const customPrompt = jobDetails?.customPrompt || "";
+        sys = [{
+          type: "text",
+          text: `You are an expert LinkedIn profile writer. Generate optimized LinkedIn content.
+
+    The user wants these sections generated: ${selectedSections}
+
+    OUTPUT: Return ONLY a JSON object. Include ONLY the requested section keys.
+    Available keys and their formats:
+
+    "headline": "string — max 220 chars, keyword-rich, pipe-separated phrases"
+
+    "about": "string — 3-4 paragraphs, first-person, engaging opening hook, achievements with metrics, call to action at end, under 2600 chars"
+
+    "experiences": [{"role": "Job Title — Company", "description": "2-3 paragraphs rewritten for LinkedIn — first person, achievement-focused, metrics where possible"}]
+
+    "education": [{"degree": "Degree — School", "description": "1-2 sentences, relevant coursework or achievements"}]
+
+    "skills": ["Skill1", "Skill2", ...] — ordered by relevance, include industry keywords, max 20
+
+    "projects": [{"name": "Project Name", "description": "2-3 sentences, impact-focused, technologies used"}]
+
+    "certifications": [{"name": "Cert Name — Issuer", "description": "1 sentence about relevance"}]
+
+    "volunteer": [{"role": "Role — Organization", "description": "1-2 sentences about impact"}]
+
+    RULES:
+    - No markdown or code fences. JSON only.
+    - Write in first person ("I" not "they").
+    - Include relevant industry keywords naturally for LinkedIn SEO.
+    - Focus on achievements and metrics, not just responsibilities.
+    - Make content engaging and professional.
+    - Never invent facts — only use data from the CV and profile.
+    - Tone: ${tone}. Experience level: ${experienceLevel}.
+    ${customPrompt ? "Additional instructions: " + customPrompt : ""}`,
+          cache_control: { type: "ephemeral" },
+        }];
+      } else if (tool === "linkedin") {
+        // ── LINKEDIN: SINGLE SECTION REGENERATE ──────────────────
+        sys = [{
+          type: "text",
+          text: `You are an expert LinkedIn profile writer. Regenerate content for the "${sectionType}" section.
+
+    OUTPUT: Return ONLY a JSON object in the format for this section type:
+    - headline: {"heading":"","entries":[{"title":"","lines":["headline text"]}]}
+    - about: {"heading":"","entries":[{"title":"","lines":["paragraph1","paragraph2","paragraph3"]}]}
+    - experiences: {"heading":"","entries":[{"title":"Role — Company","lines":["description"]}]}
+    - education: {"heading":"","entries":[{"title":"Degree — School","lines":["description"]}]}
+    - skills: {"heading":"","entries":[{"title":"","lines":["Skill1","Skill2",...]}]}
+    - projects: {"heading":"","entries":[{"title":"Project Name","lines":["description"]}]}
+    - certifications: {"heading":"","entries":[{"title":"Cert — Issuer","lines":["description"]}]}
+    - volunteer: {"heading":"","entries":[{"title":"Role — Org","lines":["description"]}]}
+
+    RULES:
+    - No markdown. JSON only.
+    - First person. Achievement-focused. Include metrics.
+    - Never invent facts. Tone: ${tone}. Level: ${experienceLevel}.`,
+          cache_control: { type: "ephemeral" },
+        }];
+
+  } else {
+    // ── CV: ORIGINAL PROMPT (unchanged) ──────────────────────────
+    sys = [{
+      type: "text",
+      text: "You are an expert CV writer. Transform raw profile data into polished CV content.\n\n" +
+        "OUTPUT: Return ONLY a JSON object: {\"heading\":\"UPPERCASE TITLE\",\"entries\":[{\"title\":\"line\",\"lines\":[\"bullet\"]}]}\n\n" +
+        "RULES: No markdown/code fences. Start bullets with '• '. Never invent data. Max ~120 words.\n" +
+        "Tone: " + tone + ". Level: " + experienceLevel + ".\n\n" +
+        "FORMATS: summary→heading='PROFESSIONAL SUMMARY',1 entry,title='',lines=['paragraph']. " +
+        "experience→1 entry/role,title='Role — Company | Dates',lines=['• Achievement']. " +
+        "education→title='Degree — School | Dates'. skills→lines=['Skill1 • Skill2']. " +
+        "certifications→lines=['Cert1','Cert2']. languages→title='Lang — Level'. " +
+        "contact→heading='',lines=['email | phone | location']. name→title='Full Name'. jobTitle→title='Title'.",
+      cache_control: { type: "ephemeral" },
+    }];
+  }
+
+  // ── Build user content ───────────────────────────────────────────
+  let userContent = `Section: ${sectionType}\n\nProfile:\n${JSON.stringify(profile,null,2)}`;
+
+  if (tool === "coverLetter" || tool === "linkedin") {
+      if (jobDetails) {
+        userContent += `\n\nJob Details:\n${JSON.stringify(jobDetails, null, 2)}`;
+      }
+      if (cvContent) {
+        userContent += `\n\nCandidate's CV Content:\n${cvContent}`;
+      }
+    }
+
+  userContent += "\n\nWrite now. JSON only.";
 
   let text, usage;
   try {
     const r = await callClaude({ model: MODEL_SONNET, system: sys,
-      userContent: `Section: ${sectionType}\n\nProfile:\n${JSON.stringify(profile,null,2)}\n\nWrite now. JSON only.`,
-      maxTokens: 1024, apiKey: ANTHROPIC_KEY.value() });
+      userContent, maxTokens: 2048, apiKey: ANTHROPIC_KEY.value() });
     text = r.text; usage = r.usage;
   } catch (err) {
     console.error("aiFill API error:", err?.response?.data || err.message);
@@ -237,9 +375,17 @@ exports.aiFill = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", timeo
     console.error("aiFill parse error:", cleaned);
     throw new HttpsError("internal", "AI returned malformed content.");
   }
-  if (typeof content !== "object" || !Array.isArray(content.entries)) {
-    throw new HttpsError("internal", "Unexpected AI output.");
-  }
+
+  // For CL "all" mode, validate we got section keys
+  if ((tool === "coverLetter" || tool === "linkedin") && sectionType === "all") {
+      if (typeof content !== "object") {
+        throw new HttpsError("internal", "Unexpected AI output.");
+      }
+    } else {
+      if (typeof content !== "object" || !Array.isArray(content.entries)) {
+        throw new HttpsError("internal", "Unexpected AI output.");
+      }
+    }
 
   const cost = calculateCost(usage, rates);
   const actId = await writeTracking({ uid,
@@ -251,7 +397,8 @@ exports.aiFill = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", timeo
 
   uploadDetail(uid, actId, { tool, type:"aiFill", sectionType, beforeText,
     afterText:JSON.stringify(content), generatedContent:content,
-    profileSnapshot:{ jobTitle:profile.jobTitle||"", experienceLevel, tone } });
+    profileSnapshot:{ jobTitle:profile.jobTitle||"", experienceLevel, tone },
+    jobDetails: jobDetails || null });
 
   return { content };
 });
@@ -742,13 +889,6 @@ exports.activateTrial = onCall({ region: "us-central1", timeoutSeconds: 30 }, as
     cycleStartDate: now,
     cycleEndDate: admin.firestore.Timestamp.fromDate(trialEnd),
     lastResetDate: now,
-
-    // Reset all usage counters for fresh trial
-    aiFillCount: 0,
-    aiRewriteCount: 0,
-    aiDesignCount: 0,
-    exportCount: 0,
-    spellcheckCount: 0,
   });
 
   // 2. Mark user profile (survives subscription changes)

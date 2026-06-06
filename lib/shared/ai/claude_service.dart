@@ -63,6 +63,8 @@ class ClaudeService {
     String? templateId,
     String? sectionTitle,
     String beforeText = '',
+    Map<String, dynamic>? jobDetails,
+    String? cvContent,
   }) async
   {
     debugPrint('🤖 [ClaudeService] aiFillSection(section=$sectionType, tone=$tone)');
@@ -78,6 +80,8 @@ class ClaudeService {
         'templateId': templateId,
         'sectionTitle': sectionTitle,
         'beforeText': beforeText,
+        'jobDetails': jobDetails,
+        'cvContent': cvContent,
       });
       final content = result.data['content'];
       if (content == null) {

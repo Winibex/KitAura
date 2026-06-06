@@ -32,7 +32,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(dashboardControllerProvider.notifier).loadDashboard(force: true);
+      ref.read(dashboardControllerProvider.notifier).loadDashboard();
     });
   }
 
@@ -158,7 +158,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           _StatCardData(
             icon: LucideIcons.download,
             label: 'Exports',
-            value: state.isPro ? '∞' : '${state.exportCount} / ${state.maxExports}',
+            value: state.isPro ? '${state.exportCount} / ∞' : '${state.exportCount} / ${state.maxExports}',
             subtitle: state.isPro ? 'Unlimited' : '${state.maxExports - state.exportCount} remaining',
             color: AppColors.dustyRose,
             progress: state.isPro ? null : state.exportCount / state.maxExports,
@@ -166,10 +166,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           _StatCardData(
             icon: LucideIcons.sparkles,
             label: 'AI Use',
-            value: state.isPro ? '∞' : '${state.aiFillCount} / ${state.maxAiFills}',
-            subtitle: state.isPro ? 'Unlimited' : '${state.maxAiFills - state.aiFillCount} remaining',
+            value: state.isPro
+                ? '${state.aiFillCount + state.aiRewriteCount} / ∞'
+                : '${state.aiFillCount + state.aiRewriteCount} / ${state.maxAiFills + state.maxAiRewrites}',
+            subtitle: state.isPro
+                ? 'Unlimited'
+                : '${(state.maxAiFills - state.aiFillCount) + (state.maxAiRewrites - state.aiRewriteCount)} remaining',
             color: AppColors.dustyMauve,
-            progress: state.isPro ? null : state.aiFillCount / state.maxAiFills,
+            progress: state.isPro
+                ? null
+                : (state.aiFillCount + state.aiRewriteCount) / (state.maxAiFills + state.maxAiRewrites),
+            detailLine: state.isPro
+                ? null
+                : 'Fills: ${state.aiFillCount}/${state.maxAiFills}  ·  Rewrites: ${state.aiRewriteCount}/${state.maxAiRewrites}',
           ),
           _StatCardData(
             icon: LucideIcons.logIn,
@@ -276,6 +285,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               color: AppColors.slateGrey,
             ),
           ),
+          if (data.detailLine != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              data.detailLine!,
+              style: TextStyle(
+                fontSize: 10,
+                fontFamily: AppFonts.openSans,
+                color: AppColors.slateGrey.withValues(alpha: 0.7),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -339,8 +359,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   title: 'LinkedIn Summary',
                   subtitle: 'Optimize your profile',
                   color: AppColors.dustyRose,
-                  onTap: () {}, // TODO
-                  comingSoon: true,
+                  onTap: () => context.go(AppRoutes.linkedin),
+                  comingSoon: false,
                 ),
               ];
 
@@ -696,14 +716,16 @@ class _StatCardData {
   final String subtitle;
   final Color color;
   final double? progress;
+  final String? detailLine;
 
-  _StatCardData({
+  const _StatCardData({
     required this.icon,
     required this.label,
     required this.value,
     required this.subtitle,
     required this.color,
     this.progress,
+    this.detailLine,
   });
 }
 

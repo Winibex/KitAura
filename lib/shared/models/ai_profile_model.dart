@@ -524,6 +524,9 @@ class CustomSection {
 
 class AiProfileModel {
   // Personal Info
+  final String? id;
+  final String name;
+  final bool isDefault;
   final String fullName;
   final String email;
   final String phone;
@@ -580,6 +583,9 @@ class AiProfileModel {
   final DateTime? updatedAt;
 
   const AiProfileModel({
+    this.id,
+    this.name = 'Default Profile',
+    this.isDefault = false,
     this.fullName = '',
     this.email = '',
     this.phone = '',
@@ -610,6 +616,9 @@ class AiProfileModel {
   });
 
   Map<String, dynamic> toJson() => {
+    if (id != null) 'id': id,
+    'name': name,
+    'isDefault': isDefault,
     'fullName': fullName,
     'email': email,
     'phone': phone,
@@ -650,6 +659,9 @@ class AiProfileModel {
     }).toList();
 
     return AiProfileModel(
+      id: json['id'] as String?,
+      name: json['name'] ?? 'Default Profile',
+      isDefault: json['isDefault'] ?? true,
       fullName: json['fullName'] ?? '',
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
@@ -699,6 +711,9 @@ class AiProfileModel {
   }
 
   AiProfileModel copyWith({
+    String? id,
+    String? name,
+    bool? isDefault,
     String? fullName,
     String? email,
     String? phone,
@@ -727,6 +742,9 @@ class AiProfileModel {
     String? jobTitle,
   }) {
     return AiProfileModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      isDefault: isDefault ?? this.isDefault,
       fullName: fullName ?? this.fullName,
       email: email ?? this.email,
       phone: phone ?? this.phone,

@@ -31,6 +31,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:web/web.dart' as web;
 
+import '../models/ai_profile_model.dart';
+
 class FirebaseService {
   // Private constructor — this class is a pure static utility; never instantiate it.
   FirebaseService._();
@@ -287,9 +289,125 @@ class FirebaseService {
       await _subscriptionDoc(uid).set(data, SetOptions(merge: true));
 
 
+// ===========================================================================
+  // AI PROFILES (multiple) — users/{uid}/aiProfiles/{profileId}
   // ===========================================================================
-  // AI PROFILE  —  users/{uid}/data/aiProfile
-  // ===========================================================================
+
+  static CollectionReference _aiProfilesCollection(String uid) =>
+      _userDoc(uid).collection('aiProfiles');
+
+  /// Get all AI profiles for a user, ordered by name.
+  static Future<QuerySnapshot> getAiProfiles(String uid) async =>
+      await _aiProfilesCollection(uid).orderBy('name').get();
+
+  /// Get a single AI profile by ID.
+  static Future<DocumentSnapshot> getAiProfileById(String uid, String profileId) async =>
+      await _aiProfilesCollection(uid).doc(profileId).get();
+
+  /// Get the default AI profile. Falls back to first profile if none marked default.
+  static Future<AiProfileModel?> getDefaultAiProfile(String uid) async {
+    // Try new collection first
+    final profiles = await _aiProfilesCollection(uid)
+        .where('isDefault', isEqualTo: true)
+        .limit(1)
+        .get();
+
+    if (profiles.docs.isNotEmpty) {
+      final data = profiles.docs.first.data() as Map<String, dynamic>;
+      data['id'] = profiles.docs.first.id;
+      return AiProfileModel.fromJson(data);
+    }
+
+    // No default found — try any profile
+    final any = await _aiProfilesCollection(uid).limit(1).get();
+    if (any.docs.isNotEmpty) {
+      final data = any.docs.first.data() as Map<String, dynamic>;
+      data['id'] = any.docs.first.id;
+      return AiProfileModel.fromJson(data);
+    }
+
+    // No profiles at all — try legacy data/aiProfile and auto-migrate
+    return await _migrateOldProfile(uid);
+  }
+
+  /// Create a new AI profile. Returns the document reference.
+  static Future<DocumentReference> createAiProfile(
+      String uid, Map<String, dynamic> data) async {
+    // If this is the first profile, make it default
+    final existing = await _aiProfilesCollection(uid).limit(1).get();
+    if (existing.docs.isEmpty) {
+      data['isDefault'] = true;
+    }
+    return await _aiProfilesCollection(uid).add(data);
+  }
+
+  /// Update an existing AI profile.
+  static Future<void> updateAiProfile(
+      String uid, String profileId, Map<String, dynamic> data) async =>
+      await _aiProfilesCollection(uid).doc(profileId).update(data);
+
+  /// Save (create or update) an AI profile.
+  static Future<String> saveAiProfileMulti(
+      String uid, Map<String, dynamic> data, {String? profileId}) async {
+    if (profileId != null) {
+      await _aiProfilesCollection(uid).doc(profileId).set(data, SetOptions(merge: true));
+      return profileId;
+    } else {
+      final ref = await createAiProfile(uid, data);
+      return ref.id;
+    }
+  }
+
+  /// Delete an AI profile.
+  static Future<void> deleteAiProfile(String uid, String profileId) async =>
+      await _aiProfilesCollection(uid).doc(profileId).delete();
+
+  /// Set a profile as default (unsets all others).
+  static Future<void> setDefaultAiProfile(String uid, String profileId) async {
+    final batch = _db.batch();
+
+    // Unset all current defaults
+    final allProfiles = await _aiProfilesCollection(uid).get();
+    for (final doc in allProfiles.docs) {
+      if (doc.id != profileId && (doc.data() as Map)['isDefault'] == true) {
+        batch.update(doc.reference, {'isDefault': false});
+      }
+    }
+
+    // Set the new default
+    batch.update(_aiProfilesCollection(uid).doc(profileId), {'isDefault': true});
+
+    await batch.commit();
+  }
+
+  /// Migrate old single profile (data/aiProfile) to new collection.
+  /// Returns the migrated profile, or null if no old profile exists.
+  static Future<AiProfileModel?> _migrateOldProfile(String uid) async {
+    try {
+      final oldDoc = await getAiProfile(uid);
+      if (!oldDoc.exists) return null;
+
+      final data = Map<String, dynamic>.from(oldDoc.data() as Map);
+      data['name'] = 'My Profile';
+      data['isDefault'] = true;
+
+      final newRef = await _aiProfilesCollection(uid).add(data);
+
+      debugPrint('🔄 Migrated old aiProfile to aiProfiles/${newRef.id}');
+
+      data['id'] = newRef.id;
+      return AiProfileModel.fromJson(data);
+    } catch (e) {
+      debugPrint('Migration failed: $e');
+      return null;
+    }
+  }
+
+  /// Get profile count for a user.
+  static Future<int> getAiProfileCount(String uid) async {
+    final snap = await _aiProfilesCollection(uid).get();
+    return snap.docs.length;
+  }
 
   static DocumentReference _aiProfileDoc(String uid) =>
       _userDoc(uid).collection('data').doc('aiProfile');
@@ -454,6 +572,33 @@ class FirebaseService {
 
   static Future<QuerySnapshot> getUserProposals(String uid) async =>
       await _proposalsCollection(uid).orderBy('updatedAt', descending: true).get();
+
+  // ===========================================================================
+  // LINKEDIN SUMMARIES — users/{uid}/linkedinSummaries/{id}
+  // ===========================================================================
+
+  static CollectionReference _linkedInCollection(String uid) =>
+      _userDoc(uid).collection('linkedinSummaries');
+
+  static Future<QuerySnapshot> getLinkedInSummaries(String uid) async =>
+      await _linkedInCollection(uid)
+          .orderBy('createdAt', descending: true)
+          .limit(20)
+          .get();
+
+  static Future<DocumentSnapshot> getLinkedInSummary(String uid, String docId) async =>
+      await _linkedInCollection(uid).doc(docId).get();
+
+  static Future<DocumentReference> createLinkedInSummary(
+      String uid, Map<String, dynamic> data) async =>
+      await _linkedInCollection(uid).add(data);
+
+  static Future<void> updateLinkedInSummary(
+      String uid, String docId, Map<String, dynamic> data) async =>
+      await _linkedInCollection(uid).doc(docId).update(data);
+
+  static Future<void> deleteLinkedInSummary(String uid, String docId) async =>
+      await _linkedInCollection(uid).doc(docId).delete();
 
   // ===========================================================================
   // AI ACTIVITY — users/{uid}/aiActivity/{id} (READ ONLY from frontend)

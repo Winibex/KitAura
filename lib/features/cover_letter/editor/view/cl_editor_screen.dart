@@ -5,6 +5,7 @@
 
 import 'dart:convert';
 import 'dart:js_interop';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,6 +19,7 @@ import '../../../../core/constants/app_fonts.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../../../shared/ai/claude_controller.dart';
 import '../../../../shared/ai/spellcheck_controller.dart';
+import '../../../../shared/canvas/editor_ui/cl_details_panel.dart';
 import '../../../../shared/canvas/editor_ui/editor_app_bar.dart';
 import '../../../../shared/canvas/editor_ui/editor_left_panel.dart';
 import '../../../../shared/canvas/editor_ui/editor_panel_config.dart';
@@ -27,7 +29,9 @@ import '../../../../shared/canvas/engine/canvas_controller.dart';
 import '../../../../shared/canvas/engine/canvas_item_widget.dart';
 import '../../../../shared/canvas/engine/shape_painter.dart';
 import '../../../../shared/canvas/engine/snap_guide.dart';
+import '../../../../shared/models/ai_profile_model.dart';
 import '../../../../shared/models/canvas_item.dart';
+import '../../../../shared/services/firebase_service.dart';
 import '../../../cv/editor/view/spellcheck_panel.dart';
 import '../../../settings/view/upgrade_modal.dart';
 import '../../dashboard/controller/cl_dashboard_controller.dart';
@@ -404,6 +408,79 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
   // ─── RIGHT PANEL ──────────────────────────────────────────────────────
 
   Widget _buildRightPanel(CanvasItem? selected, bool isMulti) {
+    // When nothing is selected in CL editor → show CL details panel
+    // When a section IS selected → show normal right panel with AI tools
+    if (selected == null && !isMulti) {
+      return Container(
+        width: 260,
+        decoration: const BoxDecoration(
+          color: AppColors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x1A000000),
+              blurRadius: 12,
+              offset: Offset(-2, 0),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: AppColors.petalFrost)),
+              ),
+              child: Row(
+                children: [
+                  const Text(
+                    'Cover Letter',
+                    style: TextStyle(
+                      color: AppColors.prussianBlue,
+                      fontSize: 13,
+                      fontFamily: AppFonts.poppins,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: () => setState(() => _rightPanelOpen = false),
+                    child: const Icon(LucideIcons.panelRightClose,
+                        size: 16, color: AppColors.slateGrey),
+                  ),
+                ],
+              ),
+            ),
+            // CL details form
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(10),
+                child: ClDetailsPanel(
+                  editor: _editor,
+                  onSpellcheck: () {
+                    ref.read(spellcheckControllerProvider.notifier).checkAll(_canvas.items);
+                    setState(() => _showSpellcheckPanel = true);
+                  },
+                  isSpellchecking: ref.watch(spellcheckControllerProvider).isChecking,
+                  onGenerateAll: () async {
+                    _canvas.saveSnapshot();
+                    await ref
+                        .read(claudeControllerProvider.notifier)
+                        .fillAllClSections(
+                      items: _canvas.items,
+                      editor: _editor,
+                    );
+                  },
+                  isGenerating: ref.watch(claudeControllerProvider).activeOperation == 'fill',
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // When a section IS selected → show standard right panel
     return EditorRightPanel(
       ctrl: _canvas,
       selected: selected,
@@ -413,6 +490,15 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
       config: EditorPanelConfig.coverLetter,
       onAiFill: (item) async {
         _canvas.saveSnapshot();
+        // For per-section CL AI fill, pass job details too
+        final profile = await _loadProfile();
+        final cvContent = await _editor.getLinkedCvContent();
+        final jobDetails = {
+          'companyName': _editor.state.targetCompany ?? '',
+          'jobRole': _editor.state.targetRole ?? '',
+          'hiringManagerName': _editor.state.hiringManagerName ?? '',
+          'jobDescription': _editor.state.jobDescription ?? '',
+        };
         await ref
             .read(claudeControllerProvider.notifier)
             .fillSection(
@@ -422,6 +508,7 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
           controller: item.controller!,
           cvId: _editor.state.firestoreDocId,
           cvTitle: _editor.state.title,
+          tool: 'coverLetter',
         );
       },
       isAiFilling:
@@ -444,6 +531,7 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
           customInstruction: customInstruction,
           cvId: _editor.state.firestoreDocId,
           cvTitle: _editor.state.title,
+          tool: 'coverLetter',
         );
       },
     );
@@ -804,5 +892,13 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
       _marqueeEnd = null;
       if (_canvas.multiSelected.length == 1) _toolbarKey = UniqueKey();
     });
+  }
+
+  Future<AiProfileModel?> _loadProfile() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return null;
+    final doc = await FirebaseService.getAiProfile(uid);
+    if (!doc.exists) return null;
+    return AiProfileModel.fromJson(doc.data() as Map<String, dynamic>);
   }
 }

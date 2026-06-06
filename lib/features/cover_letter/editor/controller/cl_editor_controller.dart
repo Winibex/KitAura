@@ -1,9 +1,11 @@
 // lib/features/cover_letter/editor/controller/cl_editor_controller.dart
 //
-// MVC controller for the Cover Letter editor screen.
-// Handles: template loading, auto-save, Firestore CRUD, profile autofill,
-// export tracking, title management, target company/role.
-// Mirrors CvEditorController — same patterns, CL-specific collection + fields.
+// CHANGES FROM PREVIOUS VERSION:
+//   1. Added job detail fields (hiringManagerName, hiringManagerTitle, companyAddress, etc.)
+//   2. Added linkedCvId field + method to load linked CV content
+//   3. Added fillAllSections() method for "AI Generate All"
+//   4. Job details save/load with Firestore document
+//   5. Removed "Generate from my profile" — replaced with context-aware generation
 
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -25,10 +27,18 @@ class ClEditorState {
   final bool isExporting;
   final String title;
   final String? firestoreDocId;
-  final String? targetCompany;
-  final String? targetRole;
   final String? error;
   final String? paywallMessage;
+
+  // ── Job details ──────────────────────────────────────────────────
+  final String? targetCompany;
+  final String? targetRole;
+  final String? hiringManagerName;
+  final String? hiringManagerTitle;
+  final String? companyAddress;
+  final String? companyCityStateZip;
+  final String? jobDescription;
+  final String? linkedCvId;
 
   const ClEditorState({
     this.isTemplateLoading = true,
@@ -37,11 +47,23 @@ class ClEditorState {
     this.isExporting = false,
     this.title = 'Untitled Cover Letter',
     this.firestoreDocId,
-    this.targetCompany,
-    this.targetRole,
     this.error,
     this.paywallMessage,
+    this.targetCompany,
+    this.targetRole,
+    this.hiringManagerName,
+    this.hiringManagerTitle,
+    this.companyAddress,
+    this.companyCityStateZip,
+    this.jobDescription,
+    this.linkedCvId,
   });
+
+  /// True if user has filled enough details for AI generation
+  bool get hasJobDetails =>
+      (targetCompany ?? '').isNotEmpty ||
+      (targetRole ?? '').isNotEmpty ||
+      (jobDescription ?? '').isNotEmpty;
 
   ClEditorState copyWith({
     bool? isTemplateLoading,
@@ -50,10 +72,16 @@ class ClEditorState {
     bool? isExporting,
     String? title,
     String? firestoreDocId,
-    String? targetCompany,
-    String? targetRole,
     String? error,
     String? paywallMessage,
+    String? targetCompany,
+    String? targetRole,
+    String? hiringManagerName,
+    String? hiringManagerTitle,
+    String? companyAddress,
+    String? companyCityStateZip,
+    String? jobDescription,
+    String? linkedCvId,
   }) {
     return ClEditorState(
       isTemplateLoading: isTemplateLoading ?? this.isTemplateLoading,
@@ -62,10 +90,16 @@ class ClEditorState {
       isExporting: isExporting ?? this.isExporting,
       title: title ?? this.title,
       firestoreDocId: firestoreDocId ?? this.firestoreDocId,
-      targetCompany: targetCompany ?? this.targetCompany,
-      targetRole: targetRole ?? this.targetRole,
       error: error,
       paywallMessage: paywallMessage,
+      targetCompany: targetCompany ?? this.targetCompany,
+      targetRole: targetRole ?? this.targetRole,
+      hiringManagerName: hiringManagerName ?? this.hiringManagerName,
+      hiringManagerTitle: hiringManagerTitle ?? this.hiringManagerTitle,
+      companyAddress: companyAddress ?? this.companyAddress,
+      companyCityStateZip: companyCityStateZip ?? this.companyCityStateZip,
+      jobDescription: jobDescription ?? this.jobDescription,
+      linkedCvId: linkedCvId ?? this.linkedCvId,
     );
   }
 }
@@ -78,6 +112,7 @@ class ClEditorController extends ChangeNotifier {
   ClEditorState get state => _state;
 
   set state(ClEditorState newState) {
+    if (_disposed) return;
     _state = newState;
     notifyListeners();
   }
@@ -86,8 +121,11 @@ class ClEditorController extends ChangeNotifier {
 
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
 
+  bool _disposed = false;
+
   @override
   void dispose() {
+    _disposed = true;
     _autoSaveTimer?.cancel();
     super.dispose();
   }
@@ -105,35 +143,35 @@ class ClEditorController extends ChangeNotifier {
       state = state.copyWith(title: 'Untitled Cover Letter');
       canvas.init();
     } else if (info != null) {
-      // New template — load JSON + autofill
       state = state.copyWith(title: '${info.label} Cover Letter');
       final json = await ClTemplateData.loadTemplateJson(docId);
       canvas.applyTemplateJson(json);
     } else {
-      // Existing Firestore document — load content, skip autofill
       state = state.copyWith(firestoreDocId: docId);
       await _loadFromFirestore(docId);
 
       await canvas.preloadFonts();
       state = state.copyWith(isTemplateLoading: false);
-      debugPrint('✉️ [ClEditor] Initialization complete (existing doc, no autofill)');
+      debugPrint(
+        '✉️ [ClEditor] Initialization complete (existing doc, no autofill)',
+      );
       return;
     }
 
-    // Autofill only for NEW templates
     await _tryAutofillFromProfile();
-
     await canvas.preloadFonts();
     state = state.copyWith(isTemplateLoading: false);
     debugPrint('✉️ [ClEditor] Initialization complete');
-
     _autoSave();
   }
 
   // ─── FIRESTORE LOAD ───────────────────────────────────────────────────
 
   Future<void> _loadFromFirestore(String docId) async {
-    if (_uid == null) { canvas.init(); return; }
+    if (_uid == null) {
+      canvas.init();
+      return;
+    }
 
     try {
       debugPrint('✉️ [ClEditor] Loading from Firestore: $docId');
@@ -144,6 +182,12 @@ class ClEditorController extends ChangeNotifier {
           title: data['title'] ?? 'Untitled Cover Letter',
           targetCompany: data['targetCompany'],
           targetRole: data['targetRole'],
+          hiringManagerName: data['hiringManagerName'],
+          hiringManagerTitle: data['hiringManagerTitle'],
+          companyAddress: data['companyAddress'],
+          companyCityStateZip: data['companyCityStateZip'],
+          jobDescription: data['jobDescription'],
+          linkedCvId: data['linkedCvId'],
         );
 
         final canvasData = <String, dynamic>{
@@ -170,7 +214,9 @@ class ClEditorController extends ChangeNotifier {
       final doc = await FirebaseService.getAiProfile(_uid!);
       if (!doc.exists) return;
 
-      final profile = AiProfileModel.fromJson(doc.data() as Map<String, dynamic>);
+      final profile = AiProfileModel.fromJson(
+        doc.data() as Map<String, dynamic>,
+      );
       if (profile.fullName.isEmpty) return;
 
       final filled = ClSectionAutofill.fillAll(canvas.items, profile);
@@ -182,23 +228,112 @@ class ClEditorController extends ChangeNotifier {
     }
   }
 
+  // ─── JOB DETAILS ──────────────────────────────────────────────────────
+
+  void updateJobDetails({
+    String? targetCompany,
+    String? targetRole,
+    String? hiringManagerName,
+    String? hiringManagerTitle,
+    String? companyAddress,
+    String? companyCityStateZip,
+    String? jobDescription,
+    String? linkedCvId,
+  }) {
+    state = state.copyWith(
+      targetCompany: targetCompany ?? state.targetCompany,
+      targetRole: targetRole ?? state.targetRole,
+      hiringManagerName: hiringManagerName ?? state.hiringManagerName,
+      hiringManagerTitle: hiringManagerTitle ?? state.hiringManagerTitle,
+      companyAddress: companyAddress ?? state.companyAddress,
+      companyCityStateZip: companyCityStateZip ?? state.companyCityStateZip,
+      jobDescription: jobDescription ?? state.jobDescription,
+      linkedCvId: linkedCvId ?? state.linkedCvId,
+    );
+    markDirty();
+  }
+
+  void clearLinkedCv() {
+    state = ClEditorState(
+      isTemplateLoading: state.isTemplateLoading,
+      isSaving: state.isSaving,
+      isSaved: state.isSaved,
+      isExporting: state.isExporting,
+      title: state.title,
+      firestoreDocId: state.firestoreDocId,
+      error: state.error,
+      paywallMessage: state.paywallMessage,
+      targetCompany: state.targetCompany,
+      targetRole: state.targetRole,
+      hiringManagerName: state.hiringManagerName,
+      hiringManagerTitle: state.hiringManagerTitle,
+      companyAddress: state.companyAddress,
+      companyCityStateZip: state.companyCityStateZip,
+      jobDescription: state.jobDescription,
+      linkedCvId: null,
+    );
+    markDirty();
+  }
+
+  /// Load plain text content from a linked CV for AI context.
+  Future<String?> getLinkedCvContent() async {
+    final cvId = state.linkedCvId;
+    if (cvId == null || _uid == null) return null;
+
+    try {
+      final doc = await FirebaseService.getCV(_uid!, cvId);
+      if (!doc.exists) return null;
+      final data = doc.data() as Map<String, dynamic>;
+      final items = data['items'] as List<dynamic>? ?? [];
+
+      // Extract plain text from all text sections in the CV
+      final buffer = StringBuffer();
+      for (final item in items) {
+        if (item is! Map) continue;
+        if (item['type'] != 'textSection') continue;
+        final delta = item['delta'] as List<dynamic>?;
+        if (delta == null) continue;
+        final title = item['title'] ?? '';
+        if (title.isNotEmpty) buffer.writeln('--- $title ---');
+        for (final op in delta) {
+          if (op is Map && op['insert'] is String) {
+            buffer.write(op['insert']);
+          }
+        }
+        buffer.writeln();
+      }
+      return buffer.toString().trim();
+    } catch (e) {
+      debugPrint('✉️ [ClEditor] Failed to load linked CV: $e');
+      return null;
+    }
+  }
+
+  /// Get list of user's CVs for the dropdown.
+  Future<List<CvDropdownItem>> getUserCvs() async {
+    if (_uid == null) return [];
+    try {
+      final snapshot = await FirebaseService.getUserCVs(_uid!);
+      return snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return CvDropdownItem(
+          id: doc.id,
+          title: data['title'] ?? 'Untitled CV',
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('✉️ [ClEditor] Failed to load CVs: $e');
+      return [];
+    }
+  }
+
   // ─── TITLE ────────────────────────────────────────────────────────────
 
   void updateTitle(String newTitle) {
-    final title = newTitle.trim().isEmpty ? 'Untitled Cover Letter' : newTitle.trim();
+    final title = newTitle.trim().isEmpty
+        ? 'Untitled Cover Letter'
+        : newTitle.trim();
     state = state.copyWith(title: title);
-    markDirty();
-  }
-
-  // ─── TARGET COMPANY / ROLE ────────────────────────────────────────────
-
-  void updateTargetCompany(String value) {
-    state = state.copyWith(targetCompany: value.trim().isEmpty ? null : value.trim());
-    markDirty();
-  }
-
-  void updateTargetRole(String value) {
-    state = state.copyWith(targetRole: value.trim().isEmpty ? null : value.trim());
     markDirty();
   }
 
@@ -224,9 +359,12 @@ class ClEditorController extends ChangeNotifier {
       final data = _toFirestoreJson();
 
       if (state.firestoreDocId != null) {
-        await FirebaseService.updateCoverLetter(_uid!, state.firestoreDocId!, data);
+        await FirebaseService.updateCoverLetter(
+          _uid!,
+          state.firestoreDocId!,
+          data,
+        );
       } else {
-        // Paywall check before creating
         final check = await PaywallService.canCreateCoverLetter();
         if (!check.allowed) {
           state = state.copyWith(
@@ -240,12 +378,11 @@ class ClEditorController extends ChangeNotifier {
         state = state.copyWith(firestoreDocId: docRef.id);
         debugPrint('✉️ [ClEditor] Created new cover letter: ${docRef.id}');
 
-        // Track creation server-side (counters + transaction log)
-       ClaudeService.trackDocCreated(
-         tool: 'coverLetter',
-         documentId: docRef.id,
-         documentTitle: state.title,
-       );
+        ClaudeService.trackDocCreated(
+          tool: 'coverLetter',
+          documentId: docRef.id,
+          documentTitle: state.title,
+        );
       }
 
       state = state.copyWith(isSaved: true, isSaving: false, error: null);
@@ -266,10 +403,15 @@ class ClEditorController extends ChangeNotifier {
 
   Map<String, dynamic> _toFirestoreJson() {
     final data = canvas.toFirestoreJson(_uid!, state.title);
-    // Override CV-specific defaults with CL fields
     data['title'] = state.title;
     data['targetCompany'] = state.targetCompany;
     data['targetRole'] = state.targetRole;
+    data['hiringManagerName'] = state.hiringManagerName;
+    data['hiringManagerTitle'] = state.hiringManagerTitle;
+    data['companyAddress'] = state.companyAddress;
+    data['companyCityStateZip'] = state.companyCityStateZip;
+    data['jobDescription'] = state.jobDescription;
+    data['linkedCvId'] = state.linkedCvId;
     return data;
   }
 
@@ -301,7 +443,8 @@ class ClEditorController extends ChangeNotifier {
     } catch (e) {
       state = state.copyWith(
         isExporting: false,
-        error: 'Something went wrong. Please check your connection and try again.',
+        error:
+            'Something went wrong. Please check your connection and try again.',
       );
       return false;
     }
@@ -314,4 +457,11 @@ class ClEditorController extends ChangeNotifier {
   void clearError() {
     state = state.copyWith(error: null);
   }
+}
+
+/// Simple model for the CV dropdown in the CL editor.
+class CvDropdownItem {
+  final String id;
+  final String title;
+  const CvDropdownItem({required this.id, required this.title});
 }

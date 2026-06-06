@@ -24,6 +24,9 @@ class AiSetupPanel extends ConsumerStatefulWidget {
   final VoidCallback onContinue;
   final VoidCallback onSkip;
   final VoidCallback onClose;
+  final String? profileId;     // null = create new, non-null = edit existing
+  final String? profileName;   // pre-fill name for new profiles
+  final bool startFresh;
 
   const AiSetupPanel({
     super.key,
@@ -31,6 +34,9 @@ class AiSetupPanel extends ConsumerStatefulWidget {
     required this.onSkip,
     required this.onClose,
     this.toolType = AiToolType.cv,
+    this.profileId,
+    this.profileName,
+    this.startFresh = false,
   });
 
   @override
@@ -74,7 +80,15 @@ class _AiSetupPanelState extends ConsumerState<AiSetupPanel> {
   void initState() {
     super.initState();
     Future.microtask(() async {
-      await ref.read(aiSetupControllerProvider.notifier).loadProfile();
+      if (widget.startFresh) {
+        // Don't load anything — start with empty profile
+        ref.read(aiSetupControllerProvider.notifier).resetProfile();
+      } else if (widget.profileId != null) {
+        await ref.read(aiSetupControllerProvider.notifier)
+            .loadProfileById(widget.profileId!);
+      } else {
+        await ref.read(aiSetupControllerProvider.notifier).loadProfile();
+      }
       if (!mounted) return;
       _syncControllersFromProfile();
     });
@@ -136,9 +150,9 @@ class _AiSetupPanelState extends ConsumerState<AiSetupPanel> {
     final state = ref.read(aiSetupControllerProvider);
     final hasData =
         state.profile.fullName.isNotEmpty ||
-        state.profile.experiences.isNotEmpty ||
-        state.profile.education.isNotEmpty ||
-        state.profile.skills.isNotEmpty;
+            state.profile.experiences.isNotEmpty ||
+            state.profile.education.isNotEmpty ||
+            state.profile.skills.isNotEmpty;
 
     if (!hasData) {
       widget.onClose();
@@ -147,45 +161,125 @@ class _AiSetupPanelState extends ConsumerState<AiSetupPanel> {
 
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Discard changes?',
-          style: TextStyle(
-            fontFamily: AppFonts.poppins,
-            fontWeight: FontWeight.bold,
-            color: AppColors.prussianBlue,
-            fontSize: 18,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          width: 380,
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 30,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(LucideIcons.alertTriangle, size: 24,
+                    color: AppColors.error.withValues(alpha: 0.8)),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Unsaved Changes',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontFamily: AppFonts.poppins,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.prussianBlue,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'You have changes that haven\'t been saved.\nWhat would you like to do?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontFamily: AppFonts.openSans,
+                  color: AppColors.slateGrey,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    await ref.read(aiSetupControllerProvider.notifier).saveProfile();
+                    if (mounted) widget.onClose();
+                  },
+                  icon: const Icon(LucideIcons.save, size: 15),
+                  label: const Text('Save & Close'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.darkRaspberry,
+                    foregroundColor: AppColors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    textStyle: const TextStyle(
+                      fontSize: 14,
+                      fontFamily: AppFonts.poppins,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    widget.onClose();
+                  },
+                  icon: const Icon(LucideIcons.trash2, size: 15),
+                  label: const Text('Discard Changes'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.error,
+                    side: BorderSide(
+                        color: AppColors.error.withValues(alpha: 0.3)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    textStyle: const TextStyle(
+                      fontSize: 14,
+                      fontFamily: AppFonts.poppins,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(ctx),
+                  child: const Text(
+                    'Keep editing',
+                    style: TextStyle(
+                      color: AppColors.slateGrey,
+                      fontSize: 12,
+                      fontFamily: AppFonts.openSans,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        content: const Text(
-          'You have unsaved information. Save before closing?',
-          style: TextStyle(
-            fontFamily: AppFonts.openSans,
-            color: AppColors.slateGrey,
-            fontSize: 14,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              widget.onClose();
-            },
-            child: const Text(
-              'Discard',
-              style: TextStyle(color: AppColors.error),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await ref.read(aiSetupControllerProvider.notifier).saveProfile();
-              if (mounted) widget.onClose();
-            },
-            child: const Text('Save & Close'),
-          ),
-        ],
       ),
     );
   }
@@ -1566,54 +1660,112 @@ class _AiSetupPanelState extends ConsumerState<AiSetupPanel> {
     );
   }
 
+  // FIND and REPLACE _confirmDeleteProfile():
+
   void _confirmDeleteProfile() {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Delete Profile?',
-          style: TextStyle(
-            fontFamily: AppFonts.poppins,
-            fontWeight: FontWeight.bold,
-            color: AppColors.prussianBlue,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          width: 380,
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 30,
+                offset: const Offset(0, 12),
+              ),
+            ],
           ),
-        ),
-        content: const Text(
-          'This will permanently delete all your saved profile data. This cannot be undone.',
-          style: TextStyle(
-            fontFamily: AppFonts.openSans,
-            color: AppColors.slateGrey,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: AppColors.slateGrey),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await ref
-                  .read(aiSetupControllerProvider.notifier)
-                  .deleteProfile();
-              if (mounted) {
-                _syncControllersFromProfile();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Profile deleted'),
-                    backgroundColor: AppColors.success,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(LucideIcons.trash2, size: 24, color: AppColors.error),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Delete Profile?',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontFamily: AppFonts.poppins,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.prussianBlue,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'This will permanently delete all your saved profile data. This action cannot be undone.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontFamily: AppFonts.openSans,
+                  color: AppColors.slateGrey,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    await ref.read(aiSetupControllerProvider.notifier).deleteProfile();
+                    if (mounted) {
+                      _syncControllersFromProfile();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Profile deleted'),
+                          backgroundColor: AppColors.success,
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(LucideIcons.trash2, size: 15),
+                  label: const Text('Delete Forever'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    foregroundColor: AppColors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    textStyle: const TextStyle(
+                      fontSize: 14,
+                      fontFamily: AppFonts.poppins,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Delete'),
+                ),
+              ),
+              const SizedBox(height: 10),
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(ctx),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: AppColors.slateGrey,
+                      fontSize: 12,
+                      fontFamily: AppFonts.openSans,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

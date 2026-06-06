@@ -28,6 +28,7 @@ class DashboardState {
   // Limits from Firebase config/limits
   final int maxExports;
   final int maxAiFills;
+  final int maxAiRewrites;
 
   const DashboardState({
     this.isLoading = false,
@@ -51,6 +52,7 @@ class DashboardState {
     this.recentItems = const [],
     this.maxExports = 3,
     this.maxAiFills = 15,
+    this.maxAiRewrites = 15,
   });
 
   bool get isPro => plan == 'pro' || (plan == 'trial' && trialActive);
@@ -79,6 +81,7 @@ class DashboardState {
     DateTime? lastActiveAt,
     List<RecentItem>? recentItems,
     int? maxExports,
+    int? maxAiRewrites,
     int? maxAiFills,
   })
   {
@@ -103,6 +106,7 @@ class DashboardState {
       lastActiveAt: lastActiveAt ?? this.lastActiveAt,
       recentItems: recentItems ?? this.recentItems,
       maxExports: maxExports ?? this.maxExports,
+      maxAiRewrites: maxAiRewrites ?? this.maxAiRewrites,
       maxAiFills: maxAiFills ?? this.maxAiFills,
     );
   }
@@ -218,10 +222,11 @@ class DashboardController extends StateNotifier<DashboardState> {
       }
 
       // Load limits from config/limits
-      int maxExports = 3, maxAiFills = 15;
+      int maxExports = 3, maxAiFills = 15; int maxAiRewrites = 15;
       final limits = await FirebaseService.getPlanLimits(state.plan);
       maxExports = limits['exportsPerMonth']!;
       maxAiFills = limits['aiFillPerMonth']!;
+      maxAiRewrites = limits['aiRewritePerMonth']!;
 
       // Load recent cover letters too
       int actualClCount = 0;
@@ -254,6 +259,7 @@ class DashboardController extends StateNotifier<DashboardState> {
         coverLetterCount: actualClCount,
         maxExports: maxExports == -1 ? 999 : maxExports,
         maxAiFills: maxAiFills == -1 ? 999 : maxAiFills,
+        maxAiRewrites: maxAiRewrites == -1 ? 999 : maxAiRewrites,
       );
     } catch (e, stack) {
       debugPrint('Dashboard load error: $e\n$stack');

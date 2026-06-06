@@ -69,6 +69,7 @@ class CvEditorController extends ChangeNotifier {
   CvEditorState get state => _state;
 
   set state(CvEditorState newState) {
+    if (_disposed) return;
     _state = newState;
     notifyListeners();
   }
@@ -77,11 +78,15 @@ class CvEditorController extends ChangeNotifier {
 
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
 
+  bool _disposed = false;
+
   @override
   void dispose() {
+    _disposed = true;
     _autoSaveTimer?.cancel();
     super.dispose();
   }
+
 
   // ─── INITIALIZATION ───────────────────────────────────────────────────
 

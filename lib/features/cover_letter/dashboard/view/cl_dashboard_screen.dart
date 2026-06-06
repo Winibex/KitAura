@@ -296,5 +296,4 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
       ),
     );
   }
-
 }

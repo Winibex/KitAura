@@ -758,6 +758,8 @@ class GoProStatCard extends ConsumerWidget {
 // TRIAL ACTIVATION DIALOG — shown when user clicks "Start Free Trial"
 // ═══════════════════════════════════════════════════════════════════════
 
+// REPLACE your existing TrialActivationDialog in go_pro_banners.dart with this
+
 class TrialActivationDialog extends StatefulWidget {
   final Future<void> Function() onActivate;
 
@@ -767,153 +769,324 @@ class TrialActivationDialog extends StatefulWidget {
   State<TrialActivationDialog> createState() => _TrialActivationDialogState();
 }
 
-class _TrialActivationDialogState extends State<TrialActivationDialog> {
+class _TrialActivationDialogState extends State<TrialActivationDialog>
+    with SingleTickerProviderStateMixin {
   bool _isLoading = false;
   String? _error;
+  late final AnimationController _iconCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _iconCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _iconCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      contentPadding: const EdgeInsets.all(28),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Icon
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: AppColors.darkRaspberry.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(14),
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        width: 400,
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 40,
+              offset: const Offset(0, 16),
             ),
-            child: const Icon(LucideIcons.sparkles, size: 28, color: AppColors.darkRaspberry),
-          ),
-          const SizedBox(height: 20),
-
-          // Title
-          const Text(
-            'Start Your Free Trial',
-            style: TextStyle(
-              fontSize: 20,
-              fontFamily: AppFonts.poppins,
-              fontWeight: FontWeight.bold,
-              color: AppColors.prussianBlue,
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // Description
-          const Text(
-            'Get 7 days of unlimited access to all Pro features. No credit card required.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              fontFamily: AppFonts.openSans,
-              color: AppColors.slateGrey,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Feature list
-          _feature(LucideIcons.infinity, 'Unlimited exports'),
-          _feature(LucideIcons.sparkles, 'Unlimited AI generation'),
-          _feature(LucideIcons.fileText, 'Unlimited CVs & cover letters'),
-          _feature(LucideIcons.layout, 'All premium templates'),
-          _feature(LucideIcons.paintbrush, 'AI Design (coming soon)'),
-          const SizedBox(height: 24),
-
-          // Error message
-          if (_error != null) ...[
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.error.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                _error!,
-                style: const TextStyle(
-                  color: AppColors.error,
-                  fontSize: 12,
-                  fontFamily: AppFonts.openSans,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: 12),
           ],
-
-          // CTA button
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              onPressed: _isLoading ? null : _activate,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.darkRaspberry,
-                foregroundColor: AppColors.white,
-                disabledBackgroundColor: AppColors.slateGrey,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── Gradient header ───────────────────────────────────
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(28, 28, 28, 24),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppColors.prussianBlue, Color(0xFF2D1B3D), AppColors.darkRaspberry],
+                  stops: [0.0, 0.5, 1.0],
+                ),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  topRight: Radius.circular(24),
                 ),
               ),
-              child: _isLoading
-                  ? const SizedBox(
-                width: 20, height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.white,
+              child: Column(
+                children: [
+                  // Close button
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: AppColors.white.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(LucideIcons.x, size: 14, color: AppColors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Animated icon
+                  AnimatedBuilder(
+                    animation: _iconCtrl,
+                    builder: (_, __) {
+                      final scale = 1.0 + (_iconCtrl.value * 0.08);
+                      final glow = 0.15 + (_iconCtrl.value * 0.15);
+                      return Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: AppColors.white.withValues(alpha: glow),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Transform.scale(
+                          scale: scale,
+                          child: const Icon(LucideIcons.sparkles, size: 30, color: AppColors.white),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Start Your Free Trial',
+                    style: TextStyle(
+                      color: AppColors.white,
+                      fontSize: 22,
+                      fontFamily: AppFonts.poppins,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '7 days of unlimited Pro access\nNo credit card required',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.white.withValues(alpha: 0.75),
+                      fontSize: 13,
+                      fontFamily: AppFonts.openSans,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Trial badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.white.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: AppColors.white.withValues(alpha: 0.2)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(LucideIcons.clock, size: 13,
+                            color: AppColors.white.withValues(alpha: 0.9)),
+                        const SizedBox(width: 6),
+                        Text(
+                          '7 days free · then \$7/mo · cancel anytime',
+                          style: TextStyle(
+                            color: AppColors.white.withValues(alpha: 0.9),
+                            fontSize: 11,
+                            fontFamily: AppFonts.poppins,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Features list ────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(28, 24, 28, 8),
+              child: Column(
+                children: [
+                  _featureRow(LucideIcons.infinity, 'Unlimited exports',
+                      'Download as many PDFs as you need'),
+                  _featureRow(LucideIcons.sparkles, 'Unlimited AI generation',
+                      'AI Fill, Rewrite & Spellcheck — no limits'),
+                  _featureRow(LucideIcons.fileText, 'Unlimited documents',
+                      'Create unlimited CVs & cover letters'),
+                  _featureRow(LucideIcons.layout, 'All premium templates',
+                      'Access every template including exclusives'),
+                  _featureRow(LucideIcons.ban, 'No watermarks',
+                      'Clean, professional exports every time'),
+                ],
+              ),
+            ),
+
+            // ── Error ────────────────────────────────────────────
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(28, 0, 28, 8),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
+                  ),
+                  child: Text(
+                    _error!,
+                    style: const TextStyle(
+                      color: AppColors.error,
+                      fontSize: 12,
+                      fontFamily: AppFonts.openSans,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
-              )
-                  : const Text(
-                'Activate 7-Day Free Trial',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontFamily: AppFonts.poppins,
-                  fontWeight: FontWeight.w600,
+              ),
+
+            // ── CTA button ───────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(28, 8, 28, 16),
+              child: SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: MouseRegion(
+                  cursor: _isLoading ? SystemMouseCursors.basic : SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: _isLoading ? null : _activate,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: _isLoading
+                            ? null
+                            : const LinearGradient(
+                          colors: [AppColors.darkRaspberry, Color(0xFFAD2B5A)],
+                        ),
+                        color: _isLoading ? AppColors.slateGrey : null,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: _isLoading
+                            ? null
+                            : [
+                          BoxShadow(
+                            color: AppColors.darkRaspberry.withValues(alpha: 0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: _isLoading
+                            ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: AppColors.white,
+                          ),
+                        )
+                            : const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(LucideIcons.zap, size: 16, color: AppColors.white),
+                            SizedBox(width: 8),
+                            Text(
+                              'Activate Free Trial',
+                              style: TextStyle(
+                                color: AppColors.white,
+                                fontSize: 15,
+                                fontFamily: AppFonts.poppins,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 12),
 
-          // Cancel
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: const Text(
-                'Maybe later',
-                style: TextStyle(
-                  color: AppColors.slateGrey,
-                  fontSize: 12,
-                  fontFamily: AppFonts.openSans,
+            // ── Footer ───────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: const Text(
+                    'Maybe later',
+                    style: TextStyle(
+                      color: AppColors.slateGrey,
+                      fontSize: 12,
+                      fontFamily: AppFonts.openSans,
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _feature(IconData icon, String text) {
+  Widget _featureRow(IconData icon, String title, String subtitle) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 14),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: AppColors.success),
-          const SizedBox(width: 10),
-          Text(
-            text,
-            style: const TextStyle(
-              fontSize: 13,
-              fontFamily: AppFonts.openSans,
-              fontWeight: FontWeight.w500,
-              color: AppColors.prussianBlue,
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: AppColors.darkRaspberry.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 15, color: AppColors.darkRaspberry),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: AppColors.prussianBlue,
+                    fontSize: 13,
+                    fontFamily: AppFonts.poppins,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: AppColors.slateGrey,
+                    fontSize: 11,
+                    fontFamily: AppFonts.openSans,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -925,7 +1098,7 @@ class _TrialActivationDialogState extends State<TrialActivationDialog> {
     setState(() { _isLoading = true; _error = null; });
     try {
       await widget.onActivate();
-      if (mounted) Navigator.pop(context, true); // true = trial activated
+      if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -947,7 +1120,8 @@ class _TrialActivationDialogState extends State<TrialActivationDialog> {
 Future<bool?> showTrialActivationDialog(
     BuildContext context, {
       required Future<void> Function() onActivate,
-    }) {
+    })
+{
   return showDialog<bool>(
     context: context,
     barrierDismissible: false,
@@ -1103,173 +1277,175 @@ class ProFeaturesDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
-      child: Container(
-        width: 420,
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.15),
-              blurRadius: 40,
-              offset: const Offset(0, 16),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // ── Header with gradient ──────────────────────────────
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(28, 28, 28, 24),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF0D4E3A), Color(0xFF16A34A)],
-                ),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(24),
-                  topRight: Radius.circular(24),
-                ),
+      child: SingleChildScrollView(
+        child: Container(
+          width: 420,
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.15),
+                blurRadius: 40,
+                offset: const Offset(0, 16),
               ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: AppColors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(12),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── Header with gradient ──────────────────────────────
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(28, 28, 28, 24),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF0D4E3A), Color(0xFF16A34A)],
+                  ),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(24),
+                    topRight: Radius.circular(24),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppColors.white.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(LucideIcons.crown, size: 24, color: AppColors.white),
                         ),
-                        child: const Icon(LucideIcons.crown, size: 24, color: AppColors.white),
-                      ),
-                      const Spacer(),
-                      MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: AppColors.white.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(8),
+                        const Spacer(),
+                        MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: AppColors.white.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(LucideIcons.x, size: 14, color: AppColors.white),
                             ),
-                            child: const Icon(LucideIcons.x, size: 14, color: AppColors.white),
                           ),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Your Pro Plan',
+                        style: TextStyle(
+                          color: AppColors.white,
+                          fontSize: 22,
+                          fontFamily: AppFonts.poppins,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Your Pro Plan',
+                    ),
+                    const SizedBox(height: 4),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Everything you need to create standout documents',
+                        style: TextStyle(
+                          color: AppColors.white.withValues(alpha: 0.8),
+                          fontSize: 13,
+                          fontFamily: AppFonts.openSans,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+        
+              // ── Features list ────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(28, 24, 28, 8),
+                child: Column(
+                  children: [
+                    _featureRow(
+                      LucideIcons.infinity,
+                      'Unlimited Exports',
+                      'Download as many PDFs as you need',
+                    ),
+                    _featureRow(
+                      LucideIcons.sparkles,
+                      'Unlimited AI Generation',
+                      'AI Fill and AI Rewrite with no limits',
+                    ),
+                    _featureRow(
+                      LucideIcons.fileText,
+                      'Unlimited Documents',
+                      'Create unlimited CVs, cover letters & proposals',
+                    ),
+                    _featureRow(
+                      LucideIcons.layout,
+                      'All Premium Templates',
+                      'Access every template including Pro exclusives',
+                    ),
+                    _featureRow(
+                      LucideIcons.paintbrush,
+                      'AI Design',
+                      'Auto-generate complete document layouts',
+                    ),
+                    _featureRow(
+                      LucideIcons.ban,
+                      'No Watermarks',
+                      'Clean, professional exports every time',
+                    ),
+                    _featureRow(
+                      LucideIcons.spellCheck,
+                      'AI Spellcheck',
+                      'Catch every typo before you submit',
+                    ),
+                    _featureRow(
+                      LucideIcons.headphones,
+                      'Priority Support',
+                      'Get help faster when you need it',
+                    ),
+                  ],
+                ),
+              ),
+        
+              // ── Footer ──────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(28, 8, 28, 24),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 44,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.success,
+                      foregroundColor: AppColors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Got it!',
                       style: TextStyle(
-                        color: AppColors.white,
-                        fontSize: 22,
+                        fontSize: 14,
                         fontFamily: AppFonts.poppins,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w600,
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Everything you need to create standout documents',
-                      style: TextStyle(
-                        color: AppColors.white.withValues(alpha: 0.8),
-                        fontSize: 13,
-                        fontFamily: AppFonts.openSans,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // ── Features list ────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(28, 24, 28, 8),
-              child: Column(
-                children: [
-                  _featureRow(
-                    LucideIcons.infinity,
-                    'Unlimited Exports',
-                    'Download as many PDFs as you need',
-                  ),
-                  _featureRow(
-                    LucideIcons.sparkles,
-                    'Unlimited AI Generation',
-                    'AI Fill and AI Rewrite with no limits',
-                  ),
-                  _featureRow(
-                    LucideIcons.fileText,
-                    'Unlimited Documents',
-                    'Create unlimited CVs, cover letters & proposals',
-                  ),
-                  _featureRow(
-                    LucideIcons.layout,
-                    'All Premium Templates',
-                    'Access every template including Pro exclusives',
-                  ),
-                  _featureRow(
-                    LucideIcons.paintbrush,
-                    'AI Design',
-                    'Auto-generate complete document layouts',
-                  ),
-                  _featureRow(
-                    LucideIcons.ban,
-                    'No Watermarks',
-                    'Clean, professional exports every time',
-                  ),
-                  _featureRow(
-                    LucideIcons.spellCheck,
-                    'AI Spellcheck',
-                    'Catch every typo before you submit',
-                  ),
-                  _featureRow(
-                    LucideIcons.headphones,
-                    'Priority Support',
-                    'Get help faster when you need it',
-                  ),
-                ],
-              ),
-            ),
-
-            // ── Footer ──────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(28, 8, 28, 24),
-              child: SizedBox(
-                width: double.infinity,
-                height: 44,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.success,
-                    foregroundColor: AppColors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Got it!',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontFamily: AppFonts.poppins,
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

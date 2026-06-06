@@ -11,7 +11,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import '../../features/cover_letter/editor/controller/cl_editor_controller.dart';
 import '../models/ai_profile_model.dart';
+import '../models/canvas_item.dart';
 import '../models/section_type.dart';
 import '../services/firebase_service.dart';
 import 'claude_service.dart';
@@ -87,7 +89,8 @@ class ClaudeController extends StateNotifier<ClaudeState> {
     String? cvTitle,
     String? templateId,
     String tool = 'cv',
-  }) async {
+  }) async
+  {
     if (state.isActive) return;
     debugPrint('🤖 [ClaudeController] fillSection($sectionTitle, type=${sectionType.key})');
 
@@ -168,6 +171,109 @@ class ClaudeController extends StateNotifier<ClaudeState> {
     }
   }
 
+  /// Fills ALL cover letter sections at once using job details + linked CV.
+  /// Called from the CL editor's "AI Generate Cover Letter" button.
+  Future<void> fillAllClSections({
+    required List<CanvasItem> items,
+    required ClEditorController editor,
+  }) async
+  {
+    if (state.isActive) return;
+    debugPrint('🤖 [ClaudeController] fillAllClSections');
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      state = const ClaudeState(status: AiFillStatus.error, error: 'Please sign in.');
+      return;
+    }
+
+    state = const ClaudeState(status: AiFillStatus.loading, activeOperation: 'fill');
+
+    // Load profile
+    try {
+      _cachedProfile ??= await _loadAiProfile(uid);
+    } catch (_) {}
+    final profile = _cachedProfile ?? const AiProfileModel();
+
+    // Load linked CV content
+    String? cvContent;
+    if (editor.state.linkedCvId != null) {
+      cvContent = await editor.getLinkedCvContent();
+    }
+
+    // Build job details map
+    final jobDetails = <String, dynamic>{
+      'companyName': editor.state.targetCompany ?? '',
+      'jobRole': editor.state.targetRole ?? '',
+      'hiringManagerName': editor.state.hiringManagerName ?? '',
+      'hiringManagerTitle': editor.state.hiringManagerTitle ?? '',
+      'companyAddress': editor.state.companyAddress ?? '',
+      'companyCityStateZip': editor.state.companyCityStateZip ?? '',
+      'jobDescription': editor.state.jobDescription ?? '',
+    };
+
+    try {
+      final content = await ClaudeService.aiFillSection(
+        sectionType: 'all',
+        tone: profile.tone,
+        experienceLevel: profile.experienceLevel,
+        profile: _sanitizeProfile(profile.toJson()),
+        tool: 'coverLetter',
+        documentId: editor.state.firestoreDocId,
+        documentTitle: editor.state.title,
+        jobDetails: jobDetails,
+        cvContent: cvContent,
+      );
+
+      if (!mounted || content == null) {
+        state = ClaudeState(
+          status: AiFillStatus.error,
+          error: 'AI returned no content. Try adding more job details.',
+        );
+        return;
+      }
+
+      // Apply each section's content to matching canvas items
+      int filled = 0;
+      for (final item in items) {
+        if (!item.isText || item.controller == null) continue;
+        final sectionKey = item.sectionType.key;
+        final sectionContent = content[sectionKey];
+        if (sectionContent == null) continue;
+        if (sectionContent is! Map) continue;
+
+        final styles = _extractStyles(item.controller!.document);
+
+        try {
+          // Reset cursor before swapping document
+          item.controller!.updateSelection(
+            const TextSelection.collapsed(offset: 0),
+            ChangeSource.local,
+          );
+          item.controller!.document = Document.fromJson(
+            _buildStyledDelta(Map<String, dynamic>.from(sectionContent), styles),
+          );
+          filled++;
+        } catch (e) {
+          debugPrint('🤖 [ClaudeController] Failed to apply section $sectionKey: $e');
+        }
+      }
+
+      state = ClaudeState(
+        status: AiFillStatus.done,
+        streamedChars: filled,
+      );
+      debugPrint('🤖 [ClaudeController] fillAllClSections OK — $filled sections filled');
+    } catch (e) {
+      if (!mounted) return;
+      final isPaywall = e.toString().contains('limit') || e.toString().contains('Upgrade');
+      state = ClaudeState(
+        status: isPaywall ? AiFillStatus.paywalled : AiFillStatus.error,
+        error: e.toString(),
+      );
+    }
+  }
+
   // ═══════════════════════════════════════════════════════════════════════
   // AI REWRITE
   // ═══════════════════════════════════════════════════════════════════════
@@ -188,7 +294,8 @@ class ClaudeController extends StateNotifier<ClaudeState> {
     String? cvTitle,
     String? templateId,
     String tool = 'cv',
-  }) async {
+  }) async
+  {
     if (state.isActive) return;
     debugPrint('🤖 [ClaudeController] rewriteSection($sectionTitle, mode=$mode)');
 
@@ -258,7 +365,8 @@ class ClaudeController extends StateNotifier<ClaudeState> {
 
   /// Apply rewritten text while preserving template formatting styles.
   void _applyRewrittenText(
-      QuillController controller, String newText, _StyleSet styles) {
+      QuillController controller, String newText, _StyleSet styles)
+  {
     try {
       // Get existing delta to preserve formatting
       final existingOps = controller.document.toDelta().toJson();
@@ -346,7 +454,8 @@ class ClaudeController extends StateNotifier<ClaudeState> {
   // ═══════════════════════════════════════════════════════════════════════
 
   List<Map<String, dynamic>> _buildStyledDelta(
-      Map<String, dynamic> content, _StyleSet styles) {
+      Map<String, dynamic> content, _StyleSet styles)
+  {
     final ops = <Map<String, dynamic>>[];
     final heading = content['heading'] as String? ?? '';
     final entries = content['entries'] as List<dynamic>? ?? [];
@@ -414,12 +523,8 @@ class ClaudeController extends StateNotifier<ClaudeState> {
   void invalidateProfile() => _cachedProfile = null;
 
   Future<AiProfileModel?> _loadAiProfile(String uid) async {
-    debugPrint('🤖 [ClaudeController] Loading AI profile for $uid');
-    final doc = await FirebaseService.getAiProfile(uid);
-    if (doc.exists) {
-      return AiProfileModel.fromJson(doc.data() as Map<String, dynamic>);
-    }
-    return null;
+    debugPrint('🤖 [ClaudeController] Loading default AI profile for $uid');
+    return await FirebaseService.getDefaultAiProfile(uid);
   }
 }
 

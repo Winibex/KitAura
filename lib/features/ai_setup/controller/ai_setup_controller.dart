@@ -1,5 +1,6 @@
 // lib/features/ai_setup/controller/ai_setup_controller.dart
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -7,6 +8,7 @@ import '../../../shared/models/ai_profile_model.dart';
 import '../../../shared/services/firebase_service.dart';
 
 class AiSetupState {
+  final String? profileId;
   final bool isLoading;
   final bool isSaving;
   final String? error;
@@ -14,6 +16,7 @@ class AiSetupState {
   final int currentStep;
 
   AiSetupState({
+    this.profileId,
     this.isLoading = false,
     this.isSaving = false,
     this.error,
@@ -59,10 +62,12 @@ class AiSetupState {
     bool? isLoading,
     bool? isSaving,
     String? error,
+    String? profileId,
     AiProfileModel? profile,
     int? currentStep,
   }) {
     return AiSetupState(
+      profileId: profileId ?? this.profileId,
       isLoading: isLoading ?? this.isLoading,
       isSaving: isSaving ?? this.isSaving,
       error: error,
@@ -125,18 +130,27 @@ class AiSetupController extends StateNotifier<AiSetupState> {
   }
 
   Future<bool> saveProfile() async {
-    if (_uid == null) return false;
-    state = state.copyWith(isSaving: true, error: null);
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return false;
+    state = state.copyWith(isSaving: true);
+
     try {
-      await FirebaseService.saveAiProfile(_uid!, state.profile.toJson());
-      state = state.copyWith(isSaving: false);
+      final data = state.profile.toJson();
+      data['updatedAt'] = FieldValue.serverTimestamp();
+
+      // Save to new multi-profile collection
+      final savedId = await FirebaseService.saveAiProfileMulti(
+        uid, data, profileId: state.profileId,
+      );
+
+      // Also save to legacy path for backward compatibility
+      await FirebaseService.saveAiProfile(uid, data);
+
+      state = state.copyWith(isSaving: false, profileId: savedId);
+      debugPrint('✅ AI profile saved: $savedId');
       return true;
     } catch (e) {
-      debugPrint('saveProfile error: $e');
-      state = state.copyWith(
-        isSaving: false,
-        error: 'Failed to save. Please try again.',
-      );
+      state = state.copyWith(isSaving: false, error: 'Save failed: $e');
       return false;
     }
   }
@@ -149,6 +163,14 @@ class AiSetupController extends StateNotifier<AiSetupState> {
     } catch (e) {
       state = state.copyWith(error: 'Failed to delete profile: $e');
     }
+  }
+
+  void resetProfile() {
+    state = state.copyWith(
+      profile: const AiProfileModel(),
+      profileId: null,
+      isLoading: false,
+    );
   }
 
   // ─── STEP 1: PERSONAL INFO ────────────────────────────────────────────
@@ -164,7 +186,8 @@ class AiSetupController extends StateNotifier<AiSetupState> {
     String? dateOfBirth,
     String? nationality,
     String? gender,
-  }) {
+  })
+  {
     state = state.copyWith(
       profile: state.profile.copyWith(
         fullName: fullName,
@@ -423,7 +446,8 @@ class AiSetupController extends StateNotifier<AiSetupState> {
     String? tone,
     String? industry,
     String? jobTitle,
-  }) {
+  })
+  {
     state = state.copyWith(
       profile: state.profile.copyWith(
         experienceLevel: experienceLevel,
@@ -432,6 +456,30 @@ class AiSetupController extends StateNotifier<AiSetupState> {
         jobTitle: jobTitle,
       ),
     );
+  }
+
+  /// Load a specific profile by ID for editing.
+  Future<void> loadProfileById(String profileId) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    state = state.copyWith(isLoading: true);
+
+    try {
+      final doc = await FirebaseService.getAiProfileById(uid, profileId);
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id;
+        state = state.copyWith(
+          profile: AiProfileModel.fromJson(data),
+          profileId: profileId,
+          isLoading: false,
+        );
+      } else {
+        state = state.copyWith(isLoading: false);
+      }
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: 'Failed to load profile');
+    }
   }
 }
 

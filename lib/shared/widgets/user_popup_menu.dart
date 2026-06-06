@@ -20,33 +20,31 @@
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_fonts.dart';
-import '../models/subscription_model.dart';
-import '../models/user_profile_model.dart';
+import '../../features/dashboard/controller/dashboard_controller.dart';
 
-class UserPopupMenu extends StatefulWidget {
-  final UserProfileModel? profile;
-  final SubscriptionModel? subscription;
+class UserPopupMenu extends ConsumerStatefulWidget {
   final VoidCallback onSettings;
   final VoidCallback onUpgrade;
   final VoidCallback onSignOut;
+  final VoidCallback onStartTrial;
 
   const UserPopupMenu({
     super.key,
-    required this.profile,
-    required this.subscription,
     required this.onSettings,
     required this.onUpgrade,
     required this.onSignOut,
+    required this.onStartTrial,
   });
 
   @override
-  State<UserPopupMenu> createState() => _UserPopupMenuState();
+  ConsumerState<UserPopupMenu> createState() => _UserPopupMenuState();
 }
 
-class _UserPopupMenuState extends State<UserPopupMenu> {
+class _UserPopupMenuState extends ConsumerState<UserPopupMenu> {
   final _overlayController = OverlayPortalController();
   final _link = LayerLink();
 
@@ -94,7 +92,10 @@ class _UserPopupMenuState extends State<UserPopupMenu> {
   }
 
   Widget _buildOverlay(BuildContext ctx, User? user) {
-    final isPro = widget.subscription?.isPro ?? false;
+    final dashState = ref.watch(dashboardControllerProvider);
+    final isPro = dashState.isPro;
+    final trialUsed = dashState.trialUsed;
+    final plan = dashState.plan;
 
     return Stack(
       children: [
@@ -156,7 +157,7 @@ class _UserPopupMenuState extends State<UserPopupMenu> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  widget.profile?.displayName ?? user?.displayName ?? 'User',
+                                  user?.displayName ?? 'User',
                                   style: const TextStyle(
                                     fontSize: 14, fontFamily: AppFonts.poppins,
                                     fontWeight: FontWeight.w600, color: AppColors.prussianBlue,
@@ -165,7 +166,7 @@ class _UserPopupMenuState extends State<UserPopupMenu> {
                                 ),
                                 const SizedBox(height: 1),
                                 Text(
-                                  widget.profile?.email ?? user?.email ?? '',
+                                  user?.email ?? '',
                                   style: const TextStyle(fontSize: 11, color: AppColors.slateGrey),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -175,11 +176,17 @@ class _UserPopupMenuState extends State<UserPopupMenu> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: isPro ? AppColors.darkRaspberry : AppColors.petalFrost,
+                              color: isPro
+                                  ? (plan == 'trial'
+                                  ? AppColors.dustyMauve
+                                  : AppColors.success)
+                                  : AppColors.petalFrost,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
-                              isPro ? 'PRO' : 'FREE',
+                              isPro
+                                  ? (plan == 'trial' ? 'TRIAL' : 'PRO')
+                                  : 'FREE',
                               style: TextStyle(
                                 fontSize: 9, fontFamily: AppFonts.poppins,
                                 fontWeight: FontWeight.w700, letterSpacing: 1,
@@ -201,11 +208,23 @@ class _UserPopupMenuState extends State<UserPopupMenu> {
                       _overlayController.hide();
                       widget.onSettings();
                     }),
-                    if (!isPro)
-                      _menuItem(LucideIcons.crown, 'Upgrade to Pro', () {
+                    if (!isPro) ...[
+                      if (!trialUsed)
+                        _menuItem(LucideIcons.sparkles, 'Start Free Trial', () {
+                          _overlayController.hide();
+                          widget.onStartTrial();
+                        }, accent: true)
+                      else
+                        _menuItem(LucideIcons.crown, 'Upgrade to Pro', () {
+                          _overlayController.hide();
+                          widget.onUpgrade();
+                        }, accent: true),
+                    ],
+                    if (isPro)
+                      _menuItem(LucideIcons.crown, 'Manage Subscription', () {
                         _overlayController.hide();
-                        widget.onUpgrade();
-                      }, accent: true),
+                        widget.onSettings();
+                      }),
                     _menuItem(LucideIcons.helpCircle, 'Help & Support', () {
                       _overlayController.hide();
                       // TODO: open help
