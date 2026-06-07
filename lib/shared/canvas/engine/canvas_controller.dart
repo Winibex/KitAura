@@ -1007,7 +1007,9 @@ class CanvasController extends ChangeNotifier {
     );
   }
 
-  Future<Uint8List> buildPdf() async {
+  // REPLACE the entire buildPdf method:
+
+  Future<Uint8List> buildPdf({bool showWatermark = false}) async {
     final doc = pw.Document();
     for (int p = 0; p < totalPages; p++) {
       final pageOffset = p * canvasH;
@@ -1019,17 +1021,36 @@ class CanvasController extends ChangeNotifier {
       doc.addPage(pw.Page(
         pageFormat: PdfPageFormat.a4,
         margin: pw.EdgeInsets.zero,
-        build: (ctx) => pw.Stack(
-          children: pageItems.map((item) {
-            // Offset Y back to per-page coordinates
+        build: (ctx) {
+          final children = pageItems.map((item) {
             final adjustedItem = item;
             final original = adjustedItem.position;
             adjustedItem.position = Offset(original.dx, original.dy - pageOffset);
             final widget = itemToPdf(adjustedItem);
-            adjustedItem.position = original; // restore
+            adjustedItem.position = original;
             return widget;
-          }).toList(),
-        ),
+          }).toList();
+
+          // Watermark as last element in Stack (renders on top)
+          if (showWatermark) {
+            children.add(
+              pw.Positioned(
+                bottom: 8,
+                right: 12,
+                child: pw.Text(
+                  'Made with KitAura — kitaura.com',
+                  style: pw.TextStyle(
+                    fontSize: 7,
+                    color: PdfColors.grey400,
+                    font: pw.Font.helvetica(),
+                  ),
+                ),
+              ),
+            );
+          }
+
+          return pw.Stack(children: children);
+        },
       ));
     }
     return doc.save();

@@ -14,6 +14,7 @@ import '../../../../core/utils/responsive.dart';
 import '../../../../shared/widgets/responsive_scaffold.dart';
 import '../../../../shared/widgets/go_pro_banners.dart';
 import '../../../../shared/widgets/stat_card.dart';
+import '../../../dashboard/controller/dashboard_controller.dart';
 import '../../../settings/view/upgrade_modal.dart';
 import '../controller/cl_dashboard_controller.dart';
 import 'cl_card_widget.dart';
@@ -45,6 +46,8 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
 
   Widget _buildScrollableContent() {
     final state = ref.watch(clDashboardControllerProvider);
+    final dashboardState = ref.watch(dashboardControllerProvider);
+
     return Skeletonizer(
       enabled: state.isLoading,
       child: Column(
@@ -55,7 +58,7 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildStatCards(state),
+                  _buildStatCards(state, dashboardState.proPrice),
                   const SizedBox(height: 24),
                   _buildCLSection(state),
                   const SizedBox(height: 24),
@@ -66,6 +69,7 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
                         context: context,
                         builder: (_) => const UpgradeModal(),
                       ),
+                      proPrice: dashboardState.proPrice,
                     ),
                   const SizedBox(height: 40),
                 ],
@@ -79,7 +83,7 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
 
   // ─── STAT CARDS ───────────────────────────────────────────────────────
 
-  Widget _buildStatCards(ClDashboardState state) {
+  Widget _buildStatCards(ClDashboardState state, final proPrice) {
     final statCards = [
       statCard(
         icon: LucideIcons.mail,
@@ -112,6 +116,7 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
           context: context,
           builder: (_) => const UpgradeModal(),
         ),
+        proPrice: proPrice,
       ),
     ];
 

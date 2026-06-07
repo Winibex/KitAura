@@ -23,5 +23,4 @@ class AppStrings {
   // PLANS
   static const String freePlan   = 'Free Plan';
   static const String proPlan    = 'Pro Plan';
-  static const String proPrice   = '\$7/mo';
 }

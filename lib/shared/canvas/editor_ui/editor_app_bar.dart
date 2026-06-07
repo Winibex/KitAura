@@ -92,62 +92,109 @@ class EditorAppBar extends StatelessWidget {
             const SizedBox(width: 16),
           ],
 
-          // Title
-          Flexible(
-            child: isEditingTitle
-                ? SizedBox(
-              width: isMobile ? 120 : 200,
-              height: 32,
-              child: TextField(
-                controller: titleController,
-                autofocus: true,
-                style: const TextStyle(
-                  color: AppColors.white, fontSize: 14,
-                  fontFamily: AppFonts.poppins, fontWeight: FontWeight.w500,
+              // Title
+            if (isMobile)
+            Flexible(
+              child: isEditingTitle
+                  ? SizedBox(
+                width: 120,
+                height: 32,
+                child: TextField(
+                  controller: titleController,
+                  autofocus: true,
+                  style: const TextStyle(
+                    color: AppColors.white, fontSize: 14,
+                    fontFamily: AppFonts.poppins, fontWeight: FontWeight.w500,
+                  ),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    filled: true,
+                    fillColor: AppColors.white.withValues(alpha: 0.15),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(4),
+                      borderSide: BorderSide(color: AppColors.white.withValues(alpha: 0.3)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(4),
+                      borderSide: BorderSide(color: AppColors.white.withValues(alpha: 0.3)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(4),
+                      borderSide: const BorderSide(color: AppColors.white),
+                    ),
+                  ),
+                  onSubmitted: onTitleSubmitted,
                 ),
-                decoration: InputDecoration(
-                  isDense: true,
-                  filled: true,
-                  fillColor: AppColors.white.withValues(alpha: 0.15),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(4),
-                    borderSide: BorderSide(color: AppColors.white.withValues(alpha: 0.3)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(4),
-                    borderSide: BorderSide(color: AppColors.white.withValues(alpha: 0.3)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(4),
-                    borderSide: const BorderSide(color: AppColors.white),
+              )
+                  : MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: onTitleTap,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(title,
+                            style: const TextStyle(color: AppColors.white, fontSize: 14,
+                                fontFamily: AppFonts.poppins, fontWeight: FontWeight.w500),
+                            overflow: TextOverflow.ellipsis),
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(LucideIcons.pencil, size: 12,
+                          color: AppColors.white.withValues(alpha: 0.5)),
+                    ],
                   ),
                 ),
-                onSubmitted: onTitleSubmitted,
               ),
             )
-                : MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: GestureDetector(
-                onTap: onTitleTap,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        title,
-                        style: const TextStyle(
-                          color: AppColors.white, fontSize: 14,
-                          fontFamily: AppFonts.poppins, fontWeight: FontWeight.w500,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Icon(LucideIcons.pencil, size: 12,
-                        color: AppColors.white.withValues(alpha: 0.5)),
-                  ],
+            else
+            isEditingTitle
+            ? SizedBox(
+            width: 200,
+            height: 32,
+            child: TextField(
+              controller: titleController,
+              autofocus: true,
+              style: const TextStyle(
+                color: AppColors.white, fontSize: 14,
+                fontFamily: AppFonts.poppins, fontWeight: FontWeight.w500,
+              ),
+              decoration: InputDecoration(
+                isDense: true,
+                filled: true,
+                fillColor: AppColors.white.withValues(alpha: 0.15),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(4),
+                  borderSide: BorderSide(color: AppColors.white.withValues(alpha: 0.3)),
                 ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(4),
+                  borderSide: BorderSide(color: AppColors.white.withValues(alpha: 0.3)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(4),
+                  borderSide: const BorderSide(color: AppColors.white),
+                ),
+              ),
+              onSubmitted: onTitleSubmitted,
+            ),
+          )
+              : MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: onTitleTap,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(title,
+                      style: const TextStyle(color: AppColors.white, fontSize: 14,
+                          fontFamily: AppFonts.poppins, fontWeight: FontWeight.w500)),
+                  const SizedBox(width: 6),
+                  Icon(LucideIcons.pencil, size: 12,
+                      color: AppColors.white.withValues(alpha: 0.5)),
+                ],
               ),
             ),
           ),

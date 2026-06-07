@@ -4,15 +4,18 @@
 // Shows all plan benefits in a clean grid.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kitaura/features/dashboard/controller/dashboard_controller.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_fonts.dart';
 
-class UpgradeModal extends StatelessWidget {
+class UpgradeModal extends ConsumerWidget {
   const UpgradeModal({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final proPrice = ref.watch(dashboardControllerProvider).proPrice;
     final screenW = MediaQuery.of(context).size.width;
     final isMobile = screenW < 768;
 
@@ -58,9 +61,9 @@ class UpgradeModal extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildPricing(),
+                  _buildPricing(proPrice),
                   const SizedBox(height: 16),
-                  _buildCTA(context),
+                  _buildCTA(context,proPrice),
                   const SizedBox(height: 12),
                   _buildFooter(context),
                 ],
@@ -182,13 +185,14 @@ class UpgradeModal extends StatelessWidget {
     );
   }
 
-  Widget _buildPricing() {
+  Widget _buildPricing(double proPrice) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
       children: [
-        const Text('\$7',
+        Text(proPrice != -1 ? '\$${proPrice.toStringAsFixed(0)}'
+        : 'Unavailable',
             style: TextStyle(color: AppColors.prussianBlue, fontSize: 36,
                 fontFamily: AppFonts.poppins, fontWeight: FontWeight.bold)),
         Text('/month',
@@ -198,7 +202,7 @@ class UpgradeModal extends StatelessWidget {
     );
   }
 
-  Widget _buildCTA(BuildContext context) {
+  Widget _buildCTA(BuildContext context, double proPrice) {
     return SizedBox(
       width: double.infinity,
       height: 48,
@@ -223,8 +227,9 @@ class UpgradeModal extends StatelessWidget {
                 ),
               ],
             ),
-            child: const Center(
-              child: Text('Start Pro — \$7/month',
+            child: Center(
+              child: Text(proPrice != -1 ? 'Start Pro — ${proPrice.toStringAsFixed(0)}/month'
+                  : 'Unavailable',
                   style: TextStyle(color: AppColors.white, fontSize: 15,
                       fontFamily: AppFonts.poppins, fontWeight: FontWeight.w700)),
             ),

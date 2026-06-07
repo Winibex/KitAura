@@ -11,7 +11,7 @@
 //
 // LOGIC:
 //   - Free + trial not used → shows "Start 7-Day Free Trial" CTA
-//   - Free + trial used    → shows "Upgrade to Pro — $7/mo" CTA
+//   - Free + trial used    → shows "Upgrade to Pro — $8/mo" CTA
 //   - Trial active         → shows "Trial: X days remaining" + upgrade CTA
 //   - Pro                  → hides all banners
 
@@ -268,6 +268,7 @@ class GoProDashboardBanner extends ConsumerWidget {
       return _TrialCountdownBanner(
         daysRemaining: trialDaysRemaining ?? 0,
         onUpgrade: onUpgrade,
+        proPrice: state.proPrice,
       );
     }
 
@@ -276,6 +277,7 @@ class GoProDashboardBanner extends ConsumerWidget {
       trialUsed: state.trialUsed,
       onStartTrial: onStartTrial,
       onUpgrade: onUpgrade,
+      proPrice: state.proPrice,
     );
   }
 }
@@ -284,11 +286,13 @@ class _FreeDashboardBanner extends StatelessWidget {
   final bool trialUsed;
   final VoidCallback onStartTrial;
   final VoidCallback onUpgrade;
+  final double proPrice;
 
   const _FreeDashboardBanner({
     required this.trialUsed,
     required this.onStartTrial,
     required this.onUpgrade,
+    required this.proPrice,
   });
 
   @override
@@ -325,7 +329,11 @@ class _FreeDashboardBanner extends StatelessWidget {
                 style: TextStyle(color: AppColors.white.withValues(alpha: 0.7),
                     fontSize: AppSizes.caption(context), fontFamily: AppFonts.openSans)),
             const SizedBox(height: 14),
-            _ShimmerCta(label: trialUsed ? 'Upgrade — \$7/mo' : 'Start Free Trial',
+            _ShimmerCta(
+                label: trialUsed ?
+                ( proPrice != -1 ? 'Upgrade — \$${proPrice.toStringAsFixed(0)}/mo'
+                    : 'Unavailable' )
+                    : 'Start Free Trial',
                 onTap: trialUsed ? onUpgrade : onStartTrial),
           ],
         ),
@@ -354,7 +362,11 @@ class _FreeDashboardBanner extends StatelessWidget {
               ],
             )),
             const SizedBox(width: 20),
-            _ShimmerCta(label: trialUsed ? 'Upgrade — \$7/mo' : 'Start Free Trial',
+            _ShimmerCta(
+                label: trialUsed ?
+                ( proPrice != -1 ? 'Upgrade — \$${proPrice.toStringAsFixed(0)}/mo'
+                    : 'Unavailable' )
+                    : 'Start Free Trial',
                 onTap: trialUsed ? onUpgrade : onStartTrial),
           ],
         ),
@@ -366,10 +378,13 @@ class _FreeDashboardBanner extends StatelessWidget {
 class _TrialCountdownBanner extends StatelessWidget {
   final int daysRemaining;
   final VoidCallback onUpgrade;
+  final double proPrice;
 
   const _TrialCountdownBanner({
     required this.daysRemaining,
     required this.onUpgrade,
+    required this.proPrice,
+
   });
 
   @override
@@ -430,7 +445,10 @@ class _TrialCountdownBanner extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 20),
-          _ShimmerCta(label: 'Upgrade — \$7/mo', onTap: onUpgrade),
+          _ShimmerCta(
+              label: proPrice != -1 ? 'Upgrade — \$${proPrice.toStringAsFixed(0)}/mo'
+                  : 'Unavailable',
+              onTap: onUpgrade),
         ],
       ),
     );
@@ -663,12 +681,14 @@ class GoProToolBanner extends ConsumerWidget {
   final String toolLabel;
   final VoidCallback onStartTrial;
   final VoidCallback onUpgrade;
+  final double proPrice;
 
   const GoProToolBanner({
     super.key,
     required this.toolLabel,
     required this.onStartTrial,
     required this.onUpgrade,
+    required this.proPrice,
   });
 
   @override
@@ -749,7 +769,10 @@ class GoProToolBanner extends ConsumerWidget {
           ),
           const SizedBox(width: 20),
           _ShimmerCta(
-            label: trialUsed ? 'Upgrade to Pro — \$7/mo' : 'Start Free Trial',
+            label: trialUsed ?
+            ( proPrice != -1 ? 'Upgrade — \$${proPrice.toStringAsFixed(0)}/mo'
+                : 'Unavailable' )
+                : 'Start Free Trial',
             onTap: trialUsed ? onUpgrade : onStartTrial,
           ),
         ],
@@ -765,11 +788,13 @@ class GoProToolBanner extends ConsumerWidget {
 class GoProStatCard extends ConsumerWidget {
   final VoidCallback onStartTrial;
   final VoidCallback onUpgrade;
+  final double proPrice;
 
   const GoProStatCard({
     super.key,
     required this.onStartTrial,
     required this.onUpgrade,
+    required this.proPrice,
   });
 
   @override
@@ -831,7 +856,10 @@ class GoProStatCard extends ConsumerWidget {
                     ),
                   ),
                   child: Text(
-                    trialUsed ? 'Upgrade — \$7/mo' : 'Start Free Trial',
+                    trialUsed ?
+                    ( proPrice != -1 ? 'Upgrade — \$${proPrice.toStringAsFixed(0)}/mo'
+                        : 'Unavailable' )
+                        : 'Start Free Trial',
                     style: const TextStyle(
                       color: AppColors.white,
                       fontSize: 11,
@@ -857,8 +885,8 @@ class GoProStatCard extends ConsumerWidget {
 
 class TrialActivationDialog extends StatefulWidget {
   final Future<void> Function() onActivate;
-
-  const TrialActivationDialog({super.key, required this.onActivate});
+  final double proPrice;
+  const TrialActivationDialog({super.key, required this.onActivate, required this.proPrice});
 
   @override
   State<TrialActivationDialog> createState() => _TrialActivationDialogState();
@@ -947,7 +975,7 @@ class _TrialActivationDialogState extends State<TrialActivationDialog>
                   // Animated icon
                   AnimatedBuilder(
                     animation: _iconCtrl,
-                    builder: (_, __) {
+                    builder: (_, _) {
                       final scale = 1.0 + (_iconCtrl.value * 0.08);
                       final glow = 0.15 + (_iconCtrl.value * 0.15);
                       return Container(
@@ -1001,7 +1029,7 @@ class _TrialActivationDialogState extends State<TrialActivationDialog>
                             color: AppColors.white.withValues(alpha: 0.9)),
                         const SizedBox(width: 6),
                         Text(
-                          '7 days free · then \$7/mo · cancel anytime',
+                          '7 days free · then \$${widget.proPrice.toStringAsFixed(0)}/mo · cancel anytime',
                           style: TextStyle(
                             color: AppColors.white.withValues(alpha: 0.9),
                             fontSize: 11,
@@ -1216,12 +1244,13 @@ class _TrialActivationDialogState extends State<TrialActivationDialog>
 Future<bool?> showTrialActivationDialog(
     BuildContext context, {
       required Future<void> Function() onActivate,
+      double proPrice = 7.0,
     })
 {
   return showDialog<bool>(
     context: context,
     barrierDismissible: false,
-    builder: (_) => TrialActivationDialog(onActivate: onActivate),
+    builder: (_) => TrialActivationDialog(onActivate: onActivate, proPrice: proPrice),
   );
 }
 
@@ -1229,6 +1258,7 @@ Future<void> showTrialDialog(BuildContext context, WidgetRef ref) async {
   final activated = await showTrialActivationDialog(
     context,
     onActivate: () => ClaudeService.activateTrial(),
+    proPrice: ref.read(dashboardControllerProvider).proPrice,
   );
 
   if (activated == true) {

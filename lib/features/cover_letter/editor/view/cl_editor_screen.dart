@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kitaura/features/dashboard/controller/dashboard_controller.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:printing/printing.dart';
 import 'package:toastification/toastification.dart';
@@ -183,11 +184,14 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
   Future<void> _exportPdf() async {
     if (!_canvas.fontsLoaded) return;
 
+    String plan = ref.watch(dashboardControllerProvider).plan;
+
     final allowed = await _editor.trackExport();
     if (!allowed) return;
 
     try {
-      final bytes = await _canvas.buildPdf();
+      final isFree = plan == 'free';
+      final bytes = await _canvas.buildPdf(showWatermark: isFree);
       await Printing.sharePdf(bytes: bytes, filename: 'kitaura_cover_letter.pdf');
     } catch (e) {
       if (mounted) {

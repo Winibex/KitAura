@@ -28,6 +28,7 @@ import '../../../../shared/canvas/engine/canvas_item_widget.dart';
 import '../../../../shared/canvas/engine/shape_painter.dart';
 import '../../../../shared/canvas/engine/snap_guide.dart';
 import '../../../../shared/models/canvas_item.dart';
+import '../../../dashboard/controller/dashboard_controller.dart';
 import '../../../settings/view/upgrade_modal.dart';
 import '../../dashboard/controller/cv_dashboard_controller.dart';
 import '../controller/cv_editor_controller.dart';
@@ -193,11 +194,14 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
   Future<void> _exportPdf() async {
     if (!_canvas.fontsLoaded) return;
 
+    String plan = ref.watch(dashboardControllerProvider).plan;
+
     final allowed = await _editor.trackExport();
     if (!allowed) return;
 
     try {
-      final bytes = await _canvas.buildPdf();
+      final isFree = plan == 'free';
+      final bytes = await _canvas.buildPdf(showWatermark: isFree);
       await Printing.sharePdf(bytes: bytes, filename: 'kitaura_cv.pdf');
     } catch (e) {
       if (mounted) {

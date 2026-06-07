@@ -12,6 +12,7 @@ class DashboardState {
   final String plan;
   final bool trialActive;
   final bool trialUsed;
+  final double proPrice;
   final int? trialDaysRemaining;
   final int exportCount;
   final int aiFillCount;
@@ -37,6 +38,7 @@ class DashboardState {
     this.plan = 'free',
     this.trialActive = false,
     this.trialUsed = false,
+    this.proPrice = 8.0,
     this.trialDaysRemaining,
     this.exportCount = 0,
     this.aiFillCount = 0,
@@ -60,6 +62,9 @@ class DashboardState {
   /// Total documents across all tools
   int get totalDocuments => cvCount + coverLetterCount + proposalCount;
 
+  String get proPriceLabel => '\$${proPrice.toStringAsFixed(proPrice % 1 == 0 ? 0 : 2)}/mo';
+  String get proPriceFullLabel => '\$${proPrice.toStringAsFixed(proPrice % 1 == 0 ? 0 : 2)}/month';
+
   DashboardState copyWith({
     bool? isLoading,
     String? error,
@@ -67,6 +72,7 @@ class DashboardState {
     String? plan,
     bool? trialActive,
     bool? trialUsed,
+    double? proPrice,
     int? trialDaysRemaining,
     int? exportCount,
     int? aiFillCount,
@@ -92,6 +98,7 @@ class DashboardState {
       plan: plan ?? this.plan,
       trialActive: trialActive ?? this.trialActive,
       trialUsed: trialUsed ?? this.trialUsed,
+      proPrice: proPrice ?? this.proPrice,
       trialDaysRemaining: trialDaysRemaining ?? this.trialDaysRemaining,
       exportCount: exportCount ?? this.exportCount,
       aiFillCount: aiFillCount ?? this.aiFillCount,
@@ -224,6 +231,7 @@ class DashboardController extends StateNotifier<DashboardState> {
       // Load limits from config/limits
       int maxExports = 3, maxAiFills = 15; int maxAiRewrites = 15;
       final limits = await FirebaseService.getPlanLimits(state.plan);
+      final proPrice = await FirebaseService.getProPrice();
       maxExports = limits['exportsPerMonth']!;
       maxAiFills = limits['aiFillPerMonth']!;
       maxAiRewrites = limits['aiRewritePerMonth']!;
@@ -260,12 +268,14 @@ class DashboardController extends StateNotifier<DashboardState> {
         maxExports: maxExports == -1 ? 999 : maxExports,
         maxAiFills: maxAiFills == -1 ? 999 : maxAiFills,
         maxAiRewrites: maxAiRewrites == -1 ? 999 : maxAiRewrites,
+        proPrice: proPrice,
       );
     } catch (e, stack) {
       debugPrint('Dashboard load error: $e\n$stack');
       state = state.copyWith(isLoading: false);
     }
   }
+
 }
 
 final dashboardControllerProvider =

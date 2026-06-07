@@ -11,6 +11,7 @@ import '../../../../core/utils/responsive.dart';
 import '../../../../shared/widgets/responsive_scaffold.dart';
 import '../../../../shared/widgets/go_pro_banners.dart';
 import '../../../../shared/widgets/stat_card.dart';
+import '../../../dashboard/controller/dashboard_controller.dart';
 import '../../../settings/view/upgrade_modal.dart';
 import '../controller/cv_dashboard_controller.dart';
 import 'cv_card_widget.dart';
@@ -46,6 +47,7 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
 
   Widget _buildScrollableContent() {
     final state = ref.watch(cvDashboardControllerProvider);
+    final dashboardState = ref.watch(dashboardControllerProvider);
     return Column(
       children: [
         Expanded(
@@ -54,7 +56,7 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildStatCards(state),
+                _buildStatCards(state, dashboardState.proPrice),
                 const SizedBox(height: 24),
                 _buildCVSection(state),
                 const SizedBox(height: 24),
@@ -65,6 +67,7 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
                       context: context,
                       builder: (_) => const UpgradeModal(),
                     ),
+                    proPrice: dashboardState.proPrice,
                   ),
                 const SizedBox(height: 40),
               ],
@@ -75,7 +78,7 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
     );
   }
 
-  Widget _buildStatCards(CvDashboardState state) {
+  Widget _buildStatCards(CvDashboardState state, final proPrice) {
 
     final statCards = [
       statCard(
@@ -107,6 +110,7 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
           context: context,
           builder: (_) => const UpgradeModal(),
         ),
+        proPrice: proPrice,
       ),
     ];
 

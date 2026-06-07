@@ -720,4 +720,14 @@ class FirebaseService {
       return 'Unknown';
     }
   }
+
+  static Future<double> getProPrice() async {
+    try {
+      final doc = await FirebaseFirestore.instance.doc('config/limits').get();
+      if (doc.exists) {
+        return (doc.data()?['proMonthlyPrice'] ?? -1).toDouble();
+      }
+    } catch (_) {}
+    return -1; // fallback
+  }
 }
