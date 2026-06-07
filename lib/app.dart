@@ -90,7 +90,7 @@ final _router = GoRouter(
     if (isLoggedIn && isAuthRoute) {
       return user.emailVerified ? AppRoutes.dashboard : AppRoutes.verifyEmail;
     }
-    if (!isLoggedIn && !isAuthRoute) {
+    if (!isLoggedIn && !isAuthRoute && state.matchedLocation != AppRoutes.resetPassword) {
       return AppRoutes.auth;
     }
     if (isLoggedIn && !user.emailVerified && !isVerify && !isAuthRoute) {

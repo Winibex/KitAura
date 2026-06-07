@@ -14,6 +14,8 @@ import '../controller/cl_template_controller.dart';
 import '../data/cl_template_data.dart';
 import 'cl_template_card_widget.dart';
 import 'cl_template_preview_modal.dart';
+import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/utils/responsive.dart';
 
 class ClTemplatePickerScreen extends ConsumerWidget {
   const ClTemplatePickerScreen({super.key});
@@ -35,13 +37,13 @@ class ClTemplatePickerScreen extends ConsumerWidget {
           // ── Content ─────────────────────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
+              padding: EdgeInsets.all(AppSizes.pagePadding(context)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildHeader(context),
                   const SizedBox(height: 28),
-                  _buildFilters(state, ctrl),
+                  _buildFilters(state, ctrl, context),
                   const SizedBox(height: 28),
                   _buildGrid(context, state),
                 ],
@@ -63,7 +65,7 @@ class ClTemplatePickerScreen extends ConsumerWidget {
           'Choose a Cover Letter Template',
           style: TextStyle(
             color: AppColors.prussianBlue,
-            fontSize: 26,
+            fontSize: AppSizes.headingLg(context),
             fontFamily: AppFonts.poppins,
             fontWeight: FontWeight.bold,
           ),
@@ -81,71 +83,60 @@ class ClTemplatePickerScreen extends ConsumerWidget {
     );
   }
 
-
   // ─── FILTERS ──────────────────────────────────────────────────────────
 
-  Widget _buildFilters(ClTemplateState state, ClTemplateController ctrl) {
-    return Row(
+  Widget _buildFilters(ClTemplateState state, ClTemplateController ctrl, BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Search bar
-        Expanded(
-          flex: 2,
-          child: Container(
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.petalFrost),
-            ),
-            child: TextField(
-              onChanged: ctrl.setSearch,
-              decoration: const InputDecoration(
-                hintText: 'Search cover letter templates...',
-                hintStyle: TextStyle(
-                  color: AppColors.slateGrey,
-                  fontSize: 13,
-                  fontFamily: AppFonts.openSans,
-                ),
-                prefixIcon: Icon(LucideIcons.search, size: 18, color: AppColors.slateGrey),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(vertical: 14),
-              ),
+        SizedBox(
+          width: Responsive.isMobile(context) ? double.infinity : 280,
+          height: 42,
+          child: TextField(
+            onChanged: ctrl.setSearch,
+            decoration: InputDecoration(
+              hintText: 'Search cover letter templates...',
+              hintStyle: const TextStyle(color: AppColors.slateGrey, fontSize: 13),
+              prefixIcon: const Icon(LucideIcons.search, size: 16, color: AppColors.slateGrey),
+              contentPadding: const EdgeInsets.symmetric(vertical: 0),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: AppColors.almondSilk)),
+              enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: AppColors.almondSilk)),
+              filled: true,
+              fillColor: AppColors.white,
             ),
           ),
         ),
-        const Spacer(),
-        // Category chips
-        ...ClTemplateController.categories.map((cat) {
-          final isActive = state.activeFilter == cat;
-          return Padding(
-            padding: const EdgeInsets.only(left: 8),
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: GestureDetector(
-                onTap: () => ctrl.setFilter(cat),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: isActive ? AppColors.darkRaspberry : AppColors.white,
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                      color: isActive ? AppColors.darkRaspberry : AppColors.petalFrost,
+        const SizedBox(height: 12),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: ClTemplateController.categories.map((cat) {
+              final isActive = state.activeFilter == cat;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () => ctrl.setFilter(cat),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isActive ? AppColors.darkRaspberry : AppColors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: isActive ? null : Border.all(color: AppColors.almondSilk),
                     ),
-                  ),
-                  child: Text(
-                    cat,
-                    style: TextStyle(
-                      color: isActive ? AppColors.white : AppColors.prussianBlue,
-                      fontSize: 12,
-                      fontFamily: AppFonts.poppins,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    child: Text(cat,
+                        style: TextStyle(
+                            color: isActive ? AppColors.white : AppColors.prussianBlue,
+                            fontSize: 13, fontFamily: AppFonts.poppins, fontWeight: FontWeight.w500)),
                   ),
                 ),
-              ),
-            ),
-          );
-        }),
+              );
+            }).toList(),
+          ),
+        ),
       ],
     );
   }
@@ -188,11 +179,14 @@ class ClTemplatePickerScreen extends ConsumerWidget {
 
     return LayoutBuilder(
       builder: (ctx, constraints) {
-        int columns = 4;
-        if (constraints.maxWidth < 500) columns = 1;
-        if (constraints.maxWidth < 700) columns = 2;
-        if (constraints.maxWidth < 1000) columns = 3;
-
+        int columns;
+        if (constraints.maxWidth < 700) {
+          columns = 2;
+        } else if (constraints.maxWidth < 1000) {
+          columns = 3;
+        } else {
+          columns = 4;
+        }
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),

@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_fonts.dart';
+import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../../../shared/widgets/template_thumbnail.dart';
 import '../../../../shared/models/template_model.dart';
 import '../data/cv_template_data.dart';
@@ -94,8 +96,11 @@ class _CVTemplatePreviewModalState extends State<CVTemplatePreviewModal> {
     final isMobile = screenW < 800;
 
     return Dialog(
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: Responsive.isMobile(context) ? 16 : 40,
+        vertical: 24,
+      ),
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(20),
       child: Container(
         width: isMobile ? screenW - 40 : 900,
         height: screenH * 0.88,
@@ -225,37 +230,160 @@ class _CVTemplatePreviewModalState extends State<CVTemplatePreviewModal> {
             ],
           ),
         ),
-        // Preview
+        // Scrollable content
         Expanded(
-          flex: 55,
-          child: Container(
-            color: const Color(0xFFF5F0EC),
-            padding: const EdgeInsets.all(16),
-            child: Center(
-              child: _loading
-                  ? const CircularProgressIndicator(color: AppColors.darkRaspberry)
-                  : AspectRatio(
-                aspectRatio: 595 / 842,
-                child: _pages.isNotEmpty
-                    ? TemplateThumbnail.fromJson(
-                  json: _pages[_currentPage],
-                  width: 595,
-                  height: 842,
-                  borderRadius: 4,
-                )
-                    : const SizedBox(),
-              ),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                // Preview
+                Container(
+                  height: 300,
+                  width: double.infinity,
+                  color: const Color(0xFFF5F0EC),
+                  padding: const EdgeInsets.all(16),
+                  child: Center(
+                    child: _loading
+                        ? const CircularProgressIndicator(color: AppColors.darkRaspberry)
+                        : AspectRatio(
+                      aspectRatio: 595 / 842,
+                      child: _pages.isNotEmpty
+                          ? TemplateThumbnail.fromJson(
+                        json: _pages[_currentPage],
+                        width: 595,
+                        height: 842,
+                        borderRadius: 4,
+                      )
+                          : const SizedBox(),
+                    ),
+                  ),
+                ),
+                // Info (without CTA buttons)
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: _buildMobileInfoContent(),
+                ),
+              ],
             ),
           ),
         ),
-        // Page thumbnails + CTA
-        Expanded(
-          flex: 45,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: _buildInfoContent(),
+        // Pinned CTA at bottom
+        Container(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            border: const Border(top: BorderSide(color: Color(0xFFF0EBE6))),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    widget.onUseTemplate();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.darkRaspberry,
+                    foregroundColor: AppColors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Use This Template',
+                      style: TextStyle(fontSize: 15, fontFamily: AppFonts.poppins,
+                          fontWeight: FontWeight.w600)),
+                ),
+              ),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pop(context);
+                  widget.onStartBlank();
+                },
+                child: const Text('or Start from Scratch',
+                    style: TextStyle(fontSize: 12, fontFamily: AppFonts.openSans,
+                        fontWeight: FontWeight.w600, color: AppColors.slateGrey)),
+              ),
+            ],
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildMobileInfoContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(widget.template.label,
+            style: TextStyle(fontSize: AppSizes.headingMd(context),
+                fontFamily: AppFonts.poppins, fontWeight: FontWeight.bold,
+                color: AppColors.prussianBlue)),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            _badge(widget.template.category[0].toUpperCase() +
+                widget.template.category.substring(1),
+                AppColors.petalFrost, AppColors.darkRaspberry),
+            const SizedBox(width: 8),
+            _badge('${_pages.length} ${_pages.length == 1 ? 'page' : 'pages'}',
+                const Color(0xFFF0EBE6), AppColors.slateGrey),
+            if (widget.template.isPremium) ...[
+              const SizedBox(width: 8),
+              _badge('Pro', AppColors.dustyMauve, AppColors.white),
+            ],
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text(CvTemplateData.getDescription(widget.template.id),
+            style: const TextStyle(fontSize: 13, fontFamily: AppFonts.openSans,
+                color: AppColors.slateGrey, height: 1.5)),
+        const SizedBox(height: 16),
+        _featureItem(LucideIcons.sparkles, 'AI content generation ready'),
+        _featureItem(LucideIcons.move, 'Fully customizable layout'),
+        _featureItem(LucideIcons.download, 'PDF export included'),
+        _featureItem(LucideIcons.type, 'Multiple font options'),
+        if (_pages.length > 1) ...[
+          const SizedBox(height: 16),
+          const Text('PAGES', style: TextStyle(fontSize: 10,
+              fontFamily: AppFonts.poppins, fontWeight: FontWeight.w600,
+              color: AppColors.slateGrey, letterSpacing: 1.5)),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 80,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _pages.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (_, idx) {
+                final isActive = idx == _currentPage;
+                return GestureDetector(
+                  onTap: () => setState(() => _currentPage = idx),
+                  child: Container(
+                    width: 56,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: isActive ? AppColors.darkRaspberry : const Color(0xFFDDD5CB),
+                        width: isActive ? 2 : 1,
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(5),
+                      child: TemplateThumbnail.fromJson(
+                        json: _pages[idx], width: 56, height: 78,
+                        borderRadius: 5, showShadow: false,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -306,8 +434,8 @@ class _CVTemplatePreviewModalState extends State<CVTemplatePreviewModal> {
         // Template name
         Text(
           widget.template.label,
-          style: const TextStyle(
-            fontSize: 26,
+          style: TextStyle(
+            fontSize: AppSizes.headingLg(context),
             fontFamily: AppFonts.poppins,
             fontWeight: FontWeight.bold,
             color: AppColors.prussianBlue,

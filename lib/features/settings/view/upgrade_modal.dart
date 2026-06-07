@@ -13,42 +13,60 @@ class UpgradeModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenW = MediaQuery.of(context).size.width;
+    final isMobile = screenW < 768;
+
     return Dialog(
       backgroundColor: Colors.transparent,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 30,
-                offset: const Offset(0, 10),
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 16 : 40,
+        vertical: 24,
+      ),
+      child: Container(
+        width: isMobile ? screenW - 32 : 480,
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height - 48,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 30,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildHeader(context),
+            // Scrollable middle
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                child: _buildFeatureGrid(isMobile),
               ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildHeader(context),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-                child: Column(
-                  children: [
-                    _buildFeatureGrid(),
-                    const SizedBox(height: 24),
-                    _buildPricing(),
-                    const SizedBox(height: 20),
-                    _buildCTA(context),
-                    const SizedBox(height: 14),
-                    _buildFooter(context),
-                  ],
-                ),
+            ),
+            // Pinned bottom
+            Container(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: Color(0xFFF0EBE6))),
               ),
-            ],
-          ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildPricing(),
+                  const SizedBox(height: 16),
+                  _buildCTA(context),
+                  const SizedBox(height: 12),
+                  _buildFooter(context),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -104,7 +122,7 @@ class UpgradeModal extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureGrid() {
+  Widget _buildFeatureGrid(bool isMobile) {
     const features = [
       _Feature(LucideIcons.infinity, 'Unlimited Exports', 'No monthly cap'),
       _Feature(LucideIcons.sparkles, 'Unlimited AI', 'Fill, rewrite & design'),
@@ -116,41 +134,51 @@ class UpgradeModal extends StatelessWidget {
       _Feature(LucideIcons.shield, 'No Watermark', 'Clean professional PDFs'),
     ];
 
+    // On mobile: full-width list. On desktop: 2-column grid.
+    if (isMobile) {
+      return Column(
+        children: features.map((f) => _featureCard(f)).toList(),
+      );
+    }
+
     return Wrap(
       spacing: 10,
       runSpacing: 10,
       children: features.map((f) => SizedBox(
         width: 205,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8F5F2),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFEDE8E3)),
-          ),
-          child: Row(
-            children: [
-              Icon(f.icon, size: 16, color: AppColors.darkRaspberry),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(f.title,
-                        style: const TextStyle(
-                            color: AppColors.prussianBlue, fontSize: 12,
-                            fontFamily: AppFonts.poppins, fontWeight: FontWeight.w600)),
-                    Text(f.subtitle,
-                        style: const TextStyle(
-                            color: AppColors.slateGrey, fontSize: 10,
-                            fontFamily: AppFonts.openSans)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+        child: _featureCard(f),
       )).toList(),
+    );
+  }
+
+  Widget _featureCard(_Feature f) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F5F2),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFEDE8E3)),
+      ),
+      child: Row(
+        children: [
+          Icon(f.icon, size: 16, color: AppColors.darkRaspberry),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(f.title,
+                    style: const TextStyle(color: AppColors.prussianBlue, fontSize: 12,
+                        fontFamily: AppFonts.poppins, fontWeight: FontWeight.w600)),
+                Text(f.subtitle,
+                    style: const TextStyle(color: AppColors.slateGrey, fontSize: 10,
+                        fontFamily: AppFonts.openSans)),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

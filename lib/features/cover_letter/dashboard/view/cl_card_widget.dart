@@ -1,6 +1,7 @@
 // lib/features/cover_letter/dashboard/view/cl_card_widget.dart
 
 import 'package:flutter/material.dart';
+import 'package:kitaura/core/constants/app_sizes.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_fonts.dart';
@@ -35,19 +36,34 @@ class ClCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Container(
-          decoration: _cardDecoration,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: _buildThumbnail()),
-              _buildInfo(context),
-            ],
-          ),
+      child: Container(
+        decoration: _cardDecoration,
+        child: Stack(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _buildThumbnail()),
+                _buildInfo(context),
+              ],
+            ),
+            // 3-dot menu at top right
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Container(padding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 2,
+              ),
+                  decoration: BoxDecoration(
+                    color: AppColors.darkRaspberry,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: _buildMenu(context)),
+            ),
+          ],
         ),
       ),
     );
@@ -133,9 +149,6 @@ class ClCardWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
@@ -150,11 +163,10 @@ class ClCardWidget extends StatelessWidget {
                     fontFamily: AppFonts.poppins,
                     fontWeight: FontWeight.w500,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              _buildMenu(context),
-            ],
-          ),
         ],
       ),
     );
@@ -162,10 +174,10 @@ class ClCardWidget extends StatelessWidget {
 
   Widget _buildMenu(BuildContext context) {
     return SizedBox(
-      width: 28,
-      height: 28,
+      width: AppSizes.icons(context),
+      height: AppSizes.icons(context),
       child: PopupMenuButton<String>(
-        icon: const Icon(LucideIcons.moreHorizontal, color: AppColors.slateGrey, size: 16),
+        icon: const Icon(LucideIcons.moreHorizontal, color: AppColors.petalFrost, size: 16),
         padding: EdgeInsets.zero,
         iconSize: 16,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

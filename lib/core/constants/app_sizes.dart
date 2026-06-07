@@ -1,3 +1,7 @@
+import 'package:flutter/material.dart';
+
+import '../utils/responsive.dart';
+
 class AppSizes {
   AppSizes._();
 
@@ -23,4 +27,49 @@ class AppSizes {
   // BREAKPOINTS
   static const double mobile  = 768.0;
   static const double tablet  = 1200.0;
+
+  static double headingLg(BuildContext context) =>
+      Responsive.isMobile(context) ? 20 : 26;
+
+  static double headingMd(BuildContext context) =>
+      Responsive.isMobile(context) ? 16 : 20;
+
+  static double headingSm(BuildContext context) =>
+      Responsive.isMobile(context) ? 14 : 16;
+
+  static double body(BuildContext context) =>
+      Responsive.isMobile(context) ? 12 : 14;
+
+  static double caption(BuildContext context) =>
+      Responsive.isMobile(context) ? 10 : 12;
+
+  static double statValue(BuildContext context) =>
+      Responsive.isMobile(context) ? 20 : 28;
+
+  // RESPONSIVE PADDING
+  static double pagePadding(BuildContext context) =>
+      Responsive.isMobile(context) ? 16 : 32;
+
+  static double cardPadding(BuildContext context) =>
+      Responsive.isMobile(context) ? 12 : 20;
+
+  // RESPONSIVE GRID
+  static int statColumns(BuildContext context) =>
+      Responsive.isMobile(context) ? 2 : Responsive.isTablet(context) ? 3 : 4;
+
+  static double statAspectRatio(BuildContext context) =>
+      Responsive.isMobile(context) ? 1.4 : 1.6;
+
+  static double icons(BuildContext context) =>
+      Responsive.isMobile(context) ? 18 : 28;
+
+  static double buttonWidth(BuildContext context) =>
+      Responsive.isMobile(context) ? 180 : 200;
+
+  static int docGridColumns(BuildContext context, double maxWidth) {
+    if (maxWidth < 400) return 2;
+    if (maxWidth < 700) return 2;
+    if (maxWidth < 1000) return 3;
+    return 4;
+  }
 }

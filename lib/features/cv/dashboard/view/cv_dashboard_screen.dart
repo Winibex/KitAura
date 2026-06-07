@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_fonts.dart';
 import '../../../../core/constants/app_routes.dart';
+import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/utils/responsive.dart';
-import '../../../../shared/widgets/app_sidebar.dart';
-import '../../../../shared/widgets/app_top_bar.dart';
+import '../../../../shared/widgets/responsive_scaffold.dart';
 import '../../../../shared/widgets/go_pro_banners.dart';
 import '../../../../shared/widgets/stat_card.dart';
 import '../../../settings/view/upgrade_modal.dart';
@@ -36,47 +37,8 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.warmGrey,
-      child: ResponsiveBuilder(
-        mobile: _buildMobileLayout(),
-        desktop: _buildDesktopLayout(),
-      ),
-    );
-  }
-
-  // ─── DESKTOP LAYOUT ───────────────────────────────────────────────────────
-
-  Widget _buildDesktopLayout() {
-    return Column(
-      children: [
-        AppTopBar(
-          canBack: false,
-          whereToGo: AppRoutes.cvDashboard,
-        ),
-        Expanded(
-          child: Row(
-            children: [
-              const AppSidebar(),
-              Expanded(child: _buildScrollableContent()),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ─── MOBILE LAYOUT ────────────────────────────────────────────────────────
-
-  Widget _buildMobileLayout() {
-    return Column(
-      children: [
-        AppTopBar(
-          canBack: false,
-          whereToGo: AppRoutes.cvDashboard,
-        ),
-        Expanded(child: _buildScrollableContent()),
-      ],
+    return ResponsiveScaffold(
+      child: _buildScrollableContent(),
     );
   }
 
@@ -88,7 +50,7 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
       children: [
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+            padding: EdgeInsets.all(AppSizes.pagePadding(context)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -114,110 +76,69 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
   }
 
   Widget _buildStatCards(CvDashboardState state) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 700) {
-          return Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: statCard(
-                      icon: LucideIcons.fileText,
-                      label: 'Total CVs',
-                      value: '${state.cvs.length}',
-                      subtext: state.isPro ? 'Unlimited' : '${state.cvs.length} / ${state.maxCvs}',                      subtextColor: AppColors.success,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: statCard(
-                      icon: LucideIcons.download,
-                      label: 'Exports Used',
-                      value: state.isPro ? '∞' : '${state.exportCount} / ${state.exportsPerMonth}',
-                      subtext: state.isPro ? 'Unlimited' : '${state.exportsPerMonth - state.exportCount} remaining',
-                      showProgress: !state.isPro,
-                      progressValue: state.isPro ? 0 : state.exportCount / state.exportsPerMonth,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: statCard(
-                      icon: LucideIcons.sparkles,
-                      label: 'AI Fills Used',
-                      value: state.isPro ? '∞' : '${state.aiUsageCount} / ${state.aiFillsPerMonth}',
-                      subtext: state.isPro
-                          ? 'Unlimited'
-                          : '${state.aiFillsPerMonth - state.aiUsageCount} remaining',
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                    Expanded(
-                      child: GoProStatCard(
-                        onStartTrial: () => showTrialDialog(context, ref),
-                        onUpgrade: () => showDialog(
-                          context: context,
-                          builder: (_) => const UpgradeModal(),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          );
-        }
 
-        return Row(
-          children: [
-            Expanded(
-              child: statCard(
-                icon: LucideIcons.fileText,
-                label: 'Total CVs',
-                value: '${state.cvs.length}',
-                subtext: state.isPro ? 'Unlimited' : '${state.cvs.length} / ${state.maxCvs}',
-                subtextColor: AppColors.success,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: statCard(
-                icon: LucideIcons.download,
-                label: 'Exports Used',
-                value: state.isPro ? '∞' : '${state.exportCount} / ${state.exportsPerMonth}',
-                subtext: state.isPro ? 'Unlimited' : '${state.exportsPerMonth - state.exportCount} remaining',
-                showProgress: !state.isPro,
-                progressValue: state.isPro ? 0 : state.exportCount / state.exportsPerMonth,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: statCard(
-                icon: LucideIcons.sparkles,
-                label: 'AI Fills Used',
-                value: state.isPro ? '∞' : '${state.aiUsageCount} / ${state.aiFillsPerMonth}',
-                subtext: state.isPro
-                    ? 'Unlimited'
-                    : '${state.aiFillsPerMonth - state.aiUsageCount} remaining',
-              ),
-            ),
-            const SizedBox(width: 16),
-              Expanded(
-                child: GoProStatCard(
-                  onStartTrial: () => showTrialDialog(context, ref),
-                  onUpgrade: () => showDialog(
-                    context: context,
-                    builder: (_) => const UpgradeModal(),
-                  ),
-                ),
-              ),
-          ],
-        );
-      },
-    );
+    final statCards = [
+      statCard(
+        icon: LucideIcons.fileText,
+        label: 'Total CVs',
+        value: '${state.cvs.length}',
+        subtext: state.isPro ? 'Unlimited' : '${state.cvs.length} / ${state.maxCvs}',
+        subtextColor: AppColors.success,
+      ),
+      statCard(
+        icon: LucideIcons.download,
+        label: 'Exports Used',
+        value: state.isPro ? '∞' : '${state.exportCount} / ${state.exportsPerMonth}',
+        subtext: state.isPro ? 'Unlimited' : '${state.exportsPerMonth - state.exportCount} remaining',
+        showProgress: !state.isPro,
+        progressValue: state.isPro ? 0 : state.exportCount / state.exportsPerMonth,
+      ),
+      statCard(
+        icon: LucideIcons.sparkles,
+        label: 'AI Fills Used',
+        value: state.isPro ? '∞' : '${state.aiUsageCount} / ${state.aiFillsPerMonth}',
+        subtext: state.isPro
+            ? 'Unlimited'
+            : '${state.aiFillsPerMonth - state.aiUsageCount} remaining',
+      ),
+      GoProStatCard(
+        onStartTrial: () => showTrialDialog(context, ref),
+        onUpgrade: () => showDialog(
+          context: context,
+          builder: (_) => const UpgradeModal(),
+        ),
+      ),
+    ];
+
+    return ResponsiveBuilder(
+      mobile: GridView.count(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: 2,
+        crossAxisSpacing: AppSizes.md,
+        mainAxisSpacing: AppSizes.md,
+        childAspectRatio: AppSizes.statAspectRatio(context),
+        children: statCards.toList(),
+      ),
+      tablet: GridView.count(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: 3,
+        crossAxisSpacing: AppSizes.md,
+        mainAxisSpacing: AppSizes.md,
+        childAspectRatio: AppSizes.statAspectRatio(context),
+        children: statCards.toList(),
+      ),
+      desktop: GridView.count(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: 4,
+        crossAxisSpacing: AppSizes.md,
+        mainAxisSpacing: AppSizes.md,
+        childAspectRatio: AppSizes.statAspectRatio(context),
+        children: statCards.toList(),
+      ),
+    ).animate().fadeIn(duration: 300.ms, delay: 100.ms);
   }
 
   // ─── CV SECTION ───────────────────────────────────────────────────────────
@@ -229,11 +150,11 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'My CVs',
               style: TextStyle(
                 color: AppColors.prussianBlue,
-                fontSize: 22,
+                fontSize: AppSizes.headingMd(context),
                 fontFamily: AppFonts.poppins,
                 fontWeight: FontWeight.bold,
               ),
@@ -247,27 +168,15 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.darkRaspberry,
                   foregroundColor: AppColors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  textStyle: const TextStyle(
-                    fontFamily: AppFonts.poppins,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  textStyle:TextStyle(fontFamily: AppFonts.poppins, fontWeight: FontWeight.w600, fontSize: AppSizes.body(context),),
                 ),
               ),
             ),
           ],
         ),
         const SizedBox(height: 20),
-        // if (state.isLoading)
-        //   _buildShimmerGrid()
-        // else
           if (state.cvs.isEmpty)
           SizedBox(
             height: 300,
@@ -284,19 +193,16 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
   Widget _buildCVGrid(CvDashboardState state) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        int columns = 4;
-        if (constraints.maxWidth < 500) columns = 1;
-        if (constraints.maxWidth < 700) columns = 2;
-        if (constraints.maxWidth < 1000) columns = 3;
+        final columns = AppSizes.docGridColumns(context, constraints.maxWidth);
 
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: columns,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 0.85,
+            crossAxisSpacing: AppSizes.sm,
+            mainAxisSpacing: AppSizes.sm,
+            childAspectRatio: 0.75,
           ),
           itemCount: state.cvs.length + 1,
           itemBuilder: (context, index) {
@@ -314,7 +220,7 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
                 ref.read(cvDashboardControllerProvider.notifier)
                     .renameCV(state.cvs[index].id, newTitle);
               },
-            );
+            ).animate().fadeIn(duration: 300.ms, delay: 100.ms);
           },
         );
       },

@@ -20,11 +20,15 @@ import 'go_pro_banners.dart';
 class AppTopBar extends ConsumerWidget {
   final bool canBack;
   final String whereToGo;
+  final bool showMenuButton;
+  final VoidCallback? onMenuTap;
 
   const AppTopBar({
     super.key,
     required this.canBack,
     required this.whereToGo,
+    this.showMenuButton = false,
+    this.onMenuTap,
   });
 
   @override
@@ -56,18 +60,14 @@ class AppTopBar extends ConsumerWidget {
                 onPressed: () => context.go(whereToGo),
               ),
           ],
+          if (showMenuButton)
+            IconButton(
+              icon: const Icon(LucideIcons.menu, color: AppColors.white, size: 20),
+              onPressed: onMenuTap,
+            ),
           SizedBox(width: 20,),
           Image.asset(AppAssets.logoHorizontalLight, height: 24),
           const Spacer(),
-
-          // Notification bell
-          IconButton(
-            icon: const Icon(LucideIcons.bell, color: AppColors.white, size: 20),
-            onPressed: () {
-              // TODO: notifications
-            },
-          ),
-          const SizedBox(width: 12),
 
           // Upgrade button
           if (isPro)

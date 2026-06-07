@@ -49,19 +49,37 @@ class AppSidebar extends ConsumerWidget {
                     icon: LucideIcons.layoutDashboard,
                     label: 'Dashboard',
                     isActive: active == AppPage.dashboard,
-                    onTap: () => context.go(AppRoutes.dashboard),
+                    onTap: () {
+                      // Close drawer if open (mobile)
+                      if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
+                        Navigator.of(context).pop();
+                      }
+                      context.go(AppRoutes.dashboard);
+                    },
                   ),
                   _SidebarItem(
                     icon: LucideIcons.filePlus,
                     label: 'Create CV',
                     isActive: active == AppPage.cvDashboard,
-                    onTap: () => context.go(AppRoutes.cvDashboard),
+                    onTap: () {
+                      // Close drawer if open (mobile)
+                      if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
+                        Navigator.of(context).pop();
+                      }
+                      context.go(AppRoutes.cvDashboard);
+                    },
                   ),
                   _SidebarItem(
                     icon: LucideIcons.mail,
                     label: 'Cover Letter',
                     isActive: active == AppPage.coverLetter,
-                    onTap: () => context.go(AppRoutes.clDashboard),
+                    onTap: () {
+                      // Close drawer if open (mobile)
+                      if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
+                        Navigator.of(context).pop();
+                      }
+                      context.go(AppRoutes.clDashboard);
+                    },
                   ),
                   _SidebarItem(
                     icon: LucideIcons.fileText,
@@ -73,7 +91,13 @@ class AppSidebar extends ConsumerWidget {
                     icon: LucideIcons.linkedin,
                     label: 'LinkedIn Summary',
                     isActive: active == AppPage.linkedin,
-                    onTap: () => context.go(AppRoutes.linkedin),
+                    onTap: () {
+                      // Close drawer if open (mobile)
+                      if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
+                        Navigator.of(context).pop();
+                      }
+                      context.go(AppRoutes.linkedin);
+                    },
                   ),
                   const SizedBox(height: 8),
                   const Divider(color: AppColors.petalFrost),

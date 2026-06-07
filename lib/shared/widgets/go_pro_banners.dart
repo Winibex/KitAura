@@ -20,6 +20,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_fonts.dart';
+import '../../core/constants/app_sizes.dart';
+import '../../core/utils/responsive.dart';
 import '../../features/dashboard/controller/dashboard_controller.dart';
 import '../ai/claude_service.dart';
 
@@ -309,62 +311,53 @@ class _FreeDashboardBanner extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          _PulsingIcon(
-            icon: LucideIcons.crown,
-            color: AppColors.white,
-            glowColor: AppColors.darkRaspberry,
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
+      child: ResponsiveBuilder(
+        mobile: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _PulsingIcon(icon: LucideIcons.crown, color: AppColors.white, glowColor: AppColors.darkRaspberry),
+            const SizedBox(height: 12),
+            Text(trialUsed ? 'Unlock the full KitAura experience' : 'Try KitAura Pro free for 7 days',
+                style: TextStyle(color: AppColors.white, fontSize: AppSizes.headingSm(context),
+                    fontFamily: AppFonts.poppins, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 6),
+            Text(trialUsed ? 'Unlimited exports, AI & more' : 'No credit card needed',
+                style: TextStyle(color: AppColors.white.withValues(alpha: 0.7),
+                    fontSize: AppSizes.caption(context), fontFamily: AppFonts.openSans)),
+            const SizedBox(height: 14),
+            _ShimmerCta(label: trialUsed ? 'Upgrade — \$7/mo' : 'Start Free Trial',
+                onTap: trialUsed ? onUpgrade : onStartTrial),
+          ],
+        ),
+        desktop: Row(
+          children: [
+            _PulsingIcon(icon: LucideIcons.crown, color: AppColors.white, glowColor: AppColors.darkRaspberry),
+            const SizedBox(width: 20),
+            Expanded(child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  trialUsed
-                      ? 'Unlock the full KitAura experience'
-                      : 'Try KitAura Pro free for 7 days',
-                  style: const TextStyle(
-                    color: AppColors.white,
-                    fontSize: 17,
-                    fontFamily: AppFonts.poppins,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                Text(trialUsed ? 'Unlock the full KitAura experience' : 'Try KitAura Pro free for 7 days',
+                    style: const TextStyle(color: AppColors.white, fontSize: 17,
+                        fontFamily: AppFonts.poppins, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 4),
-                Text(
-                  trialUsed
-                      ? 'Unlimited exports, AI generation, premium templates & more'
-                      : 'Unlimited exports, AI generation & premium templates — no credit card needed',
-                  style: TextStyle(
-                    color: AppColors.white.withValues(alpha: 0.7),
-                    fontSize: 12,
-                    fontFamily: AppFonts.openSans,
-                    height: 1.4,
-                  ),
-                ),
+                Text(trialUsed ? 'Unlimited exports, AI generation, premium templates & more'
+                    : 'Unlimited exports, AI generation & premium templates — no credit card needed',
+                    style: TextStyle(color: AppColors.white.withValues(alpha: 0.7),
+                        fontSize: 12, fontFamily: AppFonts.openSans, height: 1.4)),
                 const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: [
-                    if (!trialUsed)
-                      const _FeatureChip(icon: LucideIcons.creditCard, label: 'No credit card'),
-                    const _FeatureChip(icon: LucideIcons.infinity, label: 'Unlimited AI'),
-                    const _FeatureChip(icon: LucideIcons.download, label: 'Unlimited exports'),
-                    const _FeatureChip(icon: LucideIcons.layout, label: 'All templates'),
-                  ],
-                ),
+                Wrap(spacing: 8, runSpacing: 6, children: [
+                  if (!trialUsed) const _FeatureChip(icon: LucideIcons.creditCard, label: 'No credit card'),
+                  const _FeatureChip(icon: LucideIcons.infinity, label: 'Unlimited AI'),
+                  const _FeatureChip(icon: LucideIcons.download, label: 'Unlimited exports'),
+                  const _FeatureChip(icon: LucideIcons.layout, label: 'All templates'),
+                ]),
               ],
-            ),
-          ),
-          const SizedBox(width: 20),
-          _ShimmerCta(
-            label: trialUsed ? 'Upgrade — \$7/mo' : 'Start Free Trial',
-            onTap: trialUsed ? onUpgrade : onStartTrial,
-          ),
-        ],
+            )),
+            const SizedBox(width: 20),
+            _ShimmerCta(label: trialUsed ? 'Upgrade — \$7/mo' : 'Start Free Trial',
+                onTap: trialUsed ? onUpgrade : onStartTrial),
+          ],
+        ),
       ),
     );
   }
@@ -462,7 +455,7 @@ class ProActiveDashboardBanner extends StatelessWidget {
         ),
         child: Container(
           margin: const EdgeInsets.only(bottom: 24),
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -477,82 +470,184 @@ class ProActiveDashboardBanner extends StatelessWidget {
               color: AppColors.success.withValues(alpha: 0.2),
             ),
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: AppColors.success.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(LucideIcons.crown, size: 22, color: AppColors.success),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+          child:ResponsiveBuilder(
+            mobile: SizedBox(
+              height: 65,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    flex: 1,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.success.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(LucideIcons.crown, size: 19, color: AppColors.success),
+                    ),
+                  ),
+                  Flexible(
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'KitAura Pro',
-                          style: TextStyle(
-                            color: AppColors.prussianBlue,
-                            fontSize: 17,
-                            fontFamily: AppFonts.poppins,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: AppColors.success,
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: const Text(
-                            'ACTIVE',
-                            style: TextStyle(
-                              color: AppColors.white,
-                              fontSize: 9,
-                              fontFamily: AppFonts.poppins,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.8,
+                        Row(
+                          children: [
+                            const Text(
+                              'KitAura Pro',
+                              style: TextStyle(
+                                color: AppColors.prussianBlue,
+                                fontSize: 17,
+                                fontFamily: AppFonts.poppins,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
+                            SizedBox(width: 10,),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppColors.success,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: const Text(
+                                'ACTIVE',
+                                style: TextStyle(
+                                  color: AppColors.white,
+                                  fontSize: 9,
+                                  fontFamily: AppFonts.poppins,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'You have unlimited access to all features',
+                          style: TextStyle(
+                            color: AppColors.slateGrey,
+                            fontSize: 12,
+                            fontFamily: AppFonts.openSans,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'You have unlimited access to all features',
-                      style: TextStyle(
-                        color: AppColors.slateGrey,
-                        fontSize: 12,
-                        fontFamily: AppFonts.openSans,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Row(
-                children: [
-                  Text(
-                    'See all features',
-                    style: TextStyle(
-                      color: AppColors.success.withValues(alpha: 0.8),
-                      fontSize: 12,
-                      fontFamily: AppFonts.poppins,
-                      fontWeight: FontWeight.w500,
+                  ),
+                  Flexible(
+                    flex: 2,
+                    child: Column(
+                     mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'See all features',
+                              style: TextStyle(
+                                color: AppColors.success.withValues(alpha: 0.8),
+                                fontSize: 12,
+                                fontFamily: AppFonts.poppins,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: EdgeInsets.symmetric(vertical: 4, horizontal: 10),
+                              decoration: BoxDecoration(
+                                color: AppColors.success,
+                                borderRadius: BorderRadius.circular(10)
+                              ),
+                              child: Icon(LucideIcons.arrowRight, size: 14,
+                                  color: AppColors.white,)
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  Icon(LucideIcons.arrowRight, size: 14,
-                      color: AppColors.success.withValues(alpha: 0.8)),
                 ],
               ),
-            ],
+            ),
+            desktop: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(LucideIcons.crown, size: 22, color: AppColors.success),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            'KitAura Pro',
+                            style: TextStyle(
+                              color: AppColors.prussianBlue,
+                              fontSize: 17,
+                              fontFamily: AppFonts.poppins,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppColors.success,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: const Text(
+                              'ACTIVE',
+                              style: TextStyle(
+                                color: AppColors.white,
+                                fontSize: 9,
+                                fontFamily: AppFonts.poppins,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'You have unlimited access to all features',
+                        style: TextStyle(
+                          color: AppColors.slateGrey,
+                          fontSize: 12,
+                          fontFamily: AppFonts.openSans,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Row(
+                  children: [
+                    Text(
+                      'See all features',
+                      style: TextStyle(
+                        color: AppColors.success.withValues(alpha: 0.8),
+                        fontSize: 12,
+                        fontFamily: AppFonts.poppins,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(LucideIcons.arrowRight, size: 14,
+                        color: AppColors.success.withValues(alpha: 0.8)),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -770,7 +865,8 @@ class TrialActivationDialog extends StatefulWidget {
 }
 
 class _TrialActivationDialogState extends State<TrialActivationDialog>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin
+{
   bool _isLoading = false;
   String? _error;
   late final AnimationController _iconCtrl;
@@ -1168,7 +1264,7 @@ class ProActiveStatCard extends StatelessWidget {
           builder: (_) => const ProFeaturesDialog(),
         ),
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(AppSizes.cardPadding(context)),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -1191,10 +1287,11 @@ class ProActiveStatCard extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(6),
+                    width: 32,
+                    height: 32,
                     decoration: BoxDecoration(
                       color: AppColors.success.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusSm),
                     ),
                     child: const Icon(LucideIcons.crown, size: 16, color: AppColors.success),
                   ),
@@ -1218,27 +1315,33 @@ class ProActiveStatCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              const Text(
-                'Pro Plan',
-                style: TextStyle(
-                  color: AppColors.prussianBlue,
-                  fontSize: 16,
-                  fontFamily: AppFonts.poppins,
-                  fontWeight: FontWeight.bold,
+              const SizedBox(height: 10),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Pro Plan",
+                  style: TextStyle(
+                    fontSize: AppSizes.headingSm(context),
+                    fontFamily: AppFonts.poppins,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.prussianBlue,
+                  ),
                 ),
               ),
-              const SizedBox(height: 2),
-              const Text(
-                'Unlimited everything',
+              const SizedBox(height: 5),
+              Text(
+               "Unlimited Everything",
                 style: TextStyle(
-                  color: AppColors.slateGrey,
-                  fontSize: 11,
+                  fontSize: AppSizes.caption(context),
                   fontFamily: AppFonts.openSans,
+                  color: AppColors.slateGrey,
                 ),
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 5),
               // See features link
+              if (!Responsive.isMobile(context))
               Row(
                 children: [
                   Text(
@@ -1494,6 +1597,102 @@ class ProFeaturesDialog extends StatelessWidget {
           ),
           const Icon(LucideIcons.check, size: 16, color: AppColors.success),
         ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// SETTINGS BILLING CTA — reusable banner for Plan & Billing tab
+// ═══════════════════════════════════════════════════════════════════════
+
+class SettingsBillingCta extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String buttonLabel;
+  final VoidCallback onTap;
+  final List<Color> gradientColors;
+
+  const SettingsBillingCta({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    required this.buttonLabel,
+    required this.onTap,
+    this.gradientColors = const [AppColors.prussianBlue, Color(0xFF1E293B)],
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isMobile = Responsive.isMobile(context);
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(isMobile ? 20 : 28),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: gradientColors),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: isMobile
+          ? Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style: TextStyle(fontSize: AppSizes.headingMd(context),
+                  fontFamily: AppFonts.poppins, fontWeight: FontWeight.bold,
+                  color: AppColors.white)),
+          const SizedBox(height: 6),
+          Text(subtitle,
+              style: TextStyle(fontSize: AppSizes.caption(context),
+                  color: AppColors.white.withValues(alpha: 0.7))),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: _ctaButton(),
+          ),
+        ],
+      )
+          : Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: const TextStyle(fontSize: 20, fontFamily: AppFonts.poppins,
+                        fontWeight: FontWeight.bold, color: AppColors.white)),
+                const SizedBox(height: 6),
+                Text(subtitle,
+                    style: TextStyle(fontSize: 13,
+                        color: AppColors.white.withValues(alpha: 0.7))),
+              ],
+            ),
+          ),
+          const SizedBox(width: 20),
+          _ctaButton(),
+        ],
+      ),
+    );
+  }
+
+  Widget _ctaButton() {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Center(
+            child: Text(buttonLabel,
+                style: const TextStyle(fontSize: 13, fontFamily: AppFonts.poppins,
+                    fontWeight: FontWeight.w700, color: AppColors.darkRaspberry)),
+          ),
+        ),
       ),
     );
   }

@@ -895,150 +895,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         // ── Upgrade / Trial CTA ───────────────────────────────────
         if (isFree) ...[
           if (!(sub.trialUsed ?? false))
-          // Show trial CTA
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(28),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.prussianBlue, Color(0xFF2D1B3D), AppColors.darkRaspberry],
-                  stops: [0.0, 0.5, 1.0],
-                ),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Try KitAura Pro Free',
-                            style: TextStyle(fontSize: 20, fontFamily: AppFonts.poppins,
-                                fontWeight: FontWeight.bold, color: AppColors.white)),
-                        const SizedBox(height: 6),
-                        Text('7 days unlimited access. No credit card required.',
-                            style: TextStyle(fontSize: 13,
-                                color: AppColors.white.withValues(alpha: 0.7))),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 20),
-                  MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    child: GestureDetector(
-                      onTap: () => showTrialDialog(context, ref),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Text('Start Free Trial',
-                            style: TextStyle(fontSize: 13, fontFamily: AppFonts.poppins,
-                                fontWeight: FontWeight.w700, color: AppColors.darkRaspberry)),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            SettingsBillingCta(
+              title: 'Try KitAura Pro Free',
+              subtitle: '7 days unlimited access. No credit card required.',
+              buttonLabel: 'Start Free Trial',
+              onTap: () => showTrialDialog(context, ref),
+              gradientColors: const [AppColors.prussianBlue, Color(0xFF2D1B3D), AppColors.darkRaspberry],
             )
           else
-          // Trial used — show upgrade CTA
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(28),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.prussianBlue, Color(0xFF1E293B)],
-                ),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Upgrade to Pro',
-                            style: TextStyle(fontSize: 20, fontFamily: AppFonts.poppins,
-                                fontWeight: FontWeight.bold, color: AppColors.white)),
-                        SizedBox(height: 6),
-                        Text('Unlimited exports, AI, templates. No watermark.',
-                            style: TextStyle(fontSize: 13, color: Color(0xAAFFFFFF))),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 20),
-                  MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    child: GestureDetector(
-                      onTap: () => showDialog(
-                          context: context, builder: (_) => const UpgradeModal()),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Text('Upgrade — \$7/mo',
-                            style: TextStyle(fontSize: 13, fontFamily: AppFonts.poppins,
-                                fontWeight: FontWeight.w700, color: AppColors.darkRaspberry)),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            SettingsBillingCta(
+              title: 'Upgrade to Pro',
+              subtitle: 'Unlimited exports, AI, templates. No watermark.',
+              buttonLabel: 'Upgrade — \$7/mo',
+              onTap: () => showDialog(context: context, builder: (_) => const UpgradeModal()),
             ),
         ],
-        if (isTrial) ...[
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(28),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.prussianBlue, Color(0xFF1E293B)],
-              ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Keep Pro Forever',
-                          style: TextStyle(fontSize: 20, fontFamily: AppFonts.poppins,
-                              fontWeight: FontWeight.bold, color: AppColors.white)),
-                      const SizedBox(height: 6),
-                      Text('Your trial ends in $trialDaysRemaining days. Upgrade to keep unlimited access.',
-                          style: TextStyle(fontSize: 13,
-                              color: AppColors.white.withValues(alpha: 0.7))),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 20),
-                MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: () => showDialog(
-                        context: context, builder: (_) => const UpgradeModal()),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Text('Upgrade — \$7/mo',
-                          style: TextStyle(fontSize: 13, fontFamily: AppFonts.poppins,
-                              fontWeight: FontWeight.w700, color: AppColors.darkRaspberry)),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+        if (isTrial)
+          SettingsBillingCta(
+            title: 'Keep Pro Forever',
+            subtitle: 'Your trial ends in $trialDaysRemaining days. Upgrade to keep unlimited access.',
+            buttonLabel: 'Upgrade — \$7/mo',
+            onTap: () => showDialog(context: context, builder: (_) => const UpgradeModal()),
           ),
-        ],
-        if (isPro) ...[
+        if (isPro)
           _card(child: _settingsRow(
             LucideIcons.creditCard,
             'Manage Billing',
@@ -1052,7 +931,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ),
           )),
-        ],
 
         const SizedBox(height: 20),
 

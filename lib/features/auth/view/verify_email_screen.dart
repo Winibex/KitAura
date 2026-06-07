@@ -16,15 +16,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../../core/constants/app_assets.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_fonts.dart';
 import '../../../core/constants/app_routes.dart';
+import '../../../core/utils/responsive.dart';
+import '../../../shared/widgets/auth_screen_wrapper.dart';
 import '../controller/auth_controller.dart';
 
 // =============================================================================
@@ -204,169 +204,92 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   // Build
   // ---------------------------------------------------------------------------
 
+  // REPLACE entire build():
   @override
   Widget build(BuildContext context) {
-    // Read the email address from the Firebase auth stream to display to the
-    // user so they know which inbox to check.
-    final userEmail =
-        ref.watch(authStateProvider).asData?.value?.email ?? '';
+    final userEmail = ref.watch(authStateProvider).asData?.value?.email ?? '';
+    final isMobile = Responsive.isMobile(context);
 
-    return Scaffold(
-      backgroundColor: AppColors.lavenderBlush,
-      body: Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 480),
-          margin: const EdgeInsets.all(24),
-          padding: const EdgeInsets.all(40),
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color:      AppColors.prussianBlue.withValues(alpha: 0.08),
-                blurRadius: 24,
-                offset:     const Offset(0, 4),
+    return AuthScreenWrapper(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 480),
+        padding: EdgeInsets.all(isMobile ? 24 : 40),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.prussianBlue.withValues(alpha: 0.08),
+              blurRadius: 24,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: isMobile ? 56 : 80,
+              height: isMobile ? 56 : 80,
+              decoration: const BoxDecoration(
+                color: AppColors.petalFrost,
+                shape: BoxShape.circle,
               ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // ── Logo ───────────────────────────────────────────────────────
-              Image.asset(AppAssets.logoStackedDark, height: 48)
-                  .animate()
-                  .fadeIn(duration: 400.ms),
-
-              const SizedBox(height: 32),
-
-              // ── Mail icon bubble ───────────────────────────────────────────
-              Container(
-                width:  80,
-                height: 80,
-                decoration: const BoxDecoration(
-                  color: AppColors.petalFrost,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  LucideIcons.mail,
+              child: Icon(LucideIcons.mail,
                   color: AppColors.darkRaspberry,
-                  size:  36,
-                ),
-              ).animate().scale(
-                begin:    const Offset(0.5, 0.5),
-                duration: 400.ms,
-                curve:    Curves.easeOut,
-              ),
-
-              const SizedBox(height: 24),
-
-              // ── Heading ────────────────────────────────────────────────────
-              const Text(
-                'Verify your email',
-                style: TextStyle(
-                  color:      AppColors.prussianBlue,
-                  fontSize:   24,
-                  fontFamily: AppFonts.poppins,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              // ── Subtitle — shows the target email address ──────────────────
-              Text(
-                'We sent a verification link to\n$userEmail',
+                  size: isMobile ? 28 : 36),
+            ),
+            SizedBox(height: isMobile ? 16 : 24),
+            Text('Verify your email',
+                style: TextStyle(color: AppColors.prussianBlue,
+                    fontSize: isMobile ? 20 : 24,
+                    fontFamily: AppFonts.poppins, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text('We sent a verification link to\n$userEmail',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color:      AppColors.slateGrey,
-                  fontSize:   14,
-                  fontFamily: AppFonts.openSans,
-                  height:     1.5,
-                ),
+                style: const TextStyle(color: AppColors.slateGrey, fontSize: 14,
+                    fontFamily: AppFonts.openSans, height: 1.5)),
+            const SizedBox(height: 24),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.petalFrost,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.almondSilk),
               ),
-
-              const SizedBox(height: 32),
-
-              // ── Info banner ────────────────────────────────────────────────
-              // Explains that the page will update automatically — reassures
-              // the user they don't need to do anything other than click the link.
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color:        AppColors.petalFrost,
-                  borderRadius: BorderRadius.circular(10),
-                  border:       Border.all(color: AppColors.almondSilk),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(LucideIcons.info,
-                        color: AppColors.dustyMauve, size: 18),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Click the link in the email to verify your account. '
-                            'This page will update automatically.',
-                        style: TextStyle(
-                          color:      AppColors.prussianBlue,
-                          fontSize:   13,
-                          fontFamily: AppFonts.openSans,
-                          height:     1.4,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              child: const Row(
+                children: [
+                  Icon(LucideIcons.info, color: AppColors.dustyMauve, size: 18),
+                  SizedBox(width: 12),
+                  Expanded(child: Text(
+                    'Click the link in the email to verify your account. This page will update automatically.',
+                    style: TextStyle(color: AppColors.prussianBlue, fontSize: 13,
+                        fontFamily: AppFonts.openSans, height: 1.4),
+                  )),
+                ],
               ),
-
-              const SizedBox(height: 24),
-
-              // ── Resend button ──────────────────────────────────────────────
-              // Disabled during the cooldown window and while a resend is in
-              // flight. Button label shows the countdown so the user knows when
-              // they can try again.
-              SizedBox(
-                width:  double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: _resendCooldown > 0 || _isResending
-                      ? null
-                      : _resendEmail,
-                  child: _isResending
-                  // Spinner while the resend request is in flight.
-                      ? const SizedBox(
-                    height: 20,
-                    width:  20,
-                    child:  CircularProgressIndicator(
-                      color:       AppColors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                      : Text(
-                    _resendCooldown > 0
-                        ? 'Resend in ${_resendCooldown}s'  // countdown label
-                        : 'Resend verification email',
-                  ),
-                ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity, height: 48,
+              child: ElevatedButton(
+                onPressed: _resendCooldown > 0 || _isResending ? null : _resendEmail,
+                child: _isResending
+                    ? const SizedBox(height: 20, width: 20,
+                    child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2))
+                    : Text(_resendCooldown > 0
+                    ? 'Resend in ${_resendCooldown}s'
+                    : 'Resend verification email'),
               ),
-
-              const SizedBox(height: 12),
-
-              // ── Sign-out escape hatch ──────────────────────────────────────
-              // Allows the user to switch accounts if they signed up with
-              // the wrong email address.
-              TextButton(
-                onPressed: _signOut,
-                child: const Text(
-                  'Sign out and use a different account',
-                  style: TextStyle(
-                    color:    AppColors.slateGrey,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: _signOut,
+              child: const Text('Sign out and use a different account',
+                  style: TextStyle(color: AppColors.slateGrey, fontSize: 13)),
+            ),
+          ],
         ),
       ),
     );

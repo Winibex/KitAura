@@ -7,6 +7,8 @@ import 'package:kitaura/shared/widgets/app_top_bar.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_fonts.dart';
+import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../../../shared/services/firebase_service.dart';
 import '../../../ai_setup/view/ai_setup_panel.dart';
 import '../controller/cv_template_controller.dart';
@@ -38,7 +40,7 @@ class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen>
           ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(32),
+              padding: EdgeInsets.all(AppSizes.pagePadding(context)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -57,14 +59,14 @@ class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen>
   }
 
   Widget _buildHeader() {
-    return const Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Choose a Template',
           style: TextStyle(
             color: AppColors.prussianBlue,
-            fontSize: 26,
+            fontSize: AppSizes.headingLg(context),
             fontFamily: AppFonts.poppins,
             fontWeight: FontWeight.bold,
           ),
@@ -83,10 +85,14 @@ class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen>
   }
 
   Widget _buildSearchAndFilter(CVTemplateState state) {
-    return Row(
+    final isMobile = Responsive.isMobile(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Search bar — full width on mobile
         SizedBox(
-          width: 280,
+          width: isMobile ? double.infinity : 280,
           height: 42,
           child: TextField(
             onChanged: (v) =>
@@ -109,40 +115,48 @@ class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen>
             ),
           ),
         ),
-        const Spacer(),
-        ...CVTemplateController.categories.map((cat) {
-          final isActive = state.activeFilter == cat;
-          return Padding(
-            padding: const EdgeInsets.only(left: 8),
-            child: GestureDetector(
-              onTap: () => ref
-                  .read(templateControllerProvider.notifier)
-                  .setFilter(cat),
-              child: Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color:
-                  isActive ? AppColors.darkRaspberry : AppColors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border:
-                  isActive ? null : Border.all(color: AppColors.almondSilk),
-                ),
-                child: Text(
-                  cat,
-                  style: TextStyle(
-                    color: isActive
-                        ? AppColors.white
-                        : AppColors.prussianBlue,
-                    fontSize: 13,
-                    fontFamily: AppFonts.poppins,
-                    fontWeight: FontWeight.w500,
+        const SizedBox(height: 12),
+        // Filter chips — wrap on mobile
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: CVTemplateController.categories.map((cat) {
+              final isActive = state.activeFilter == cat;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () => ref
+                      .read(templateControllerProvider.notifier)
+                      .setFilter(cat),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isActive
+                          ? AppColors.darkRaspberry
+                          : AppColors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: isActive
+                          ? null
+                          : Border.all(color: AppColors.almondSilk),
+                    ),
+                    child: Text(
+                      cat,
+                      style: TextStyle(
+                        color: isActive
+                            ? AppColors.white
+                            : AppColors.prussianBlue,
+                        fontSize: 13,
+                        fontFamily: AppFonts.poppins,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-          );
-        }),
+              );
+            }).toList(),
+          ),
+        ),
       ],
     );
   }
@@ -152,10 +166,14 @@ class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen>
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        int columns = 4;
-        if (constraints.maxWidth < 500) columns = 1;
-        if (constraints.maxWidth < 700) columns = 2;
-        if (constraints.maxWidth < 1000) columns = 3;
+        int columns;
+        if (constraints.maxWidth < 700) {
+          columns = 2;
+        } else if (constraints.maxWidth < 1000) {
+          columns = 3;
+        } else {
+          columns = 4;
+        }
 
         if (templates.isEmpty) {
           return const Padding(
@@ -199,10 +217,10 @@ class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen>
       builder: (_) => CVTemplatePreviewModal(
         template: template,
         onUseTemplate: () {
-          _handleTemplateSelected(template.id);  // ← routes through AI setup
+          _handleTemplateSelected(template.id);
         },
         onStartBlank: () {
-          _handleTemplateSelected('blank');  // ← blank also gets AI setup option
+          _handleTemplateSelected('blank');
         },
       ),
     );
@@ -251,7 +269,10 @@ class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen>
       barrierColor: AppColors.prussianBlue.withValues(alpha: 0.7),
       builder: (dialogContext) => Center(
         child: Container(
-          width: 440,
+          width: Responsive.isMobile(context)
+              ? MediaQuery.of(context).size.width - 32
+              : 520,
+          constraints: const BoxConstraints(maxHeight: 700),
           margin: const EdgeInsets.all(24),
           padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
@@ -393,7 +414,7 @@ class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen>
                     // Load default profile ID for editing
                     String? profileId;
                     try {
-                      final def = await FirebaseService.getDefaultAiProfile(uid!);
+                      final def = await FirebaseService.getDefaultAiProfile(uid);
                       profileId = def?.id;
                     } catch (_) {}
                     _openAiSetupWizard(templateId, profileId: profileId);

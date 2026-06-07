@@ -8,6 +8,7 @@ import '../../../core/constants/app_fonts.dart';
 import '../../../core/constants/app_routes.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/responsive.dart';
+import '../../../shared/widgets/auth_screen_wrapper.dart';
 import '../../../shared/widgets/error_banner.dart';
 import '../../../shared/widgets/form_field_widget.dart';
 import '../controller/auth_controller.dart';
@@ -86,17 +87,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }
 
   Widget _buildMobileLayout() {
-    return Container(
-      decoration: _gradientDecoration,
-      child: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: _buildFormCard(),
-          ),
-        ),
-      ),
-    );
+    return AuthScreenWrapper(child: _buildFormCard());
   }
 
   // ── Left branding panel ──────────────────────────────────────────────
@@ -169,7 +160,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   Widget _buildRightPanel() {
     return Container(
-      decoration: _gradientDecoration,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFFFD4E5), Color(0xFFFFE4EC), Color(0xFFFFF1F5)],
+        ),
+      ),
       child: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
@@ -181,18 +178,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   // ── Form card ────────────────────────────────────────────────────────
 
-  static const _gradientDecoration = BoxDecoration(
-    gradient: LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [Color(0xFFFFD4E5), Color(0xFFFFE4EC), Color(0xFFFFF1F5)],
-    ),
-  );
-
   Widget _buildFormCard() {
     return Container(
       constraints: const BoxConstraints(maxWidth: 440),
-      padding: const EdgeInsets.only(left: 32, right: 32, bottom: 32, top: 32),
+      padding: EdgeInsets.all(Responsive.isMobile(context) ? 24 : 32),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
@@ -286,11 +275,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Text(
+        Text(
           'Welcome back',
           style: TextStyle(
             color: AppColors.prussianBlue,
-            fontSize: 28,
+            fontSize: Responsive.isMobile(context) ? 22 : 28,
             fontFamily: AppFonts.poppins,
             fontWeight: FontWeight.bold,
           ),
@@ -378,11 +367,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Text(
+        Text(
           'Create your account',
           style: TextStyle(
             color: AppColors.prussianBlue,
-            fontSize: 28,
+            fontSize: Responsive.isMobile(context) ? 22 : 28,
             fontFamily: AppFonts.poppins,
             fontWeight: FontWeight.bold,
           ),

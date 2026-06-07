@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_fonts.dart';
+import '../../../../core/constants/app_sizes.dart';
 import '../model/cv_summary_model.dart';
 import '../../../../shared/widgets/template_thumbnail.dart';
 
@@ -40,11 +41,29 @@ class CvCardWidget extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: _cardDecoration,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
-            Expanded(child: _buildThumbnail()),
-            _buildInfo(context),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _buildThumbnail()),
+                _buildInfo(context),
+              ],
+            ),
+            // 3-dot menu at top right
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Container(padding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 3,
+              ),
+                  decoration: BoxDecoration(
+                    color: AppColors.darkRaspberry,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: _buildMenu(context)),
+            ),
           ],
         ),
       ),
@@ -123,9 +142,6 @@ class CvCardWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
               // Template tag
               Container(
                 padding: const EdgeInsets.symmetric(
@@ -144,12 +160,10 @@ class CvCardWidget extends StatelessWidget {
                     fontFamily: AppFonts.poppins,
                     fontWeight: FontWeight.w500,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              // 3-dot menu
-              _buildMenu(context),
-            ],
-          ),
         ],
       ),
     );
@@ -157,14 +171,10 @@ class CvCardWidget extends StatelessWidget {
 
   Widget _buildMenu(BuildContext context) {
     return SizedBox(
-      width: 28,
-      height: 28,
+      width: AppSizes.icons(context),
+      height: AppSizes.icons(context),
       child: PopupMenuButton<String>(
-        icon: const Icon(
-          LucideIcons.moreHorizontal,
-          color: AppColors.slateGrey,
-          size: 16,
-        ),
+        icon: const Icon(LucideIcons.moreHorizontal, color: AppColors.petalFrost, size: 16),
         padding: EdgeInsets.zero,
         iconSize: 16,
         shape: RoundedRectangleBorder(

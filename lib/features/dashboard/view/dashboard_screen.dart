@@ -12,6 +12,9 @@ import 'package:skeletonizer/skeletonizer.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_fonts.dart';
 import '../../../core/constants/app_routes.dart';
+import '../../../core/constants/app_sizes.dart';
+import '../../../core/utils/responsive.dart';
+import '../../../shared/widgets/responsive_scaffold.dart';
 import '../../../shared/widgets/app_sidebar.dart';
 import '../../../shared/widgets/app_top_bar.dart';
 import '../../../shared/widgets/go_pro_banners.dart';
@@ -28,7 +31,6 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
-  @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -40,36 +42,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(dashboardControllerProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.warmGrey,
-      body: Stack(
-        children: [
-          // Main content
-          Column(
-            children: [
-              AppTopBar(
-                canBack: false,
-                whereToGo: AppRoutes.dashboard,
-              ),
-              Expanded(
-                child: Row(
-                  children: [
-                    const AppSidebar(),
-                    Expanded(child: _buildContent(state)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+    return ResponsiveScaffold(
+      child: _buildContent(state),
     );
   }
 
   Widget _buildContent(DashboardState state) {
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.all(AppSizes.pagePadding(context)),
       child: Skeletonizer(
         enabled: state.isLoading,
         child: Column(
@@ -81,7 +62,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             const SizedBox(height: 32),
             _buildQuickStart(state),
             const SizedBox(height: 32),
-            _buildRecentActivity(state),
+            ResponsiveBuilder(
+              mobile: _buildRecentItemsMobile(state),
+              desktop: _buildRecentActivity(state), // your existing table
+            ),
             const SizedBox(height: 32),
               GoProDashboardBanner(
                 plan: state.plan,
@@ -115,8 +99,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             children: [
               Text(
                 '$greeting, ${state.displayName} 👋',
-                style: const TextStyle(
-                  fontSize: 26,
+                style: TextStyle(
+                  fontSize: AppSizes.headingLg(context),
                   fontFamily: AppFonts.poppins,
                   fontWeight: FontWeight.bold,
                   color: AppColors.prussianBlue,
@@ -141,90 +125,86 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   // ─── STAT CARDS ────────────────────────────────────────────────────────
 
   Widget _buildStatCards(DashboardState state) {
+    final statCards = [
+      _StatCardData(
+        icon: LucideIcons.fileText,
+        label: 'Documents',
+        value: '${state.totalDocuments}',
+        subtitle: '${state.totalDocuments} total created',
+        color: AppColors.magentaBloom,
+      ),
+      _StatCardData(
+        icon: LucideIcons.download,
+        label: 'Exports',
+        value: state.isPro ? '${state.exportCount} / ∞' : '${state.exportCount} / ${state.maxExports}',
+        subtitle: state.isPro ? 'Unlimited' : '${state.maxExports - state.exportCount} remaining',
+        color: AppColors.dustyRose,
+        progress: state.isPro ? null : state.exportCount / state.maxExports,
+      ),
+      _StatCardData(
+        icon: LucideIcons.sparkles,
+        label: 'AI Use',
+        value: state.isPro
+            ? '${state.aiFillCount + state.aiRewriteCount} / ∞'
+            : '${state.aiFillCount + state.aiRewriteCount} / ${state.maxAiFills + state.maxAiRewrites}',
+        subtitle: state.isPro
+            ? 'Unlimited'
+            : '${(state.maxAiFills - state.aiFillCount) + (state.maxAiRewrites - state.aiRewriteCount)} remaining',
+        color: AppColors.dustyMauve,
+        progress: state.isPro
+            ? null
+            : (state.aiFillCount + state.aiRewriteCount) / (state.maxAiFills + state.maxAiRewrites),
+        detailLine: state.isPro
+            ? null
+            : 'Fills: ${state.aiFillCount}/${state.maxAiFills}  ·  Rewrites: ${state.aiRewriteCount}/${state.maxAiRewrites}',
+      ),
+      _StatCardData(
+        icon: LucideIcons.logIn,
+        label: 'Sessions',
+        value: '${state.loginCount}',
+        subtitle: 'Total logins',
+        color: AppColors.slateGrey,
+      ),
+    ];
 
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isNarrow = constraints.maxWidth < 800;
-
-        final cards = [
-          _StatCardData(
-            icon: LucideIcons.fileText,
-            label: 'Documents',
-            value: '${state.totalDocuments}',
-            subtitle: '${state.totalDocuments} total created',
-            color: AppColors.magentaBloom,
-          ),
-          _StatCardData(
-            icon: LucideIcons.download,
-            label: 'Exports',
-            value: state.isPro ? '${state.exportCount} / ∞' : '${state.exportCount} / ${state.maxExports}',
-            subtitle: state.isPro ? 'Unlimited' : '${state.maxExports - state.exportCount} remaining',
-            color: AppColors.dustyRose,
-            progress: state.isPro ? null : state.exportCount / state.maxExports,
-          ),
-          _StatCardData(
-            icon: LucideIcons.sparkles,
-            label: 'AI Use',
-            value: state.isPro
-                ? '${state.aiFillCount + state.aiRewriteCount} / ∞'
-                : '${state.aiFillCount + state.aiRewriteCount} / ${state.maxAiFills + state.maxAiRewrites}',
-            subtitle: state.isPro
-                ? 'Unlimited'
-                : '${(state.maxAiFills - state.aiFillCount) + (state.maxAiRewrites - state.aiRewriteCount)} remaining',
-            color: AppColors.dustyMauve,
-            progress: state.isPro
-                ? null
-                : (state.aiFillCount + state.aiRewriteCount) / (state.maxAiFills + state.maxAiRewrites),
-            detailLine: state.isPro
-                ? null
-                : 'Fills: ${state.aiFillCount}/${state.maxAiFills}  ·  Rewrites: ${state.aiRewriteCount}/${state.maxAiRewrites}',
-          ),
-          _StatCardData(
-            icon: LucideIcons.logIn,
-            label: 'Sessions',
-            value: '${state.loginCount}',
-            subtitle: 'Total logins',
-            color: AppColors.slateGrey,
-          ),
-        ];
-
-        if (isNarrow) {
-          return Column(
-            children: [
-              Row(children: [
-                Expanded(child: _buildStatCard(cards[0])),
-                const SizedBox(width: 16),
-                Expanded(child: _buildStatCard(cards[1])),
-              ]),
-              const SizedBox(height: 16),
-              Row(children: [
-                Expanded(child: _buildStatCard(cards[2])),
-                const SizedBox(width: 16),
-                Expanded(child: _buildStatCard(cards[3])),
-              ]),
-            ],
-          );
-        }
-
-        return Row(
-          children: cards.map((c) => Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(right: c == cards.last ? 0 : 16),
-              child: _buildStatCard(c),
-            ),
-          )).toList(),
-        );
-      },
+    return ResponsiveBuilder(
+      mobile: GridView.count(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: 2,
+        crossAxisSpacing: AppSizes.md,
+        mainAxisSpacing: AppSizes.md,
+        childAspectRatio: AppSizes.statAspectRatio(context),
+        children: statCards.map(_buildStatCard).toList(),
+      ),
+      tablet: GridView.count(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: 3,
+        crossAxisSpacing: AppSizes.md,
+        mainAxisSpacing: AppSizes.md,
+        childAspectRatio: AppSizes.statAspectRatio(context),
+        children: statCards.map(_buildStatCard).toList(),
+      ),
+      desktop: GridView.count(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: 4,
+        crossAxisSpacing: AppSizes.md,
+        mainAxisSpacing: AppSizes.md,
+        childAspectRatio: AppSizes.statAspectRatio(context),
+        children: statCards.map(_buildStatCard).toList(),
+      ),
     ).animate().fadeIn(duration: 300.ms, delay: 100.ms);
+
   }
 
   Widget _buildStatCard(_StatCardData data) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(AppSizes.cardPadding(context)),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppSizes.radiusLg),
         border: Border.all(color: const Color(0xFFEDE8E3)),
       ),
       child: Column(
@@ -233,33 +213,40 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           Row(
             children: [
               Container(
-                width: 36,
-                height: 36,
+                width: 32,
+                height: 32,
                 decoration: BoxDecoration(
                   color: data.color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusSm),
                 ),
-                child: Icon(data.icon, color: data.color, size: 18),
+                child: Icon(data.icon, color: data.color, size: 16),
               ),
               const Spacer(),
-              Text(
-                data.label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontFamily: AppFonts.openSans,
-                  color: AppColors.slateGrey,
+              Flexible(
+                child: Text(
+                  data.label,
+                  style: TextStyle(
+                    fontSize: AppSizes.caption(context),
+                    fontFamily: AppFonts.openSans,
+                    color: AppColors.slateGrey,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            data.value,
-            style: const TextStyle(
-              fontSize: 28,
-              fontFamily: AppFonts.poppins,
-              fontWeight: FontWeight.bold,
-              color: AppColors.prussianBlue,
+          const Spacer(),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              data.value,
+              style: TextStyle(
+                fontSize: AppSizes.statValue(context),
+                fontFamily: AppFonts.poppins,
+                fontWeight: FontWeight.bold,
+                color: AppColors.prussianBlue,
+              ),
             ),
           ),
           const SizedBox(height: 4),
@@ -268,32 +255,34 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               borderRadius: BorderRadius.circular(3),
               child: LinearProgressIndicator(
                 value: data.progress!.clamp(0.0, 1.0),
-                minHeight: 4,
+                minHeight: 3,
                 backgroundColor: const Color(0xFFF0EBE6),
                 valueColor: AlwaysStoppedAnimation(
                   data.progress! >= 1.0 ? AppColors.error : data.color,
                 ),
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
           ],
           Text(
             data.subtitle,
-            style: const TextStyle(
-              fontSize: 12,
+            style: TextStyle(
+              fontSize: AppSizes.caption(context),
               fontFamily: AppFonts.openSans,
               color: AppColors.slateGrey,
             ),
+            overflow: TextOverflow.ellipsis,
           ),
           if (data.detailLine != null) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               data.detailLine!,
               style: TextStyle(
-                fontSize: 10,
+                fontSize: Responsive.isMobile(context) ? 8 : 10,
                 fontFamily: AppFonts.openSans,
                 color: AppColors.slateGrey.withValues(alpha: 0.7),
               ),
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ],
@@ -304,6 +293,40 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   // ─── QUICK START CARDS ─────────────────────────────────────────────────
 
   Widget _buildQuickStart(DashboardState state) {
+
+    final quickStatCards = [
+      _QuickStartData(
+        icon: LucideIcons.filePlus,
+        title: 'Create CV',
+        subtitle: 'Professional resume builder',
+        color: AppColors.darkRaspberry,
+        onTap: () => context.go(AppRoutes.cvTemplates),
+      ),
+      _QuickStartData(
+        icon: LucideIcons.fileText,
+        title: 'Write Proposal',
+        subtitle: 'Win more clients',
+        color: AppColors.dustyMauve,
+        onTap: () {}, // TODO
+        comingSoon: true,
+      ),
+      _QuickStartData(
+        icon: LucideIcons.mail,
+        title: 'Cover Letter',
+        subtitle: 'Stand out from the crowd',
+        color: AppColors.magentaBloom,
+        onTap: () => context.go(AppRoutes.clTemplates),
+        comingSoon: false,
+      ),
+      _QuickStartData(
+        icon: LucideIcons.linkedin,
+        title: 'LinkedIn Summary',
+        subtitle: 'Optimize your profile',
+        color: AppColors.dustyRose,
+        onTap: () => context.go(AppRoutes.linkedin),
+        comingSoon: false,
+      ),
+    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -327,140 +350,91 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
         const SizedBox(height: 16),
 
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isNarrow = constraints.maxWidth < 700;
-              final cards = [
-                _QuickStartData(
-                  icon: LucideIcons.filePlus,
-                  title: 'Create CV',
-                  subtitle: 'Professional resume builder',
-                  color: AppColors.darkRaspberry,
-                  onTap: () => context.go(AppRoutes.cvTemplates),
-                ),
-                _QuickStartData(
-                  icon: LucideIcons.fileText,
-                  title: 'Write Proposal',
-                  subtitle: 'Win more clients',
-                  color: AppColors.dustyMauve,
-                  onTap: () {}, // TODO
-                  comingSoon: true,
-                ),
-                _QuickStartData(
-                  icon: LucideIcons.mail,
-                  title: 'Cover Letter',
-                  subtitle: 'Stand out from the crowd',
-                  color: AppColors.magentaBloom,
-                  onTap: () => context.go(AppRoutes.clTemplates),
-                  comingSoon: false,
-                ),
-                _QuickStartData(
-                  icon: LucideIcons.linkedin,
-                  title: 'LinkedIn Summary',
-                  subtitle: 'Optimize your profile',
-                  color: AppColors.dustyRose,
-                  onTap: () => context.go(AppRoutes.linkedin),
-                  comingSoon: false,
-                ),
-              ];
-
-              if (isNarrow) {
-                return Column(
-                  children: [
-                    Row(children: [
-                      Expanded(child: _buildQuickStartCard(cards[0])),
-                      const SizedBox(width: 12),
-                      Expanded(child: _buildQuickStartCard(cards[1])),
-                    ]),
-                    const SizedBox(height: 12),
-                    Row(children: [
-                      Expanded(child: _buildQuickStartCard(cards[2])),
-                      const SizedBox(width: 12),
-                      Expanded(child: _buildQuickStartCard(cards[3])),
-                    ]),
-                  ],
-                );
-              }
-
-              return Row(
-                children: cards.map((c) => Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(right: c == cards.last ? 0 : 12),
-                    child: _buildQuickStartCard(c),
-                  ),
-                )).toList(),
-              );
-            },
+        ResponsiveBuilder(
+          mobile: GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            crossAxisSpacing: AppSizes.md,
+            mainAxisSpacing: AppSizes.md,
+            childAspectRatio: AppSizes.statAspectRatio(context),
+            children: quickStatCards.map(_buildQuickStartCard).toList(),
           ),
+          tablet: GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 3,
+            crossAxisSpacing: AppSizes.md,
+            mainAxisSpacing: AppSizes.md,
+            childAspectRatio: AppSizes.statAspectRatio(context),
+            children: quickStatCards.map(_buildQuickStartCard).toList(),
+          ),
+          desktop: GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 4,
+            crossAxisSpacing: AppSizes.md,
+            mainAxisSpacing: AppSizes.md,
+            childAspectRatio: AppSizes.statAspectRatio(context),
+            children: quickStatCards.map(_buildQuickStartCard).toList(),
+          ),
+        ),
       ],
     ).animate().fadeIn(duration: 300.ms, delay: 200.ms);
   }
 
   Widget _buildQuickStartCard(_QuickStartData data) {
     return MouseRegion(
-      cursor: data.comingSoon ? SystemMouseCursors.basic : SystemMouseCursors.click,
+      cursor: data.comingSoon ? SystemMouseCursors.click : SystemMouseCursors.basic,
       child: GestureDetector(
-        onTap: data.comingSoon ? null : data.onTap,
+        onTap: data.onTap,
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(AppSizes.cardPadding(context)),
           decoration: BoxDecoration(
             color: AppColors.white,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppSizes.radiusLg),
             border: Border.all(color: const Color(0xFFEDE8E3)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Row(
                 children: [
                   Container(
-                    width: 40,
-                    height: 40,
+                    width: 32, height: 32,
                     decoration: BoxDecoration(
-                      color: data.color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
+                      color: AppColors.petalFrost,
+                      borderRadius: BorderRadius.circular(AppSizes.radiusSm),
                     ),
-                    child: Icon(data.icon, color: data.color, size: 20),
+                    child: Icon(data.icon, size: 16, color: AppColors.darkRaspberry),
                   ),
                   const Spacer(),
                   if (data.comingSoon)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF0EBE6),
-                        borderRadius: BorderRadius.circular(10),
+                        color: AppColors.petalFrost,
+                        borderRadius: BorderRadius.circular(4),
                       ),
-                      child: const Text(
-                        'Soon',
-                        style: TextStyle(fontSize: 10, color: AppColors.slateGrey,
-                            fontFamily: AppFonts.poppins, fontWeight: FontWeight.w600),
-                      ),
+                      child: Text('Soon', style: TextStyle(
+                          fontSize: Responsive.isMobile(context) ? 8 : 10,
+                          color: AppColors.slateGrey)),
                     )
                   else
-                    Icon(LucideIcons.arrowRight, size: 16, color: data.color),
+                    Icon(LucideIcons.arrowRight, size: 14, color: AppColors.slateGrey),
                 ],
               ),
-              const SizedBox(height: 14),
-              Text(
-                data.title,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontFamily: AppFonts.poppins,
-                  fontWeight: FontWeight.w600,
-                  color: data.comingSoon
-                      ? AppColors.slateGrey
-                      : AppColors.prussianBlue,
-                ),
-              ),
+              const Spacer(),
+              Text(data.title, style: TextStyle(
+                  fontSize: AppSizes.body(context), fontFamily: AppFonts.poppins,
+                  fontWeight: FontWeight.w600, color: AppColors.prussianBlue),
+                  overflow: TextOverflow.ellipsis),
               const SizedBox(height: 2),
-              Text(
-                data.subtitle,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontFamily: AppFonts.openSans,
-                  color: AppColors.slateGrey,
-                ),
-              ),
+              Text(data.subtitle, style: TextStyle(
+                  fontSize: AppSizes.caption(context), fontFamily: AppFonts.openSans,
+                  color: AppColors.slateGrey),
+                  overflow: TextOverflow.ellipsis, maxLines: 1),
             ],
           ),
         ),
@@ -469,6 +443,155 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   // ─── RECENT ACTIVITY ───────────────────────────────────────────────────
+
+  Widget _buildEmptyState(){
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 48),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFEDE8E3)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: AppColors.petalFrost,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(LucideIcons.fileText,
+                color: AppColors.darkRaspberry, size: 24),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'No documents yet',
+            style: TextStyle(
+              fontSize: 16,
+              fontFamily: AppFonts.poppins,
+              fontWeight: FontWeight.w600,
+              color: AppColors.prussianBlue,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Create your first CV to get started',
+            style: TextStyle(fontSize: 13, color: AppColors.slateGrey),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: 150,
+            child: ElevatedButton.icon(
+              onPressed: () => context.go(AppRoutes.cvTemplates),
+              icon: const Icon(LucideIcons.plus, size: 16),
+              label: const Text('Create CV'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.darkRaspberry,
+                foregroundColor: AppColors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecentItemsMobile(DashboardState state) {
+    if (state.recentItems.isEmpty) return _buildEmptyState();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text('Recent Activity', style: TextStyle(
+                fontSize: AppSizes.headingMd(context), fontFamily: AppFonts.poppins,
+                fontWeight: FontWeight.bold, color: AppColors.prussianBlue)),
+            const Spacer(),
+            Text('View all →', style: TextStyle(
+                fontSize: AppSizes.caption(context), fontFamily: AppFonts.poppins,
+                fontWeight: FontWeight.w500, color: AppColors.darkRaspberry)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ...state.recentItems.map((item) => Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+            border: Border.all(color: const Color(0xFFEDE8E3)),
+          ),
+          child: InkWell(
+            onTap: () {
+              if (item.type == 'cv') {
+                context.go('/cv/edit/${item.id}');
+              } else if (item.type == 'coverLetter') {
+                context.go('/cover-letters/edit/${item.id}');
+              }
+            },
+            child: Row(
+              children: [
+                Container(
+                  width: 36, height: 36,
+                  decoration: BoxDecoration(
+                    color: AppColors.petalFrost,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    item.type == 'cv' ? LucideIcons.fileText : LucideIcons.mail,
+                    size: 16, color: AppColors.darkRaspberry,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(item.title,
+                          style: TextStyle(fontSize: AppSizes.body(context),
+                              fontFamily: AppFonts.poppins, fontWeight: FontWeight.w600,
+                              color: AppColors.prussianBlue),
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                      const SizedBox(height: 2),
+                      Text('${item.typeLabel} · ${item.timeAgo}',
+                          style: TextStyle(fontSize: AppSizes.caption(context),
+                              fontFamily: AppFonts.openSans, color: AppColors.slateGrey)),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.petalFrost,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(item.templateId,
+                            style: TextStyle(
+                              fontSize: AppSizes.caption(context),
+                              color: AppColors.darkRaspberry,
+                              fontFamily: AppFonts.poppins,
+                              fontWeight: FontWeight.w500,
+                            ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(LucideIcons.chevronRight, size: 16, color: AppColors.slateGrey),
+              ],
+            ),
+          ),
+        )),
+      ],
+    );
+  }
 
   Widget _buildRecentActivity(DashboardState state) {
     return Column(
@@ -505,62 +628,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ],
         ),
         const SizedBox(height: 16),
-
         if (state.recentItems.isEmpty)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 48),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFEDE8E3)),
-            ),
-            child: Column(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: AppColors.petalFrost,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(LucideIcons.fileText,
-                      color: AppColors.darkRaspberry, size: 24),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'No documents yet',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontFamily: AppFonts.poppins,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.prussianBlue,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Create your first CV to get started',
-                  style: TextStyle(fontSize: 13, color: AppColors.slateGrey),
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: 150,
-                  child: ElevatedButton.icon(
-                    onPressed: () => context.go(AppRoutes.cvTemplates),
-                    icon: const Icon(LucideIcons.plus, size: 16),
-                    label: const Text('Create CV'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.darkRaspberry,
-                      foregroundColor: AppColors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          )
+          _buildEmptyState()
 
         else
           Container(
@@ -578,15 +647,31 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     color: Color(0xFFFBF8F6),
                     borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
                   ),
-                  child: const Row(
-                    children: [
-                      Expanded(flex: 4, child: Text('Document', style: _headerStyle)),
-                      Expanded(flex: 2, child: Text('Type', style: _headerStyle)),
-                      Expanded(flex: 2, child: Text('Template', style: _headerStyle)),
-                      Expanded(flex: 2, child: Text('Last edited', style: _headerStyle)),
-                      SizedBox(width: 40),
-                    ],
-                  ),
+                  child: ResponsiveBuilder(
+                    mobile: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      child: Row(
+                        children: [
+                          Expanded(flex: 3, child: Text('Document', style: _tableHeaderStyle(context))),
+                          Expanded(flex: 2, child: Text('Type', style: _tableHeaderStyle(context))),
+                          Expanded(flex: 2, child: Text('Edited', style: _tableHeaderStyle(context))),
+                          const SizedBox(width: 24), // arrow space
+                        ],
+                      ),
+                    ),
+                    desktop: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: Row(
+                        children: [
+                          Expanded(flex: 3, child: Text('Document', style: _tableHeaderStyle(context))),
+                          Expanded(flex: 2, child: Text('Type', style: _tableHeaderStyle(context))),
+                          Expanded(flex: 2, child: Text('Template', style: _tableHeaderStyle(context))),
+                          Expanded(flex: 2, child: Text('Last edited', style: _tableHeaderStyle(context))),
+                          const SizedBox(width: 32),
+                        ],
+                      ),
+                    ),
+                  )
                 ),
                 // Rows
                 ...state.recentItems.map((item) => _buildRecentRow(item)),
@@ -597,12 +682,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     ).animate().fadeIn(duration: 300.ms, delay: 300.ms);
   }
 
-  static const _headerStyle = TextStyle(
-    fontSize: 11,
+  TextStyle _tableHeaderStyle(BuildContext context) => TextStyle(
+    fontSize: AppSizes.caption(context),
     fontFamily: AppFonts.poppins,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w500,
     color: AppColors.slateGrey,
-    letterSpacing: 0.5,
   );
 
   Widget _buildRecentRow(RecentItem item) {

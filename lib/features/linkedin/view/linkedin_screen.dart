@@ -12,9 +12,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_fonts.dart';
+import '../../../core/constants/app_sizes.dart';
+import '../../../core/utils/responsive.dart';
 import '../../../shared/services/firebase_service.dart';
-import '../../../shared/widgets/app_sidebar.dart';
-import '../../../shared/widgets/app_top_bar.dart';
+import '../../../shared/widgets/responsive_scaffold.dart';
 import '../../cover_letter/editor/controller/cl_editor_controller.dart';
 import '../controller/linkedin_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -59,11 +60,12 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
           title: data['title'] ?? 'Untitled CV',
         );
       }).toList();
-      if (mounted)
+      if (mounted) {
         setState(() {
           _cvList = cvs;
           _loadingCvs = false;
         });
+      }
     } catch (_) {
       if (mounted) setState(() => _loadingCvs = false);
     }
@@ -108,47 +110,32 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(linkedInControllerProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.lavenderBlush,
-      body: Column(
-        children: [
-          const AppTopBar(canBack: false, whereToGo: ''),
-          Expanded(
-            child: Row(
+    return ResponsiveScaffold(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(32),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 820),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const AppSidebar(),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(32),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 820),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildHeader(),
-                            const SizedBox(height: 28),
-                            if (!state.hasResults) ...[
-                              _buildInputCard(state),
-                            ] else ...[
-                              _buildResultsHeader(state),
-                              const SizedBox(height: 16),
-                              _buildResults(state),
-                            ],
-                            const SizedBox(height: 32),
-                            if (state.savedItems.isNotEmpty &&
-                                !state.hasResults)
-                              _buildSavedList(state),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+                _buildHeader(),
+                const SizedBox(height: 28),
+                if (!state.hasResults) ...[
+                  _buildInputCard(state),
+                ] else ...[
+                  _buildResultsHeader(state),
+                  const SizedBox(height: 16),
+                  _buildResults(state),
+                ],
+                const SizedBox(height: 32),
+                if (state.savedItems.isNotEmpty &&
+                    !state.hasResults)
+                  _buildSavedList(state),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -156,47 +143,54 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
   // ── HEADER ─────────────────────────────────────────────────────────
 
   Widget _buildHeader() {
-    return Row(
-      children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: AppColors.darkRaspberry.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
+    return ResponsiveBuilder(
+      mobile: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40, height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.darkRaspberry.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(LucideIcons.linkedin, size: 20, color: AppColors.darkRaspberry),
           ),
-          child: const Icon(
-            LucideIcons.linkedin,
-            size: 24,
-            color: AppColors.darkRaspberry,
+          const SizedBox(height: 12),
+          Text('LinkedIn Content Studio',
+              style: TextStyle(fontSize: AppSizes.headingLg(context), fontFamily: AppFonts.poppins,
+                  fontWeight: FontWeight.bold, color: AppColors.prussianBlue)),
+          const SizedBox(height: 4),
+          Text('Generate optimized LinkedIn content from your CV & AI Profile',
+              style: TextStyle(fontSize: AppSizes.caption(context), fontFamily: AppFonts.openSans,
+                  color: AppColors.slateGrey)),
+        ],
+      ),
+      desktop: Row(
+        children: [
+          Container(
+            width: 48, height: 48,
+            decoration: BoxDecoration(
+              color: AppColors.darkRaspberry.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(LucideIcons.linkedin, size: 24, color: AppColors.darkRaspberry),
           ),
-        ),
-        const SizedBox(width: 16),
-        const Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'LinkedIn Content Studio',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontFamily: AppFonts.poppins,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.prussianBlue,
-                ),
-              ),
-              Text(
-                'Generate optimized LinkedIn content from your CV & AI Profile',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontFamily: AppFonts.openSans,
-                  color: AppColors.slateGrey,
-                ),
-              ),
-            ],
+          const SizedBox(width: 16),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('LinkedIn Content Studio',
+                    style: TextStyle(fontSize: 24, fontFamily: AppFonts.poppins,
+                        fontWeight: FontWeight.bold, color: AppColors.prussianBlue)),
+                Text('Generate optimized LinkedIn content from your CV & AI Profile',
+                    style: TextStyle(fontSize: 13, fontFamily: AppFonts.openSans,
+                        color: AppColors.slateGrey)),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -206,7 +200,7 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
     final ctrl = ref.read(linkedInControllerProvider.notifier);
 
     return Container(
-      padding: const EdgeInsets.all(28),
+      padding: EdgeInsets.all(AppSizes.pagePadding(context)),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
@@ -223,10 +217,10 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Two-column dropdowns ─────────────────────────────
-          const Text(
+          Text(
             'Data Sources',
             style: TextStyle(
-              fontSize: 15,
+              fontSize: AppSizes.headingSm(context),
               fontFamily: AppFonts.poppins,
               fontWeight: FontWeight.w700,
               color: AppColors.prussianBlue,
@@ -243,12 +237,10 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
           ),
           const SizedBox(height: 14),
 
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // AI Profile dropdown
-              Expanded(
-                child: _buildDropdownBlock(
+          ResponsiveBuilder(
+            mobile: Column(
+              children: [
+                _buildDropdownBlock(
                   icon: LucideIcons.sparkles,
                   label: 'AI Profile',
                   sublabel: 'Your career data & preferences',
@@ -258,11 +250,8 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
                       ? _dropdownEmpty('No profiles — create one in Settings')
                       : _buildProfileDropdown(),
                 ),
-              ),
-              const SizedBox(width: 16),
-              // CV dropdown
-              Expanded(
-                child: _buildDropdownBlock(
+                const SizedBox(height: 14),
+                _buildDropdownBlock(
                   icon: LucideIcons.fileText,
                   label: 'CV (Optional)',
                   sublabel: 'For richer, more detailed content',
@@ -272,8 +261,34 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
                       ? _dropdownEmpty('No CVs yet')
                       : _buildCvDropdown(state, ctrl),
                 ),
-              ),
-            ],
+              ],
+            ),
+            desktop: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _buildDropdownBlock(
+                  icon: LucideIcons.sparkles,
+                  label: 'AI Profile',
+                  sublabel: 'Your career data & preferences',
+                  child: _loadingProfiles
+                      ? _dropdownLoading()
+                      : _profileList.isEmpty
+                      ? _dropdownEmpty('No profiles — create one in Settings')
+                      : _buildProfileDropdown(),
+                )),
+                const SizedBox(width: 16),
+                Expanded(child: _buildDropdownBlock(
+                  icon: LucideIcons.fileText,
+                  label: 'CV (Optional)',
+                  sublabel: 'For richer, more detailed content',
+                  child: _loadingCvs
+                      ? _dropdownLoading()
+                      : _cvList.isEmpty
+                      ? _dropdownEmpty('No CVs yet')
+                      : _buildCvDropdown(state, ctrl),
+                )),
+              ],
+            ),
           ),
 
           const SizedBox(height: 24),
@@ -283,10 +298,10 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
           // ── Section checkboxes ───────────────────────────────
           Row(
             children: [
-              const Text(
+              Text(
                 'Sections to Generate',
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: AppSizes.headingSm(context),
                   fontFamily: AppFonts.poppins,
                   fontWeight: FontWeight.w700,
                   color: AppColors.prussianBlue,
@@ -390,10 +405,10 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
           const SizedBox(height: 20),
 
           // ── Custom instructions ──────────────────────────────
-          const Text(
+          Text(
             'Custom Instructions',
             style: TextStyle(
-              fontSize: 15,
+              fontSize: AppSizes.headingSm(context),
               fontFamily: AppFonts.poppins,
               fontWeight: FontWeight.w700,
               color: AppColors.prussianBlue,
@@ -548,7 +563,8 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
     required String label,
     required String sublabel,
     required Widget child,
-  }) {
+  })
+  {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -756,33 +772,51 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
   Widget _buildResultsHeader(LinkedInState state) {
     final ctrl = ref.read(linkedInControllerProvider.notifier);
 
-    return Row(
-      children: [
-        const Text(
-          'Generated Content',
-          style: TextStyle(
-            fontSize: 18,
-            fontFamily: AppFonts.poppins,
-            fontWeight: FontWeight.bold,
-            color: AppColors.prussianBlue,
+    return ResponsiveBuilder(
+      mobile: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Generated Content',
+              style: TextStyle(fontSize: AppSizes.headingMd(context),
+                  fontFamily: AppFonts.poppins, fontWeight: FontWeight.bold,
+                  color: AppColors.prussianBlue)),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _headerAction(LucideIcons.plus, 'New', ctrl.clearResults)),
+              const SizedBox(width: 8),
+              Expanded(child: _headerAction(LucideIcons.copy, 'Copy All', () async {
+                await ctrl.copyAll();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('All content copied'),
+                        backgroundColor: AppColors.success, duration: Duration(seconds: 2)),
+                  );
+                }
+              }, filled: true)),
+            ],
           ),
-        ),
-        const Spacer(),
-        _headerAction(LucideIcons.plus, 'New', ctrl.clearResults),
-        const SizedBox(width: 8),
-        _headerAction(LucideIcons.copy, 'Copy All', () async {
-          await ctrl.copyAll();
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('All content copied'),
-                backgroundColor: AppColors.success,
-                duration: Duration(seconds: 2),
-              ),
-            );
-          }
-        }, filled: true),
-      ],
+        ],
+      ),
+      desktop: Row(
+        children: [
+          const Text('Generated Content',
+              style: TextStyle(fontSize: 18, fontFamily: AppFonts.poppins,
+                  fontWeight: FontWeight.bold, color: AppColors.prussianBlue)),
+          const Spacer(),
+          _headerAction(LucideIcons.plus, 'New', ctrl.clearResults),
+          const SizedBox(width: 8),
+          _headerAction(LucideIcons.copy, 'Copy All', () async {
+            await ctrl.copyAll();
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('All content copied'),
+                    backgroundColor: AppColors.success, duration: Duration(seconds: 2)),
+              );
+            }
+          }, filled: true),
+        ],
+      ),
     );
   }
 
@@ -791,7 +825,8 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
     String label,
     VoidCallback onTap, {
     bool filled = false,
-  }) {
+  })
+  {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
@@ -878,7 +913,9 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
                   color: AppColors.prussianBlue,
                 ),
               ),
-              trailing: Row(
+              trailing: Responsive.isMobile(context)
+                  ? const Icon(LucideIcons.chevronDown, size: 16, color: AppColors.slateGrey)
+                  : Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (state.regeneratingSection == section.key)
@@ -888,42 +925,27 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
                         color: AppColors.lavenderBlush,
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const SizedBox(
-                        width: 13, height: 13,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.darkRaspberry,
-                        ),
-                      ),
+                      child: const SizedBox(width: 13, height: 13,
+                          child: CircularProgressIndicator(strokeWidth: 2,
+                              color: AppColors.darkRaspberry)),
                     )
                   else
                     _iconBtn(LucideIcons.refreshCw,
                         state.isGenerating ? null : () => ctrl.regenerateSection(section.key),
                         AppColors.lavenderBlush, AppColors.darkRaspberry),
                   const SizedBox(width: 6),
-                  _iconBtn(
-                    LucideIcons.copy,
-                    () async {
-                      await ctrl.copySection(section.key);
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('${section.label} copied'),
+                  _iconBtn(LucideIcons.copy, () async {
+                    await ctrl.copySection(section.key);
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('${section.label} copied'),
                             backgroundColor: AppColors.success,
-                            duration: const Duration(seconds: 1),
-                          ),
-                        );
-                      }
-                    },
-                    AppColors.petalFrost,
-                    AppColors.darkRaspberry,
-                  ),
+                            duration: const Duration(seconds: 1)),
+                      );
+                    }
+                  }, AppColors.petalFrost, AppColors.darkRaspberry),
                   const SizedBox(width: 8),
-                  const Icon(
-                    LucideIcons.chevronDown,
-                    size: 16,
-                    color: AppColors.slateGrey,
-                  ),
+                  const Icon(LucideIcons.chevronDown, size: 16, color: AppColors.slateGrey),
                 ],
               ),
               children: [
@@ -936,14 +958,79 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
                   ),
                   child: SelectableText(
                     ctrl.formatSectionText(section.key, data),
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontFamily: AppFonts.openSans,
-                      color: AppColors.prussianBlue,
-                      height: 1.6,
-                    ),
+                    style: TextStyle(fontSize: AppSizes.body(context),
+                        fontFamily: AppFonts.openSans, color: AppColors.prussianBlue,
+                        height: 1.6),
                   ),
                 ),
+                if (Responsive.isMobile(context)) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: state.isGenerating ? null : () => ctrl.regenerateSection(section.key),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: AppColors.lavenderBlush,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                state.regeneratingSection == section.key
+                                    ? const SizedBox(width: 14, height: 14,
+                                    child: CircularProgressIndicator(strokeWidth: 2,
+                                        color: AppColors.darkRaspberry))
+                                    : const Icon(LucideIcons.refreshCw, size: 14,
+                                    color: AppColors.darkRaspberry),
+                                const SizedBox(width: 6),
+                                Text('Regenerate', style: TextStyle(
+                                    fontSize: AppSizes.caption(context),
+                                    fontFamily: AppFonts.poppins, fontWeight: FontWeight.w500,
+                                    color: AppColors.darkRaspberry)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () async {
+                            await ctrl.copySection(section.key);
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('${section.label} copied'),
+                                    backgroundColor: AppColors.success,
+                                    duration: const Duration(seconds: 1)),
+                              );
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: AppColors.darkRaspberry.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(LucideIcons.copy, size: 14, color: AppColors.darkRaspberry),
+                                const SizedBox(width: 6),
+                                Text('Copy', style: TextStyle(
+                                    fontSize: AppSizes.caption(context),
+                                    fontFamily: AppFonts.poppins, fontWeight: FontWeight.w500,
+                                    color: AppColors.darkRaspberry)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),

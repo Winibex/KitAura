@@ -11,6 +11,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_fonts.dart';
 import '../../../../shared/widgets/template_thumbnail.dart';
 import '../data/cl_template_data.dart';
+import '../../../../core/constants/app_sizes.dart';
 
 class ClTemplatePreviewModal extends StatefulWidget {
   final ClTemplateInfo info;
@@ -98,16 +99,134 @@ class _ClTemplatePreviewModalState extends State<ClTemplatePreviewModal> {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
-          child: Row(
+          child: screenW < 800 ? _buildMobileLayout() : Row(
             children: [
-              // Left — Preview
               Expanded(flex: 55, child: _buildLeftPanel()),
-              // Right — Info
               Expanded(flex: 45, child: _buildRightPanel()),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildMobileLayout() {
+    return Column(
+      children: [
+        // Close bar
+        Container(
+          height: 48,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(widget.info.label,
+                    style: const TextStyle(fontSize: 16, fontFamily: AppFonts.poppins,
+                        fontWeight: FontWeight.w600, color: AppColors.prussianBlue),
+                    overflow: TextOverflow.ellipsis),
+              ),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(LucideIcons.x, size: 20),
+              ),
+            ],
+          ),
+        ),
+        // Scrollable content
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                // Preview
+                Container(
+                  height: 300,
+                  width: double.infinity,
+                  color: const Color(0xFFF5F0EC),
+                  padding: const EdgeInsets.all(16),
+                  child: Center(
+                    child: _loading
+                        ? const CircularProgressIndicator(color: AppColors.darkRaspberry)
+                        : AspectRatio(
+                      aspectRatio: 595 / 842,
+                      child: _pages.isNotEmpty
+                          ? TemplateThumbnail.fromJson(
+                          json: _pages[_currentPage],
+                          width: 595, height: 842,
+                          borderRadius: 4)
+                          : const SizedBox(),
+                    ),
+                  ),
+                ),
+                // Info
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(widget.info.label,
+                          style: TextStyle(fontSize: AppSizes.headingMd(context),
+                              fontFamily: AppFonts.poppins, fontWeight: FontWeight.bold,
+                              color: AppColors.prussianBlue)),
+                      const SizedBox(height: 8),
+                      Row(children: [
+                        _badge(widget.info.category[0].toUpperCase() +
+                            widget.info.category.substring(1),
+                            AppColors.petalFrost, AppColors.darkRaspberry),
+                        if (widget.info.isPremium) ...[
+                          const SizedBox(width: 8),
+                          _badge('Pro', AppColors.dustyMauve, AppColors.white),
+                        ],
+                      ]),
+                      const SizedBox(height: 16),
+                      Text(widget.info.description,
+                          style: const TextStyle(fontSize: 13, fontFamily: AppFonts.openSans,
+                              color: AppColors.slateGrey, height: 1.5)),
+                      const SizedBox(height: 16),
+                      _featureItem(LucideIcons.sparkles, 'AI content generation ready'),
+                      _featureItem(LucideIcons.move, 'Fully customizable layout'),
+                      _featureItem(LucideIcons.download, 'PDF export included'),
+                      _featureItem(LucideIcons.type, 'Multiple font options'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Pinned CTA
+        Container(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+          decoration: const BoxDecoration(
+            color: AppColors.white,
+            border: Border(top: BorderSide(color: Color(0xFFF0EBE6))),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: double.infinity, height: 48,
+                child: ElevatedButton(
+                  onPressed: () { Navigator.pop(context); widget.onUse(); },
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.darkRaspberry,
+                      foregroundColor: AppColors.white, elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  child: const Text('Use This Template',
+                      style: TextStyle(fontSize: 15, fontFamily: AppFonts.poppins,
+                          fontWeight: FontWeight.w600)),
+                ),
+              ),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: const Text('or Start from Scratch',
+                    style: TextStyle(fontSize: 12, fontFamily: AppFonts.openSans,
+                        color: AppColors.slateGrey)),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
