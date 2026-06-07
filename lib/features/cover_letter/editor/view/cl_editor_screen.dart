@@ -60,11 +60,15 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
   List<GuideLine> _snapGuides = [];
 
   final ScrollController _verticalScrollCtrl = ScrollController();
+  final TransformationController _zoomCtrl = TransformationController();
+  double _currentZoom = 1.0;
   final _titleCtrl = TextEditingController();
   final Map<String, VoidCallback> _focusListeners = {};
   final Map<String, VoidCallback> _docListeners = {};
 
   String? _lastKnownDocId;
+
+  bool get _isMobile => MediaQuery.of(context).size.width < 768;
 
   @override
   void initState() {
@@ -82,6 +86,15 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
       if (mounted) {
         _titleCtrl.text = _editor.state.title;
         _wireFocusListeners();
+        // Auto-close panels on mobile
+        if (_isMobile) {
+          _leftPanelOpen = false;
+          _rightPanelOpen = false;
+          // Auto-fit canvas to screen width
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _fitToScreen();
+          });
+        }
         setState(() {});
       }
     });
@@ -160,6 +173,7 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
     _canvas.dispose();
     _editor.dispose();
     _verticalScrollCtrl.dispose();
+    _zoomCtrl.dispose();
     _titleCtrl.dispose();
     super.dispose();
   }
@@ -228,6 +242,28 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
     item.controller!.addListener(docListener);
   }
 
+  // ─── Zoom Functions ─────────────────────
+
+  void _fitToScreen() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final canvasWidth = CanvasController.canvasW + 64; // 32px padding each side
+    final scale = (screenWidth / canvasWidth).clamp(0.3, 1.0);
+    _zoomCtrl.value = Matrix4.diagonal3Values(scale, scale, 1.0);
+    setState(() => _currentZoom = scale);
+  }
+
+  void _zoomIn() {
+    final newZoom = (_currentZoom + 0.1).clamp(0.3, 2.0);
+    _zoomCtrl.value = Matrix4.diagonal3Values(newZoom, newZoom, 1.0);
+    setState(() => _currentZoom = newZoom);
+  }
+
+  void _zoomOut() {
+    final newZoom = (_currentZoom - 0.1).clamp(0.3, 2.0);
+    _zoomCtrl.value = Matrix4.diagonal3Values(newZoom, newZoom, 1.0);
+    setState(() => _currentZoom = newZoom);
+  }
+
   // ─── BUILD ────────────────────────────────────────────────────────────
 
   @override
@@ -289,6 +325,18 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
                   )
                       : _buildCanvas(),
                 ),
+                if (_isMobile && (_leftPanelOpen || _rightPanelOpen))
+                  Positioned.fill(
+                    child: GestureDetector(
+                      onTap: () => setState(() {
+                        _leftPanelOpen = false;
+                        _rightPanelOpen = false;
+                      }),
+                      child: Container(
+                        color: Colors.black.withValues(alpha: 0.3),
+                      ),
+                    ),
+                  ),
                 if (_leftPanelOpen)
                   Positioned(
                     left: 0,
@@ -314,7 +362,10 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
                     top: 8,
                     child: EditorPanelToggle(
                       icon: LucideIcons.panelLeft,
-                      onTap: () => setState(() => _leftPanelOpen = true),
+                      onTap: () => setState(() {
+                        _leftPanelOpen = true;
+                        if (_isMobile) _rightPanelOpen = false;
+                      }),
                     ),
                   ),
                 if (!_rightPanelOpen)
@@ -323,7 +374,10 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
                     top: 8,
                     child: EditorPanelToggle(
                       icon: LucideIcons.panelRight,
-                      onTap: () => setState(() => _rightPanelOpen = true),
+                      onTap: () => setState(() {
+                        _rightPanelOpen = true;
+                        if (_isMobile) _leftPanelOpen = false;
+                      }),
                     ),
                   ),
                 if (_showSpellcheckPanel)
@@ -338,6 +392,43 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
                       },
                     ),
                   ),
+                // Zoom controls
+                Positioned(
+                  bottom: 16,
+                  right: 16,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: const [
+                        BoxShadow(color: Color(0x1A000000), blurRadius: 8, offset: Offset(0, 2)),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _zoomBtn(LucideIcons.minus, _zoomOut),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: GestureDetector(
+                            onTap: _fitToScreen,
+                            child: Text(
+                              '${(_currentZoom * 100).round()}%',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontFamily: AppFonts.poppins,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.prussianBlue,
+                              ),
+                            ),
+                          ),
+                        ),
+                        _zoomBtn(LucideIcons.plus, _zoomIn),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -539,18 +630,37 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
 
   // ─── CANVAS ───────────────────────────────────────────────────────────
 
+  Widget _zoomBtn(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 32, height: 32,
+        decoration: BoxDecoration(
+          color: AppColors.lavenderBlush,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Icon(icon, size: 14, color: AppColors.darkRaspberry),
+      ),
+    );
+  }
+
   Widget _buildCanvas() {
     return Container(
       color: const Color(0xFFE8E0D8),
-      child: Center(
-        child: SingleChildScrollView(
-          controller: _verticalScrollCtrl,
-          scrollDirection: Axis.vertical,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
+      child: InteractiveViewer(
+        transformationController: _zoomCtrl,
+        minScale: 0.3,
+        maxScale: 2.0,
+        constrained: false,
+        panEnabled: true,
+        scaleEnabled: true,
+        boundaryMargin: const EdgeInsets.all(double.infinity),
+        onInteractionUpdate: (details) {
+          setState(() => _currentZoom = _zoomCtrl.value.getMaxScaleOnAxis());
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
                 children: [
                   _buildPageControls(),
                   const SizedBox(height: 16),
@@ -629,9 +739,7 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
               ),
             ),
           ),
-        ),
-      ),
-    );
+        );
   }
 
   Widget _buildPageBackground(int pageIdx) {
@@ -643,6 +751,7 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
       height: CanvasController.canvasH,
       child: GestureDetector(
         onTapDown: (_) => _canvas.deselect(),
+        // Marquee + multi-drag only on desktop — mobile uses InteractiveViewer pan
         onPanStart: (d) {
           if (_canvas.multiSelected.isNotEmpty) {
             _canvas.startMultiDrag(
@@ -650,14 +759,17 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
             );
             return;
           }
-          setState(() {
-            _isMarqueeActive = true;
-            _marqueeStart = Offset(
-              d.localPosition.dx,
-              d.localPosition.dy + yOffset,
-            );
-            _marqueeEnd = _marqueeStart;
-          });
+          // Marquee only on desktop — mobile pans via InteractiveViewer
+          if (!_isMobile) {
+            setState(() {
+              _isMarqueeActive = true;
+              _marqueeStart = Offset(
+                d.localPosition.dx,
+                d.localPosition.dy + yOffset,
+              );
+              _marqueeEnd = _marqueeStart;
+            });
+          }
         },
         onPanUpdate: (d) {
           if (_canvas.isMultiDragging) {
@@ -667,7 +779,7 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
             setState(() {});
             return;
           }
-          if (_isMarqueeActive) {
+          if (!_isMobile && _isMarqueeActive) {
             setState(
                   () => _marqueeEnd = Offset(
                 d.localPosition.dx,
@@ -681,7 +793,7 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
             _canvas.endMultiDrag();
             return;
           }
-          if (_isMarqueeActive) _onMarqueeEnd();
+          if (!_isMobile && _isMarqueeActive) _onMarqueeEnd();
         },
         child: Container(
           decoration: BoxDecoration(
