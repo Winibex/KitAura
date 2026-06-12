@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_fonts.dart';
+import '../../../../core/constants/app_sizes.dart';
 
 class EmptyStateWidget extends StatelessWidget {
   final VoidCallback onCreateCV;
@@ -42,11 +43,27 @@ class EmptyStateWidget extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Create your first CV from the sidebar',
+            'Create your first CV to get started',
             style: TextStyle(
               color: AppColors.slateGrey,
               fontSize: 13,
               fontFamily: AppFonts.openSans,
+            ),
+          ),
+          const SizedBox(height: 15),
+          SizedBox(
+            width: 110,
+            child: ElevatedButton.icon(
+              onPressed: () => onCreateCV,
+              icon: const Icon(LucideIcons.plus, size: 13),
+              label: const Text('New CV'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.darkRaspberry,
+                foregroundColor: AppColors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                textStyle:TextStyle(fontFamily: AppFonts.poppins, fontWeight: FontWeight.w600, fontSize: AppSizes.caption(context),),
+              ),
             ),
           ),
         ],

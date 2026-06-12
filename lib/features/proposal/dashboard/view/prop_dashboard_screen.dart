@@ -1,4 +1,4 @@
-// lib/features/cover_letter/dashboard/view/cl_dashboard_screen.dart
+// lib/features/proposal/dashboard/view/prop_dashboard_screen.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -16,23 +16,24 @@ import '../../../../shared/widgets/go_pro_banners.dart';
 import '../../../../shared/widgets/stat_card.dart';
 import '../../../dashboard/controller/dashboard_controller.dart';
 import '../../../settings/view/upgrade_modal.dart';
-import '../controller/cl_dashboard_controller.dart';
-import 'cl_card_widget.dart';
+import '../controller/prop_dashboard_controller.dart';
+import 'prop_card_widget.dart';
 
-class ClDashboardScreen extends ConsumerStatefulWidget {
-  const ClDashboardScreen({super.key});
+class PropDashboardScreen extends ConsumerStatefulWidget {
+  const PropDashboardScreen({super.key});
 
   @override
-  ConsumerState<ClDashboardScreen> createState() => _ClDashboardScreenState();
+  ConsumerState<PropDashboardScreen> createState() =>
+      _PropDashboardScreenState();
 }
 
-class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
+class _PropDashboardScreenState extends ConsumerState<PropDashboardScreen> {
   @override
   void initState() {
     super.initState();
     Future.microtask(() {
       if (mounted) {
-        ref.read(clDashboardControllerProvider.notifier).loadDashboard();
+        ref.read(propDashboardControllerProvider.notifier).loadDashboard();
       }
     });
   }
@@ -45,7 +46,7 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
   }
 
   Widget _buildScrollableContent() {
-    final state = ref.watch(clDashboardControllerProvider);
+    final state = ref.watch(propDashboardControllerProvider);
     final dashboardState = ref.watch(dashboardControllerProvider);
 
     return Skeletonizer(
@@ -60,17 +61,17 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
                 children: [
                   _buildStatCards(state, dashboardState.proPrice),
                   const SizedBox(height: 24),
-                  _buildCLSection(state),
+                  _buildProposalSection(state),
                   const SizedBox(height: 24),
-                    GoProToolBanner(
-                      toolLabel: 'cover letters',  // or 'cover letters' for CL dashboard
-                      onStartTrial: () => showTrialDialog(context, ref),
-                      onUpgrade: () => showDialog(
-                        context: context,
-                        builder: (_) => const UpgradeModal(),
-                      ),
-                      proPrice: dashboardState.proPrice,
+                  GoProToolBanner(
+                    toolLabel: 'proposals',
+                    onStartTrial: () => showTrialDialog(context, ref),
+                    onUpgrade: () => showDialog(
+                      context: context,
+                      builder: (_) => const UpgradeModal(),
                     ),
+                    proPrice: dashboardState.proPrice,
+                  ),
                   const SizedBox(height: 40),
                 ],
               ),
@@ -83,29 +84,36 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
 
   // ─── STAT CARDS ───────────────────────────────────────────────────────
 
-  Widget _buildStatCards(ClDashboardState state, final proPrice) {
+  Widget _buildStatCards(PropDashboardState state, final proPrice) {
     final statCards = [
       statCard(
-        icon: LucideIcons.mail,
-        label: 'Cover Letters',
-        value: '${state.coverLetters.length}',
+        icon: LucideIcons.fileText,
+        label: 'Proposals',
+        value: '${state.proposals.length}',
         subtext: state.isPro
             ? 'Unlimited'
-            : '${state.coverLetters.length} / ${state.maxCoverLetters}',
+            : '${state.proposals.length} / ${state.maxProposals}',
         subtextColor: AppColors.success,
       ),
       statCard(
         icon: LucideIcons.download,
         label: 'Exports Used',
-        value: state.isPro ? '∞' : '${state.exportCount} / ${state.exportsPerMonth}',
-        subtext: state.isPro ? 'Unlimited' : '${state.exportsPerMonth - state.exportCount} remaining',
+        value: state.isPro
+            ? '∞'
+            : '${state.exportCount} / ${state.exportsPerMonth}',
+        subtext: state.isPro
+            ? 'Unlimited'
+            : '${state.exportsPerMonth - state.exportCount} remaining',
         showProgress: !state.isPro,
-        progressValue: state.isPro ? 0 : state.exportCount / state.exportsPerMonth,
+        progressValue:
+        state.isPro ? 0 : state.exportCount / state.exportsPerMonth,
       ),
       statCard(
         icon: LucideIcons.sparkles,
         label: 'AI Fills Used',
-        value: state.isPro ? '∞' : '${state.aiUsageCount} / ${state.aiFillsPerMonth}',
+        value: state.isPro
+            ? '∞'
+            : '${state.aiUsageCount} / ${state.aiFillsPerMonth}',
         subtext: state.isPro
             ? 'Unlimited'
             : '${state.aiFillsPerMonth - state.aiUsageCount} remaining',
@@ -128,7 +136,7 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
         crossAxisSpacing: AppSizes.md,
         mainAxisSpacing: AppSizes.md,
         childAspectRatio: AppSizes.statAspectRatio(context),
-        children: statCards.toList(),
+        children: statCards,
       ),
       tablet: GridView.count(
         shrinkWrap: true,
@@ -137,7 +145,7 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
         crossAxisSpacing: AppSizes.md,
         mainAxisSpacing: AppSizes.md,
         childAspectRatio: AppSizes.statAspectRatio(context),
-        children: statCards.toList(),
+        children: statCards,
       ),
       desktop: GridView.count(
         shrinkWrap: true,
@@ -146,49 +154,57 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
         crossAxisSpacing: AppSizes.md,
         mainAxisSpacing: AppSizes.md,
         childAspectRatio: AppSizes.statAspectRatio(context),
-        children: statCards.toList(),
+        children: statCards,
       ),
     ).animate().fadeIn(duration: 300.ms, delay: 100.ms);
   }
 
-  // ─── COVER LETTER SECTION ─────────────────────────────────────────────
+  // ─── PROPOSAL SECTION ─────────────────────────────────────────────────
 
-  Widget _buildCLSection(ClDashboardState state) {
+  Widget _buildProposalSection(PropDashboardState state) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('My Cover Letters',
+            Text(
+              'My Proposals',
               style: TextStyle(
                 color: AppColors.prussianBlue,
                 fontSize: AppSizes.headingMd(context),
                 fontFamily: AppFonts.poppins,
                 fontWeight: FontWeight.bold,
-              ),),
+              ),
+            ),
             SizedBox(
-              width: AppSizes.coverLetterPrimaryButtonWidth(context),
+              width: AppSizes.proposalPrimaryButtonWidth(context),
               child: ElevatedButton.icon(
-                onPressed: () => context.go(AppRoutes.clTemplates),
+                onPressed: () => context.go(AppRoutes.proposalTemplates),
                 icon: const Icon(LucideIcons.plus, size: 16),
-                label: const Text('New Cover Letter'),
+                label: const Text('New Proposal'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.darkRaspberry,
                   foregroundColor: AppColors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  textStyle:TextStyle(fontFamily: AppFonts.poppins, fontWeight: FontWeight.w600, fontSize: AppSizes.body(context),),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  textStyle: TextStyle(
+                    fontFamily: AppFonts.poppins,
+                    fontWeight: FontWeight.w600,
+                    fontSize: AppSizes.body(context),
+                  ),
                 ),
               ),
             ),
           ],
         ),
         const SizedBox(height: 20),
-          if (state.coverLetters.isEmpty)
+        if (state.proposals.isEmpty)
           _buildEmptyState()
         else
-          RepaintBoundary(child: _buildCLGrid(state)),
+          RepaintBoundary(child: _buildProposalGrid(state)),
       ],
     );
   }
@@ -201,30 +217,45 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 64, height: 64,
-              decoration: const BoxDecoration(color: AppColors.petalFrost, shape: BoxShape.circle),
-              child: const Icon(LucideIcons.mail, color: AppColors.darkRaspberry, size: 28),
+              width: 64,
+              height: 64,
+              decoration: const BoxDecoration(
+                  color: AppColors.petalFrost, shape: BoxShape.circle),
+              child: const Icon(LucideIcons.fileText,
+                  color: AppColors.darkRaspberry, size: 28),
             ),
             const SizedBox(height: 16),
-            const Text('No cover letters yet',
-                style: TextStyle(color: AppColors.prussianBlue, fontSize: 18,
-                    fontFamily: AppFonts.poppins, fontWeight: FontWeight.bold)),
+            const Text('No proposals yet',
+                style: TextStyle(
+                    color: AppColors.prussianBlue,
+                    fontSize: 18,
+                    fontFamily: AppFonts.poppins,
+                    fontWeight: FontWeight.bold)),
             const SizedBox(height: 6),
-            const Text('Create your first cover letter to get started',
-                style: TextStyle(color: AppColors.slateGrey, fontSize: 13, fontFamily: AppFonts.openSans)),
+            const Text('Create your first proposal to get started',
+                style: TextStyle(
+                    color: AppColors.slateGrey,
+                    fontSize: 13,
+                    fontFamily: AppFonts.openSans)),
             const SizedBox(height: 15),
             SizedBox(
-              width: AppSizes.coverLetterSecondaryButtonWidth(context),
+              width: AppSizes.proposalSecondaryButtonWidth(context),
               child: ElevatedButton.icon(
-                onPressed: () => context.go(AppRoutes.clTemplates),
+                onPressed: () => context.go(AppRoutes.proposalTemplates),
                 icon: const Icon(LucideIcons.plus, size: 13),
-                label: const Text('New Cover Letter'),
+                label: const Text('New Proposal'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.darkRaspberry,
                   foregroundColor: AppColors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  textStyle:TextStyle(fontFamily: AppFonts.poppins, fontWeight: FontWeight.w600, fontSize: AppSizes.caption(context),),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  textStyle: TextStyle(
+                    fontFamily: AppFonts.poppins,
+                    fontWeight: FontWeight.w600,
+                    fontSize: AppSizes.caption(context),
+                  ),
                 ),
               ),
             ),
@@ -234,10 +265,11 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
     );
   }
 
-  Widget _buildCLGrid(ClDashboardState state) {
+  Widget _buildProposalGrid(PropDashboardState state) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = AppSizes.docGridColumns(context, constraints.maxWidth);
+        final columns =
+        AppSizes.docGridColumns(context, constraints.maxWidth);
 
         return GridView.builder(
           shrinkWrap: true,
@@ -248,15 +280,19 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
             mainAxisSpacing: AppSizes.sm,
             childAspectRatio: 0.75,
           ),
-          itemCount: state.coverLetters.length + 1,
+          itemCount: state.proposals.length + 1,
           itemBuilder: (context, index) {
-            if (index == state.coverLetters.length) return _buildNewCLCard();
-            final cl = state.coverLetters[index];
-            return ClCardWidget(
-              cl: cl,
-              onTap: () => context.go('/cover-letters/edit/${cl.id}'),
-              onDelete: () => ref.read(clDashboardControllerProvider.notifier).deleteCL(cl.id),
-              onRename: (t) => ref.read(clDashboardControllerProvider.notifier).renameCL(cl.id, t),
+            if (index == state.proposals.length) return _buildNewPropCard();
+            final prop = state.proposals[index];
+            return PropCardWidget(
+              prop: prop,
+              onTap: () => context.go('/proposals/edit/${prop.id}'),
+              onDelete: () => ref
+                  .read(propDashboardControllerProvider.notifier)
+                  .deleteProposal(prop.id),
+              onRename: (t) => ref
+                  .read(propDashboardControllerProvider.notifier)
+                  .renameProposal(prop.id, t),
             );
           },
         ).animate().fadeIn(duration: 300.ms, delay: 100.ms);
@@ -264,9 +300,9 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
     );
   }
 
-  Widget _buildNewCLCard() {
+  Widget _buildNewPropCard() {
     return GestureDetector(
-      onTap: () => context.go(AppRoutes.clTemplates),
+      onTap: () => context.go(AppRoutes.proposalTemplates),
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: Container(
@@ -279,9 +315,12 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
             children: [
               Icon(LucideIcons.plus, color: AppColors.magentaBloom, size: 36),
               SizedBox(height: 8),
-              Text('New Cover Letter',
-                  style: TextStyle(color: AppColors.slateGrey, fontSize: 14,
-                      fontFamily: AppFonts.poppins, fontWeight: FontWeight.w500)),
+              Text('New Proposal',
+                  style: TextStyle(
+                      color: AppColors.slateGrey,
+                      fontSize: 14,
+                      fontFamily: AppFonts.poppins,
+                      fontWeight: FontWeight.w500)),
             ],
           ),
         ),

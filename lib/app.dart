@@ -13,6 +13,8 @@ import 'features/cv/editor/view/cv_editor_screen.dart';
 import 'features/cv/templates/view/cv_template_picker_screen.dart';
 import 'features/dashboard/view/dashboard_screen.dart';
 import 'features/linkedin/view/linkedin_screen.dart';
+import 'features/proposal/dashboard/view/prop_dashboard_screen.dart';
+import 'features/proposal/template/view/prop_template_picker_screen.dart';
 import 'features/settings/view/settings_screen.dart';
 import 'features/auth/view/verify_email_screen.dart';
 import 'features/auth/view/reset_password_screen.dart';
@@ -78,6 +80,23 @@ final _router = GoRouter(
     GoRoute(
       path: AppRoutes.settings,
       builder: (_, _) => const SettingsScreen(),
+    ),
+    // Proposal routes
+    GoRoute(
+      path: AppRoutes.proposalDashboard,
+      builder: (_, _) => const PropDashboardScreen(),
+    ),
+    // Route:
+    GoRoute(
+      path: AppRoutes.proposalTemplates,
+      builder: (_, _) => const PropTemplatePickerScreen(),
+    ),
+    GoRoute(
+      path: '/proposals/edit/:docId',
+      builder: (context, state) {
+        final docId = state.pathParameters['docId']!;
+        return Placeholder(); // TODO: PropEditorScreen(docId: docId)
+      },
     ),
   ],
   redirect: (context, state) {

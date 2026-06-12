@@ -545,7 +545,7 @@ class _AiSetupPanelState extends ConsumerState<AiSetupPanel> {
               ),
               padding: const EdgeInsets.symmetric(horizontal: 16),
               borderRadius: BorderRadius.circular(10),
-              items: ['Male', 'Female', 'Non-binary', 'Prefer not to say']
+              items: ['Male', 'Female', 'Prefer not to say']
                   .map(
                     (g) => DropdownMenuItem(
                       value: g.toLowerCase(),

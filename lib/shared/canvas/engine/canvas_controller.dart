@@ -20,6 +20,7 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../models/canvas_item.dart';
 import '../../models/canvas_item_type.dart';
 import '../../models/section_type.dart';
+import '../../models/table_data.dart';
 
 class CanvasController extends ChangeNotifier {
   static const double canvasW = 595;
@@ -198,6 +199,14 @@ class CanvasController extends ChangeNotifier {
       item.sectionType = snap.sectionType;
       item.imageBytes = snap.imageBytes;
 
+      // Restore table data
+      if (item.isTable && snap.tableDataJson != null) {
+        try {
+          item.tableData = TableData.fromJson(
+              Map<String, dynamic>.from(snap.tableDataJson!));
+        } catch (_) {}
+      }
+
       // ── RESTORE TEXT DELTA (the key fix for text undo) ──
       if (item.isText && snap.deltaJson != null && item.controller != null) {
         try {
@@ -231,6 +240,14 @@ class CanvasController extends ChangeNotifier {
           sectionType: snap.sectionType,
         );
         newItem.imageBytes = snap.imageBytes;
+
+        if (snap.type == CanvasItemType.tableSection &&
+            snap.tableDataJson != null) {
+          try {
+            newItem.tableData = TableData.fromJson(
+                Map<String, dynamic>.from(snap.tableDataJson!));
+          } catch (_) {}
+        }
 
         // Restore text content for recreated text sections
         if (snap.type == CanvasItemType.textSection &&
@@ -278,6 +295,35 @@ class CanvasController extends ChangeNotifier {
       title: title,
       color: Colors.white,
       borderColor: const Color(0xFFE0E0E0),
+    );
+    items.add(item);
+    selectedId = item.id;
+    multiSelected.clear();
+    notifyListeners();
+    return item;
+  }
+
+  CanvasItem addTableSection({
+    String title = 'Table',
+    Offset? position,
+    double width = 495,
+    double height = 160,
+    TableData? tableData,
+    SectionType sectionType = SectionType.custom,
+  }) {
+    saveSnapshot();
+    final pageOffset = currentPage * canvasH;
+    final pos = position ?? Offset(50, pageOffset + 40);
+    final item = CanvasItem(
+      type: CanvasItemType.tableSection,
+      position: pos,
+      width: width,
+      height: height,
+      title: title,
+      color: Colors.white,
+      borderColor: const Color(0xFFE0E0E0),
+      sectionType: sectionType,
+      tableData: tableData,
     );
     items.add(item);
     selectedId = item.id;
@@ -362,6 +408,9 @@ class CanvasController extends ChangeNotifier {
     }
     if (src.imageBytes != null) {
       item.imageBytes = Uint8List.fromList(src.imageBytes!);
+    }
+    if (src.isTable && src.tableData != null) {
+      item.tableData = src.tableData!.copyWith();
     }
     items.add(item);
     selectedId = item.id;
@@ -722,6 +771,13 @@ class CanvasController extends ChangeNotifier {
       } catch (_) {}
     }
 
+    if (item.isTable && map['tableData'] != null) {
+      try {
+        item.tableData = TableData.fromJson(
+            Map<String, dynamic>.from(map['tableData'] as Map));
+      } catch (_) {}
+    }
+
     return item;
   }
 
@@ -815,6 +871,9 @@ class CanvasController extends ChangeNotifier {
       };
       if (item.isText && item.controller != null) {
         map['delta'] = item.controller!.document.toDelta().toJson();
+      }
+      if (item.isTable && item.tableData != null) {
+        map['tableData'] = item.tableData!.toJson();
       }
       return map;
     }).toList();
@@ -993,6 +1052,52 @@ class CanvasController extends ChangeNotifier {
           ),
         );
         break;
+      case CanvasItemType.tableSection:
+        final td = item.tableData;
+        if (td == null || td.headers.isEmpty) {
+          content = pw.SizedBox();
+          break;
+        }
+        final rows = <pw.TableRow>[];
+        // Header
+        if (td.showHeader) {
+          rows.add(pw.TableRow(
+            decoration: pw.BoxDecoration(color: toPdfColor(td.headerBgColor)),
+            children: td.headers.map((h) => pw.Padding(
+              padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: pw.Text(h, style: pw.TextStyle(
+                font: getFont(globalFont),
+                fontSize: td.fontSize,
+                fontWeight: pw.FontWeight.bold,
+                color: toPdfColor(td.headerTextColor),
+              )),
+            )).toList(),
+          ));
+        }
+        // Data rows
+        for (int r = 0; r < td.rowCount; r++) {
+          rows.add(pw.TableRow(
+            decoration: pw.BoxDecoration(
+              color: r % 2 == 0 ? PdfColors.white : const PdfColor(0.976, 0.969, 0.961),
+            ),
+            children: List.generate(td.columnCount, (c) {
+              final val = c < td.rows[r].length ? td.rows[r][c] : '';
+              return pw.Padding(
+                padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: pw.Text(val, style: pw.TextStyle(
+                  font: getFont(globalFont),
+                  fontSize: td.fontSize,
+                  color: toPdfColor(td.cellTextColor),
+                )),
+              );
+            }),
+          ));
+        }
+        content = pw.Table(
+          border: pw.TableBorder.all(color: toPdfColor(td.borderColor), width: 0.5),
+          children: rows,
+        );
+        break;
       default:
         content = pw.SizedBox();
     }
@@ -1117,6 +1222,9 @@ class CanvasController extends ChangeNotifier {
         };
         if (item.isText && item.controller != null) {
           map['delta'] = item.controller!.document.toDelta().toJson();
+        }
+        if (item.isTable && item.tableData != null) {
+          map['tableData'] = item.tableData!.toJson();
         }
         return map;
       }).toList(),

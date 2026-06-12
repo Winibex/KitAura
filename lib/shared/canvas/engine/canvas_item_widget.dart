@@ -23,6 +23,9 @@ import '../../../core/constants/app_colors.dart';
 import '../../models/canvas_item_type.dart';
 import '../../models/canvas_item.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
+import 'table_section_renderer.dart';
+import 'table_editor_dialog.dart';
+import '../../models/table_data.dart';
 
 class CanvasItemWidget extends StatefulWidget {
   final CanvasItem item;
@@ -256,6 +259,38 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
   }
 
   Widget _buildBody() {
+    // ── TABLE SECTION ──────────────────────────────────────────
+    if (widget.item.isTable) {
+      return MouseRegion(
+        cursor: SystemMouseCursors.move,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () { if (!widget.isSelected) widget.onSelect(); },
+          onDoubleTap: () async {
+            widget.onSelect();
+            widget.onSaveSnapshot();
+            final result = await TableEditorDialog.show(
+              context,
+              initialData: widget.item.tableData ?? TableData.empty(),
+              title: widget.item.title.isNotEmpty ? widget.item.title : 'Edit Table',
+            );
+            if (result != null) {
+              widget.item.tableData = result;
+              setState(() {});
+            }
+          },
+          onPanStart: _onDragStart,
+          onPanUpdate: _onDragUpdate,
+          onPanEnd: _onDragEnd,
+          child: TableSectionRenderer(
+            data: widget.item.tableData ?? TableData.empty(),
+            width: _w,
+            height: _h,
+          ),
+        ),
+      );
+    }
+    // ── TEXT SECTION ────────
     if (widget.item.isText) {
       if (_editMode) {
         return Container(

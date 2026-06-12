@@ -15,8 +15,6 @@ import '../../../core/constants/app_routes.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../shared/widgets/responsive_scaffold.dart';
-import '../../../shared/widgets/app_sidebar.dart';
-import '../../../shared/widgets/app_top_bar.dart';
 import '../../../shared/widgets/go_pro_banners.dart';
 import '../../settings/view/upgrade_modal.dart';
 import '../controller/dashboard_controller.dart';
@@ -40,15 +38,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(dashboardControllerProvider);
-
     return ResponsiveScaffold(
-      child: _buildContent(state),
+      child: _buildContent(),
     );
   }
 
-  Widget _buildContent(DashboardState state) {
-
+  Widget _buildContent() {
+    final state = ref.watch(dashboardControllerProvider);
     return SingleChildScrollView(
       padding: EdgeInsets.all(AppSizes.pagePadding(context)),
       child: Skeletonizer(
@@ -67,7 +63,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               desktop: _buildRecentActivity(state), // your existing table
             ),
             const SizedBox(height: 32),
-              GoProDashboardBanner(
+            GoProDashboardBanner(
                 plan: state.plan,
                 trialActive: state.trialActive,
                 trialDaysRemaining: state.trialDaysRemaining,
@@ -89,8 +85,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget _buildGreeting(DashboardState state) {
     final hour = DateTime.now().hour;
     final greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-
-
     return Row(
       children: [
         Expanded(
@@ -154,9 +148,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         progress: state.isPro
             ? null
             : (state.aiFillCount + state.aiRewriteCount) / (state.maxAiFills + state.maxAiRewrites),
-        detailLine: state.isPro
+        detailLineHeaders: state.isPro
             ? null
-            : 'Fills: ${state.aiFillCount}/${state.maxAiFills}  ·  Rewrites: ${state.aiRewriteCount}/${state.maxAiRewrites}',
+            : ['Fills',  'Rewrites'],
+        detailLineData: state.isPro
+            ? null
+            : ['${state.aiFillCount}/${state.maxAiFills}', '${state.aiRewriteCount}/${state.maxAiRewrites}'],
       ),
       _StatCardData(
         icon: LucideIcons.logIn,
@@ -221,7 +218,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
                 child: Icon(data.icon, color: data.color, size: 16),
               ),
-              const Spacer(),
+              SizedBox(width: 10,),
               Flexible(
                 child: Text(
                   data.label,
@@ -235,7 +232,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
             ],
           ),
-          const Spacer(),
+          Spacer(),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
@@ -273,16 +270,50 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ),
             overflow: TextOverflow.ellipsis,
           ),
-          if (data.detailLine != null) ...[
-            const SizedBox(height: 2),
-            Text(
-              data.detailLine!,
-              style: TextStyle(
-                fontSize: Responsive.isMobile(context) ? 8 : 10,
-                fontFamily: AppFonts.openSans,
-                color: AppColors.slateGrey.withValues(alpha: 0.7),
-              ),
-              overflow: TextOverflow.ellipsis,
+          if (data.detailLineHeaders != null && data.detailLineHeaders!.isNotEmpty &&
+              data.detailLineData != null && data.detailLineData!.isNotEmpty) ...[
+            Spacer(),
+            Row(
+              children: [
+                Text(
+                  '${data.detailLineHeaders![0]}: ',
+                  style: TextStyle(
+                    fontSize: Responsive.isMobile(context) ? 8 : 10,
+                    fontFamily: AppFonts.openSans,
+                    color: AppColors.darkRaspberry,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  '${data.detailLineData![0]} ',
+                  style: TextStyle(
+                    fontSize: Responsive.isMobile(context) ? 8 : 10,
+                    fontFamily: AppFonts.openSans,
+                    color: AppColors.prussianBlue,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  '- ${data.detailLineHeaders![1]}: ',
+                  style: TextStyle(
+                    fontSize: Responsive.isMobile(context) ? 8 : 10,
+                    fontFamily: AppFonts.openSans,
+                    color: AppColors.darkRaspberry,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  data.detailLineData![1],
+                  style: TextStyle(
+                    fontSize: Responsive.isMobile(context) ? 8 : 10,
+                    fontFamily: AppFonts.openSans,
+                    color: AppColors.prussianBlue,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ],
         ],
@@ -290,10 +321,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  // ─── QUICK START CARDS ─────────────────────────────────────────────────
+  //  ─── QUICK START CARDS ─────────────────────────────────────────────────
 
   Widget _buildQuickStart(DashboardState state) {
-
     final quickStatCards = [
       _QuickStartData(
         icon: LucideIcons.filePlus,
@@ -349,7 +379,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
         ),
         const SizedBox(height: 16),
-
         ResponsiveBuilder(
           mobile: GridView.count(
             shrinkWrap: true,
@@ -630,7 +659,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         const SizedBox(height: 16),
         if (state.recentItems.isEmpty)
           _buildEmptyState()
-
         else
           Container(
             decoration: BoxDecoration(
@@ -800,7 +828,8 @@ class _StatCardData {
   final String subtitle;
   final Color color;
   final double? progress;
-  final String? detailLine;
+  final List<String>? detailLineHeaders;
+  final List<String>? detailLineData;
 
   const _StatCardData({
     required this.icon,
@@ -809,7 +838,8 @@ class _StatCardData {
     required this.subtitle,
     required this.color,
     this.progress,
-    this.detailLine,
+    this.detailLineHeaders,
+    this.detailLineData
   });
 }
 

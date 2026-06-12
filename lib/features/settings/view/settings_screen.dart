@@ -397,6 +397,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildSidebarNav() {
+    BuildContext buildContext = context;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -412,8 +413,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         // Sign out at bottom
         _navAction(LucideIcons.logOut, 'Sign Out', AppColors.slateGrey, () async {
           await ref.read(authControllerProvider.notifier).signOut();
-          if (context.mounted) {
-            context.go(AppRoutes.auth);
+          if (buildContext.mounted) {
+            buildContext.go(AppRoutes.auth);
           }
         }),
       ],
@@ -768,7 +769,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Widget _billingContent() {
     final sub = _subscription ?? const SubscriptionModel();
-    final isTrial = sub.plan == 'trial' && (sub.trialActive ?? false);
+    final isTrial = sub.plan == 'trial' && (sub.trialActive);
     final isPro = sub.plan == 'pro';
     final isFree = !isTrial && !isPro;
 
@@ -856,7 +857,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               _planDetailRow(LucideIcons.refreshCw, 'Usage Resets On', cycleResetLabel),
               const SizedBox(height: 10),
               _planDetailRow(LucideIcons.sparkles, 'Trial Available',
-                  (sub.trialUsed ?? false) ? 'Already used' : 'Yes — 7 days free'),
+                  (sub.trialUsed) ? 'Already used' : 'Yes — 7 days free'),
             ],
             if (isPro) ...[
               _planDetailRow(LucideIcons.calendar, 'Billing Cycle', cycleResetLabel),
@@ -894,7 +895,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
         // ── Upgrade / Trial CTA ───────────────────────────────────
         if (isFree) ...[
-          if (!(sub.trialUsed ?? false))
+          if (!(sub.trialUsed))
             SettingsBillingCta(
               title: 'Try KitAura Pro Free',
               subtitle: '7 days unlimited access. No credit card required.',
@@ -948,7 +949,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               LucideIcons.userPlus,
               AppColors.success,
             ),
-            if (sub.trialUsed ?? false)
+            if (sub.trialUsed)
               _historyItem(
                 'Trial Activated',
                 sub.trialStartDate != null ? _fmtDate(sub.trialStartDate!) : 'Unknown',
@@ -1664,17 +1665,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             valueColor: AlwaysStoppedAnimation(atLimit ? AppColors.error : color),
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _infoField(String label, String value) {
-    return Row(
-      children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.slateGrey, fontFamily: AppFonts.poppins)),
-        const Spacer(),
-        Text(value, style: const TextStyle(fontSize: 13, fontFamily: AppFonts.poppins,
-            fontWeight: FontWeight.w500, color: AppColors.prussianBlue)),
       ],
     );
   }

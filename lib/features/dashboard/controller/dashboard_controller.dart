@@ -164,6 +164,7 @@ class DashboardController extends StateNotifier<DashboardState> {
   Future<void> loadDashboard({bool force = false}) async {
     if (_hasLoaded && !force) return; // Skip if already loaded
     if (_uid == null) return;
+    debugPrint("Loading Main Dashboard");
     state = state.copyWith(isLoading: true, error: null);
 
     try {

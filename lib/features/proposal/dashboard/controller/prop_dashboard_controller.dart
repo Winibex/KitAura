@@ -1,4 +1,4 @@
-// lib/features/cover_letter/dashboard/controller/cl_dashboard_controller.dart
+// lib/features/proposal/dashboard/controller/prop_dashboard_controller.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -6,73 +6,72 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../../../../shared/ai/claude_service.dart';
 import '../../../../shared/services/firebase_service.dart';
-import '../model/cl_summary_model.dart';
+import '../model/prop_summary_model.dart';
 
-class ClDashboardState {
+class PropDashboardState {
   final bool isLoading;
   final String? error;
-  final List<ClSummaryModel> coverLetters;
+  final List<PropSummaryModel> proposals;
   final int exportCount;
   final int aiUsageCount;
   final String plan;
 
   // Limits from Firebase (not hardcoded)
-  final int maxCoverLetters;
+  final int maxProposals;
   final int exportsPerMonth;
   final int aiFillsPerMonth;
 
-  ClDashboardState({
+  PropDashboardState({
     this.isLoading = false,
     this.error,
-    this.coverLetters = const [],
+    this.proposals = const [],
     this.exportCount = 0,
     this.aiUsageCount = 0,
     this.plan = 'free',
-    this.maxCoverLetters = 3,
+    this.maxProposals = 3,
     this.exportsPerMonth = 3,
     this.aiFillsPerMonth = 15,
   });
 
   bool get isPro => plan == 'pro' || plan == 'trial';
   bool get canExport => isPro || exportCount < exportsPerMonth;
-  bool get canCreateCL => isPro || coverLetters.length < maxCoverLetters;
+  bool get canCreateProposal => isPro || proposals.length < maxProposals;
 
-  ClDashboardState copyWith({
+  PropDashboardState copyWith({
     bool? isLoading,
     String? error,
-    List<ClSummaryModel>? coverLetters,
+    List<PropSummaryModel>? proposals,
     int? exportCount,
     int? aiUsageCount,
     String? plan,
-    int? maxCoverLetters,
+    int? maxProposals,
     int? exportsPerMonth,
     int? aiFillsPerMonth,
-  })
-  {
-    return ClDashboardState(
+  }) {
+    return PropDashboardState(
       isLoading: isLoading ?? this.isLoading,
       error: error,
-      coverLetters: coverLetters ?? this.coverLetters,
+      proposals: proposals ?? this.proposals,
       exportCount: exportCount ?? this.exportCount,
       aiUsageCount: aiUsageCount ?? this.aiUsageCount,
       plan: plan ?? this.plan,
-      maxCoverLetters: maxCoverLetters ?? this.maxCoverLetters,
+      maxProposals: maxProposals ?? this.maxProposals,
       exportsPerMonth: exportsPerMonth ?? this.exportsPerMonth,
       aiFillsPerMonth: aiFillsPerMonth ?? this.aiFillsPerMonth,
     );
   }
 }
 
-class ClDashboardController extends StateNotifier<ClDashboardState> {
-  ClDashboardController() : super(ClDashboardState());
+class PropDashboardController extends StateNotifier<PropDashboardState> {
+  PropDashboardController() : super(PropDashboardState());
 
   bool _hasLoaded = false;
 
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
 
   Future<void> loadDashboard({bool force = false}) async {
-    debugPrint("Loading Cover Letter Dashboard");
-    if (_hasLoaded && !force) return; // Skip if already loaded
+    debugPrint("Loading Proposal Dashboard");
+    if (_hasLoaded && !force) return;
     if (_uid == null) return;
     state = state.copyWith(isLoading: true, error: null);
 
@@ -91,93 +90,97 @@ class ClDashboardController extends StateNotifier<ClDashboardState> {
       }
 
       // Load limits from config/limits
-      int maxCL = 3, maxExports = 3, maxAiFills = 15;
-      final limits = await FirebaseService.getPlanLimits(state.plan);
-      maxCL = limits['maxCoverLetters']!;
+      int maxProp = 3, maxExports = 3, maxAiFills = 15;
+      final limits = await FirebaseService.getPlanLimits(plan);
+      maxProp = limits['maxProposals']!;
       maxExports = limits['exportsPerMonth']!;
       maxAiFills = limits['aiFillPerMonth']!;
 
-      // Load cover letters
-      List<ClSummaryModel> cls = [];
+      // Load proposals
+      List<PropSummaryModel> props = [];
       try {
-        final snapshot = await FirebaseService.getUserCoverLetters(_uid!);
-        cls = snapshot.docs
-            .map((doc) => ClSummaryModel.fromJson(doc.id, doc.data() as Map<String, dynamic>))
+        final snapshot = await FirebaseService.getUserProposals(_uid!);
+        props = snapshot.docs
+            .map((doc) => PropSummaryModel.fromJson(
+            doc.id, doc.data() as Map<String, dynamic>))
             .toList();
       } catch (e) {
-        debugPrint('Cover letters query failed: $e');
+        debugPrint('Proposals query failed: $e');
       }
 
       _hasLoaded = true;
       state = state.copyWith(
         isLoading: false,
-        coverLetters: cls,
+        proposals: props,
         plan: plan,
         exportCount: exportCount,
         aiUsageCount: aiUsageCount,
-        maxCoverLetters: maxCL == -1 ? 999 : maxCL,
+        maxProposals: maxProp == -1 ? 999 : maxProp,
         exportsPerMonth: maxExports == -1 ? 999 : maxExports,
         aiFillsPerMonth: maxAiFills == -1 ? 999 : maxAiFills,
       );
     } catch (e, stack) {
-      debugPrint('ClDashboard loadDashboard error: $e\n$stack');
+      debugPrint('PropDashboard loadDashboard error: $e\n$stack');
       state = state.copyWith(isLoading: false);
     }
   }
 
-  Future<void> deleteCL(String clId) async {
+  Future<void> deleteProposal(String propId) async {
     String title = 'Untitled';
     try {
-      final cl = state.coverLetters.firstWhere((c) => c.id == clId);
-      title = cl.title;
+      final prop = state.proposals.firstWhere((p) => p.id == propId);
+      title = prop.title;
     } catch (_) {}
 
     try {
+      // Optimistic update
       state = state.copyWith(
-        coverLetters: state.coverLetters.where((c) => c.id != clId).toList(),
+        proposals: state.proposals.where((p) => p.id != propId).toList(),
       );
-      await FirebaseService.deleteCoverLetter(_uid!, clId);
+      await FirebaseService.deleteProposal(_uid!, propId);
 
       ClaudeService.trackDocDeleted(
-        tool: 'coverLetter',
-        documentId: clId,
+        tool: 'proposal',
+        documentId: propId,
         documentTitle: title,
       );
     } catch (e) {
-      debugPrint('Delete cover letter failed: $e');
-      await loadDashboard(force: true);
+      debugPrint('Delete proposal failed: $e');
+      await loadDashboard(force: true); // Rollback
     }
   }
 
-  Future<void> renameCL(String clId, String newTitle) async {
+  Future<void> renameProposal(String propId, String newTitle) async {
     try {
-      await FirebaseService.updateCoverLetter(_uid!, clId, {
+      await FirebaseService.updateProposal(_uid!, propId, {
         'title': newTitle,
         'updatedAt': Timestamp.fromDate(DateTime.now()),
       });
-      final updated = state.coverLetters.map((cl) {
-        if (cl.id == clId) {
-          return ClSummaryModel(
-            id: cl.id,
+      final updated = state.proposals.map((p) {
+        if (p.id == propId) {
+          return PropSummaryModel(
+            id: p.id,
             title: newTitle,
-            thumbnailUrl: cl.thumbnailUrl,
-            templateId: cl.templateId,
-            targetCompany: cl.targetCompany,
-            targetRole: cl.targetRole,
+            thumbnailUrl: p.thumbnailUrl,
+            templateId: p.templateId,
+            clientName: p.clientName,
+            projectScope: p.projectScope,
             updatedAt: DateTime.now(),
-            createdAt: cl.createdAt,
+            createdAt: p.createdAt,
+            items: p.items,
+            canvasBackground: p.canvasBackground,
           );
         }
-        return cl;
+        return p;
       }).toList();
-      state = state.copyWith(coverLetters: updated);
+      state = state.copyWith(proposals: updated);
     } catch (e) {
-      debugPrint('renameCL error: $e');
+      debugPrint('renameProposal error: $e');
     }
   }
 }
 
-final clDashboardControllerProvider =
-StateNotifierProvider<ClDashboardController, ClDashboardState>(
-      (ref) => ClDashboardController(),
+final propDashboardControllerProvider =
+StateNotifierProvider<PropDashboardController, PropDashboardState>(
+      (ref) => PropDashboardController(),
 );

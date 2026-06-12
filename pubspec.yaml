@@ -95,6 +95,7 @@ flutter:
     - assets/images/
     - assets/cv_templates/
     - assets/cl_templates/
+    - assets/prop_templates/
 
   fonts:
     - family: Poppins

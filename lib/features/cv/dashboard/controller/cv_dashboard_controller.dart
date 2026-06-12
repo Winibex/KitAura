@@ -72,6 +72,7 @@ class DashboardController extends StateNotifier<CvDashboardState> {
   String? get _uid => _auth.currentUser?.uid;
 
   Future<void> loadDashboard({bool force = false}) async {
+    debugPrint("Loading CV Dashboard");
     if (_hasLoaded && !force) return; // Skip if already loaded
     if (_uid == null) return;
     state = state.copyWith(isLoading: true, error: null);

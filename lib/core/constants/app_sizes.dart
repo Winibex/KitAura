@@ -63,8 +63,17 @@ class AppSizes {
   static double icons(BuildContext context) =>
       Responsive.isMobile(context) ? 18 : 28;
 
-  static double buttonWidth(BuildContext context) =>
+  static double coverLetterPrimaryButtonWidth(BuildContext context) =>
       Responsive.isMobile(context) ? 180 : 200;
+
+  static double coverLetterSecondaryButtonWidth(BuildContext context) =>
+      Responsive.isMobile(context) ? 150 : 170;
+
+  static double proposalPrimaryButtonWidth(BuildContext context) =>
+      Responsive.isMobile(context) ? 180 : 200;
+
+  static double proposalSecondaryButtonWidth(BuildContext context) =>
+      Responsive.isMobile(context) ? 150 : 170;
 
   static int docGridColumns(BuildContext context, double maxWidth) {
     if (maxWidth < 400) return 2;

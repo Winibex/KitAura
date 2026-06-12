@@ -1,0 +1,326 @@
+{
+  "canvasBackground": "#FFFFFF",
+  "items": [
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 0, "y": 0, "w": 595, "h": 842,
+      "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom"
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 0, "y": 500, "w": 595, "h": 342,
+      "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom"
+    },
+    {
+      "type": "textSection",
+      "title": "Agency Name",
+      "x": 50, "y": 50, "w": 300, "h": 30,
+      "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "YOUR AGENCY", "attributes": {"bold": true, "size": "12", "color": "#FFE4EC"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Title",
+      "x": 50, "y": 180, "w": 495, "h": 120,
+      "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "CREATIVE", "attributes": {"bold": true, "size": "42", "color": "#FFFFFF"}},
+        {"insert": "\n"},
+        {"insert": "PROPOSAL", "attributes": {"bold": true, "size": "42", "color": "#FFE4EC"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Subtitle",
+      "x": 50, "y": 340, "w": 400, "h": 50,
+      "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "A bold approach to [Project Name]", "attributes": {"size": "16", "color": "#FFE4EC"}},
+        {"insert": "\n"},
+        {"insert": "Prepared for Client Name  |  January 2026", "attributes": {"size": "11", "color": "#CC7E85"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Contact Cover",
+      "x": 50, "y": 560, "w": 495, "h": 70,
+      "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Your Full Name", "attributes": {"bold": true, "size": "14", "color": "#FFFFFF"}},
+        {"insert": "\n"},
+        {"insert": "Creative Director  |  your@agency.com  |  +1 234 567 890", "attributes": {"size": "11", "color": "#A0AEC0"}},
+        {"insert": "\n"}
+      ]
+    },
+
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 0, "y": 842, "w": 8, "h": 842,
+      "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom"
+    },
+    {
+      "type": "textSection",
+      "title": "Challenge Heading",
+      "x": 50, "y": 892, "w": 495, "h": 35,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "THE CHALLENGE", "attributes": {"bold": true, "size": "20", "color": "#831843"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Challenge",
+      "x": 50, "y": 935, "w": 495, "h": 80,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "[Client Company] needs to [describe the creative challenge]. The current [brand/campaign/product] isn't connecting with [target audience] because [key insight]. There's a clear opportunity to [desired transformation].", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Vision Heading",
+      "x": 50, "y": 1045, "w": 495, "h": 35,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "OUR VISION", "attributes": {"bold": true, "size": "20", "color": "#831843"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Vision",
+      "x": 50, "y": 1088, "w": 495, "h": 100,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "We envision a [campaign/brand/experience] that [big creative idea]. By combining [creative approach A] with [creative approach B], we'll create something that doesn't just reach your audience — it moves them.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "The core concept: ", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "[One-line creative concept / tagline / big idea]", "attributes": {"bold": true, "size": "12", "color": "#831843"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Strategy Heading",
+      "x": 50, "y": 1220, "w": 495, "h": 35,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "STRATEGY", "attributes": {"bold": true, "size": "20", "color": "#831843"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Strategy",
+      "x": 50, "y": 1263, "w": 495, "h": 130,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Our approach breaks into three creative phases:", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "01 — Discover", "attributes": {"bold": true, "size": "12", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "Brand audit, audience research, competitive analysis, mood boarding.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "02 — Create", "attributes": {"bold": true, "size": "12", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "Concept development, design exploration, copywriting, prototyping.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "03 — Launch", "attributes": {"bold": true, "size": "12", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "Final production, asset delivery, campaign rollout support.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Deliverables Heading",
+      "x": 50, "y": 1430, "w": 495, "h": 35,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "DELIVERABLES", "attributes": {"bold": true, "size": "20", "color": "#831843"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "tableSection",
+      "title": "Deliverables Table",
+      "x": 50, "y": 1473, "w": 495, "h": 130,
+      "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "tableData": {
+        "headers": ["What", "Details", "When"],
+        "rows": [
+          ["Brand Audit Report", "Competitive analysis and positioning insights", "Week 1-2"],
+          ["Creative Concepts", "3 directions with mood boards and mockups", "Week 3-4"],
+          ["Final Assets", "All production-ready files and guidelines", "Week 6-7"],
+          ["Launch Support", "Campaign setup and rollout assistance", "Week 8"]
+        ],
+        "headerBgColor": "#831843",
+        "headerTextColor": "#FFFFFF",
+        "cellTextColor": "#333333",
+        "borderColor": "#FFE4EC",
+        "fontSize": 10,
+        "showHeader": true
+      }
+    },
+
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 0, "y": 1684, "w": 8, "h": 842,
+      "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom"
+    },
+    {
+      "type": "textSection",
+      "title": "Timeline Heading",
+      "x": 50, "y": 1734, "w": 495, "h": 35,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "TIMELINE", "attributes": {"bold": true, "size": "20", "color": "#831843"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "tableSection",
+      "title": "Timeline Table",
+      "x": 50, "y": 1777, "w": 495, "h": 130,
+      "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "tableData": {
+        "headers": ["Phase", "Activities", "Duration"],
+        "rows": [
+          ["01 Discover", "Research, audit, strategy alignment", "2 weeks"],
+          ["02 Create", "Design, copy, prototyping, review cycles", "3 weeks"],
+          ["03 Produce", "Final production and asset creation", "2 weeks"],
+          ["04 Launch", "Deployment and rollout support", "1 week"]
+        ],
+        "headerBgColor": "#831843",
+        "headerTextColor": "#FFFFFF",
+        "cellTextColor": "#333333",
+        "borderColor": "#FFE4EC",
+        "fontSize": 10,
+        "showHeader": true
+      }
+    },
+    {
+      "type": "textSection",
+      "title": "Investment Heading",
+      "x": 50, "y": 1940, "w": 495, "h": 35,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "INVESTMENT", "attributes": {"bold": true, "size": "20", "color": "#831843"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "tableSection",
+      "title": "Pricing Table",
+      "x": 50, "y": 1983, "w": 495, "h": 130,
+      "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "tableData": {
+        "headers": ["Phase", "Scope", "Investment"],
+        "rows": [
+          ["Discovery", "Research, strategy, creative brief", "$X,XXX"],
+          ["Creative Development", "Concepts, design, copywriting", "$X,XXX"],
+          ["Production & Launch", "Final assets and rollout", "$X,XXX"],
+          ["Total", "", "$XX,XXX"]
+        ],
+        "headerBgColor": "#831843",
+        "headerTextColor": "#FFFFFF",
+        "cellTextColor": "#333333",
+        "borderColor": "#FFE4EC",
+        "fontSize": 10,
+        "showHeader": true
+      }
+    },
+    {
+      "type": "textSection",
+      "title": "Why Us",
+      "x": 50, "y": 2150, "w": 495, "h": 80,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "WHY US", "attributes": {"bold": true, "size": "20", "color": "#831843"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "We've helped [X] brands transform their [area]. Our work has been featured in [publications/awards]. We don't just make things look good — we make them work.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 50, "y": 2270, "w": 495, "h": 1,
+      "color": "#FFE4EC", "borderColor": "#FFE4EC", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom"
+    },
+    {
+      "type": "textSection",
+      "title": "Lets Talk",
+      "x": 50, "y": 2290, "w": 495, "h": 60,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "LET'S TALK", "attributes": {"bold": true, "size": "16", "color": "#831843"}},
+        {"insert": "\n"},
+        {"insert": "your@agency.com  |  +1 234 567 890  |  www.youragency.com", "attributes": {"size": "11", "color": "#76818E"}},
+        {"insert": "\n"}
+      ]
+    }
+  ]
+}

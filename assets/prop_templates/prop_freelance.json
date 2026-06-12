@@ -1,0 +1,310 @@
+{
+  "canvasBackground": "#FFFFFF",
+  "items": [
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 0, "y": 0, "w": 595, "h": 160,
+      "color": "#FFF1F5", "borderColor": "#FFF1F5", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom"
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 0, "y": 160, "w": 595, "h": 3,
+      "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom"
+    },
+    {
+      "type": "textSection",
+      "title": "Header",
+      "x": 50, "y": 30, "w": 330, "h": 55,
+      "color": "#FFF1F5", "borderColor": "#FFF1F5", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Your Full Name", "attributes": {"bold": true, "size": "22", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "Your Title  |  Freelance Professional", "attributes": {"size": "11", "color": "#76818E"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Contact",
+      "x": 380, "y": 35, "w": 175, "h": 50,
+      "color": "#FFF1F5", "borderColor": "#FFF1F5", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "email@example.com", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "+1 234 567 890", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "www.yourwebsite.com", "attributes": {"size": "10", "color": "#831843"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Proposal For",
+      "x": 50, "y": 100, "w": 495, "h": 40,
+      "color": "#FFF1F5", "borderColor": "#FFF1F5", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Proposal for ", "attributes": {"size": "13", "color": "#76818E"}},
+        {"insert": "Client Name", "attributes": {"bold": true, "size": "13", "color": "#831843"}},
+        {"insert": "  |  January 15, 2026", "attributes": {"size": "13", "color": "#76818E"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Project Title",
+      "x": 50, "y": 190, "w": 495, "h": 50,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Project Name", "attributes": {"bold": true, "size": "24", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "Brief one-line description of what this project is about", "attributes": {"size": "12", "color": "#76818E"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Understanding Heading",
+      "x": 50, "y": 270, "w": 495, "h": 28,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Project Understanding", "attributes": {"bold": true, "size": "15", "color": "#831843"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Understanding",
+      "x": 50, "y": 300, "w": 495, "h": 100,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Based on our conversation, I understand that you need [describe the client's need/problem in your own words]. The goal is to [desired outcome] so that [business benefit].", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "Here's what I see as the key priorities:", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  [Priority 1 — most important thing to get right]", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  [Priority 2 — second focus area]", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  [Priority 3 — nice-to-have or future phase]", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Approach Heading",
+      "x": 50, "y": 430, "w": 495, "h": 28,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "My Approach", "attributes": {"bold": true, "size": "15", "color": "#831843"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Approach",
+      "x": 50, "y": 460, "w": 495, "h": 130,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "I'll work in [X] clear phases to keep things on track and transparent:", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "Step 1 — Discovery", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "Deep dive into your requirements, audience, and goals. Deliverable: project brief.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "Step 2 — Creation", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "Build out the core deliverables with regular check-ins for feedback.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "Step 3 — Refine & Deliver", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "Polish based on feedback, final handoff with all files and documentation.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Deliverables Heading",
+      "x": 50, "y": 620, "w": 495, "h": 28,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "What You'll Get", "attributes": {"bold": true, "size": "15", "color": "#831843"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "tableSection",
+      "title": "Deliverables Table",
+      "x": 50, "y": 655, "w": 495, "h": 120,
+      "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "tableData": {
+        "headers": ["Deliverable", "Details", "Timeline"],
+        "rows": [
+          ["Deliverable 1", "Description of what's included", "Week 1"],
+          ["Deliverable 2", "Description of what's included", "Week 2-3"],
+          ["Deliverable 3", "Description of what's included", "Week 4"],
+          ["Final Handoff", "All files, documentation, walkthrough", "Week 5"]
+        ],
+        "headerBgColor": "#831843",
+        "headerTextColor": "#FFFFFF",
+        "cellTextColor": "#333333",
+        "borderColor": "#FFE4EC",
+        "fontSize": 10,
+        "showHeader": true
+      }
+    },
+
+    {
+      "type": "textSection",
+      "title": "Investment Heading",
+      "x": 50, "y": 862, "w": 495, "h": 28,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Investment", "attributes": {"bold": true, "size": "15", "color": "#831843"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "tableSection",
+      "title": "Pricing Table",
+      "x": 50, "y": 897, "w": 495, "h": 120,
+      "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "tableData": {
+        "headers": ["Service", "Description", "Price"],
+        "rows": [
+          ["Discovery & Planning", "Requirements gathering and project brief", "$X,XXX"],
+          ["Core Work", "Design, development, or creation phase", "$X,XXX"],
+          ["Revisions & Polish", "Up to X rounds of revisions included", "$X,XXX"],
+          ["Total", "", "$X,XXX"]
+        ],
+        "headerBgColor": "#831843",
+        "headerTextColor": "#FFFFFF",
+        "cellTextColor": "#333333",
+        "borderColor": "#FFE4EC",
+        "fontSize": 10,
+        "showHeader": true
+      }
+    },
+    {
+      "type": "textSection",
+      "title": "Payment Note",
+      "x": 50, "y": 1030, "w": 495, "h": 50,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Payment: 50% upfront to begin, 50% upon completion. Additional revisions beyond scope billed at $XXX/hr. This proposal is valid for 14 days.", "attributes": {"size": "10", "color": "#76818E"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Next Steps Heading",
+      "x": 50, "y": 1110, "w": 495, "h": 28,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Next Steps", "attributes": {"bold": true, "size": "15", "color": "#831843"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Next Steps",
+      "x": 50, "y": 1143, "w": 495, "h": 100,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Ready to move forward? Here's how we get started:", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "1.  Reply to this proposal or sign below to confirm", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "2.  I'll send an invoice for the first 50% deposit", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "3.  We'll schedule a kickoff call to align on details", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "Looking forward to working together!", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 50, "y": 1280, "w": 495, "h": 1,
+      "color": "#FFE4EC", "borderColor": "#FFE4EC", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom"
+    },
+    {
+      "type": "textSection",
+      "title": "Signature",
+      "x": 50, "y": 1300, "w": 220, "h": 70,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Accepted by:", "attributes": {"size": "10", "color": "#76818E"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "____________________________", "attributes": {"size": "11", "color": "#C5AFA4"}},
+        {"insert": "\n"},
+        {"insert": "Client Name  |  Date", "attributes": {"size": "9", "color": "#76818E"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Freelancer Signature",
+      "x": 325, "y": 1300, "w": 220, "h": 70,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Submitted by:", "attributes": {"size": "10", "color": "#76818E"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "____________________________", "attributes": {"size": "11", "color": "#C5AFA4"}},
+        {"insert": "\n"},
+        {"insert": "Your Name  |  Date", "attributes": {"size": "9", "color": "#76818E"}},
+        {"insert": "\n"}
+      ]
+    }
+  ]
+}

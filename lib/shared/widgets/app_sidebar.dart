@@ -85,7 +85,13 @@ class AppSidebar extends ConsumerWidget {
                     icon: LucideIcons.fileText,
                     label: 'Create Proposal',
                     isActive: active == AppPage.proposal,
-                    onTap: () {}, // TODO: context.go(AppRoutes.proposal)
+                    onTap: () {
+                      // Close drawer if open (mobile)
+                      if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
+                        Navigator.of(context).pop();
+                      }
+                      context.go(AppRoutes.proposalDashboard);
+                    },
                   ),
                   _SidebarItem(
                     icon: LucideIcons.linkedin,

@@ -8,6 +8,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:kitaura/shared/models/table_data.dart';
 import 'canvas_item_type.dart';
 import 'section_type.dart';
 
@@ -32,6 +33,8 @@ class CanvasItem {
   FocusNode? focusNode;
   ScrollController? scrollController;
 
+  TableData? tableData;
+
   CanvasItem({
     required this.type,
     required this.position,
@@ -47,6 +50,7 @@ class CanvasItem {
     this.flipX = false,
     this.flipY = false,
     SectionType? sectionType,
+    TableData? tableData,
   })  : id = UniqueKey().toString(),
         sectionType = sectionType ??
             (type == CanvasItemType.textSection
@@ -57,9 +61,14 @@ class CanvasItem {
       focusNode = FocusNode();
       scrollController = ScrollController();
     }
+    if (type == CanvasItemType.tableSection) {
+      this.tableData = tableData ?? TableData.empty();
+    }
   }
 
   bool get isText => type == CanvasItemType.textSection;
+
+  bool get isTable => type == CanvasItemType.tableSection;
 
   void dispose() {
     controller?.dispose();
@@ -86,6 +95,7 @@ class ItemSnapshot {
   final SectionType sectionType;
   final List<dynamic>? deltaJson;   // NEW — Quill delta for text undo
   final Uint8List? imageBytes;      // NEW — image data for undo
+  final Map<String, dynamic>? tableDataJson;
 
   ItemSnapshot({
     required this.id,
@@ -104,6 +114,8 @@ class ItemSnapshot {
     required this.sectionType,
     this.deltaJson,
     this.imageBytes,
+    this.tableDataJson,
+
   });
 
   factory ItemSnapshot.from(CanvasItem item) => ItemSnapshot(
@@ -128,6 +140,9 @@ class ItemSnapshot {
     // Capture image data for undo/redo
     imageBytes: item.imageBytes != null
         ? Uint8List.fromList(item.imageBytes!)
+        : null,
+    tableDataJson: item.isTable && item.tableData != null
+        ? item.tableData!.toJson()
         : null,
   );
 }

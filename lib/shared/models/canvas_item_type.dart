@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 enum CanvasItemType {
-  textSection, line, rectangle, circle, imageBox, icon,
+  textSection, tableSection, line, rectangle, circle, imageBox, icon,
   triangle, star, arrow, diamond, hexagon, skewedRectangle
 }
 
@@ -14,6 +14,7 @@ enum ResizeHandle { topLeft, top, topRight, right, bottomRight, bottom, bottomLe
 CanvasItemType parseCanvasItemType(String raw) {
   switch (raw) {
     case 'textSection':      return CanvasItemType.textSection;
+    case 'tableSection':     return CanvasItemType.tableSection;
     case 'line':             return CanvasItemType.line;
     case 'rectangle':        return CanvasItemType.rectangle;
     case 'circle':           return CanvasItemType.circle;
@@ -32,6 +33,7 @@ CanvasItemType parseCanvasItemType(String raw) {
 String canvasItemTypeToString(CanvasItemType type) {
   switch (type) {
     case CanvasItemType.textSection:     return 'textSection';
+    case CanvasItemType.tableSection:    return 'tableSection';
     case CanvasItemType.line:            return 'line';
     case CanvasItemType.rectangle:       return 'rectangle';
     case CanvasItemType.circle:          return 'circle';
@@ -49,6 +51,7 @@ String canvasItemTypeToString(CanvasItemType type) {
 IconData canvasItemTypeIcon(CanvasItemType t) {
   switch (t) {
     case CanvasItemType.textSection:      return LucideIcons.type;
+    case CanvasItemType.tableSection:     return LucideIcons.table;
     case CanvasItemType.line:             return LucideIcons.minus;
     case CanvasItemType.rectangle:        return LucideIcons.square;
     case CanvasItemType.circle:           return LucideIcons.circle;

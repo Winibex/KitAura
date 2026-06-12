@@ -168,6 +168,8 @@ class _TemplatePainter extends CustomPainter {
           _drawCircle(canvas, x, y, w, h, color, borderColor, borderWidth);
         case 'textSection':
           _drawText(canvas, map, x, y, w, h, scaleX, scaleY);
+        case 'tableSection':
+          _drawTable(canvas, map, x, y, w, h, scaleX, scaleY);
         case 'triangle':
           _drawTriangle(canvas, x, y, w, h, color, borderColor, borderWidth);
         case 'star':
@@ -185,7 +187,8 @@ class _TemplatePainter extends CustomPainter {
   }
 
   void _drawRect(Canvas canvas, double x, double y, double w, double h,
-      Color fill, Color border, double borderW) {
+      Color fill, Color border, double borderW)
+  {
     final rect = Rect.fromLTWH(x, y, w, h);
     canvas.drawRect(rect, Paint()..color = fill);
     if (borderW > 0) {
@@ -199,7 +202,8 @@ class _TemplatePainter extends CustomPainter {
   }
 
   void _drawLine(Canvas canvas, double x, double y, double w,
-      Color color, double strokeW) {
+      Color color, double strokeW)
+  {
     canvas.drawLine(
       Offset(x, y),
       Offset(x + w, y),
@@ -210,7 +214,8 @@ class _TemplatePainter extends CustomPainter {
   }
 
   void _drawCircle(Canvas canvas, double x, double y, double w, double h,
-      Color fill, Color border, double borderW) {
+      Color fill, Color border, double borderW)
+  {
     final center = Offset(x + w / 2, y + h / 2);
     final radius = (w < h ? w : h) / 2;
     canvas.drawCircle(center, radius, Paint()..color = fill);
@@ -226,7 +231,8 @@ class _TemplatePainter extends CustomPainter {
   }
 
   void _drawTriangle(Canvas canvas, double x, double y, double w, double h,
-      Color fill, Color border, double borderW) {
+      Color fill, Color border, double borderW)
+  {
     final path = Path()
       ..moveTo(x + w / 2, y)
       ..lineTo(x + w, y + h)
@@ -244,14 +250,16 @@ class _TemplatePainter extends CustomPainter {
   }
 
   void _drawStar(Canvas canvas, double x, double y, double w, double h,
-      Color fill) {
+      Color fill)
+  {
     final cx = x + w / 2, cy = y + h / 2;
     final r = (w < h ? w : h) / 2;
     canvas.drawCircle(Offset(cx, cy), r * 0.6, Paint()..color = fill);
   }
 
   void _drawDiamond(Canvas canvas, double x, double y, double w, double h,
-      Color fill, Color border, double borderW) {
+      Color fill, Color border, double borderW)
+  {
     final path = Path()
       ..moveTo(x + w / 2, y)
       ..lineTo(x + w, y + h / 2)
@@ -272,7 +280,8 @@ class _TemplatePainter extends CustomPainter {
   // ── TEXT — reads per-op delta attributes (color/size/bold) ──────────
 
   void _drawText(Canvas canvas, Map<String, dynamic> map, double x, double y,
-      double w, double h, double scaleX, double scaleY) {
+      double w, double h, double scaleX, double scaleY)
+  {
     final delta = map['delta'] as List<dynamic>?;
     if (delta == null || delta.isEmpty) {
       _drawPlaceholderLines(canvas, x, y, w, h, scaleY);
@@ -357,7 +366,8 @@ class _TemplatePainter extends CustomPainter {
   }
 
   void _drawPlaceholderLines(
-      Canvas canvas, double x, double y, double w, double h, double scaleY) {
+      Canvas canvas, double x, double y, double w, double h, double scaleY)
+  {
     final paint = Paint()..color = const Color(0xFFE0D8D0);
     final lineH = 2.5 * scaleY;
     final gap = 4.0 * scaleY;
