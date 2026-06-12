@@ -186,6 +186,100 @@ class _TemplatePainter extends CustomPainter {
     }
   }
 
+  void _drawTable(Canvas canvas, Map<String, dynamic> map, double x, double y,
+      double w, double h, double scaleX, double scaleY)
+  {
+    final tableDataRaw = map['tableData'] as Map<String, dynamic>?;
+    if (tableDataRaw == null) {
+      _drawPlaceholderLines(canvas, x, y, w, h, scaleY);
+      return;
+    }
+
+    final headers = (tableDataRaw['headers'] as List?)?.cast<String>() ?? [];
+    final rows = (tableDataRaw['rows'] as List?)
+        ?.map((r) => (r as List).cast<String>())
+        .toList() ??
+        [];
+    final headerBg =
+    _parseColor(tableDataRaw['headerBgColor'] as String? ?? '#0F172A');
+    final headerTextColor =
+    _parseColor(tableDataRaw['headerTextColor'] as String? ?? '#FFFFFF');
+    final cellTextColor =
+    _parseColor(tableDataRaw['cellTextColor'] as String? ?? '#333333');
+    final borderColor =
+    _parseColor(tableDataRaw['borderColor'] as String? ?? '#E0E0E0');
+    final showHeader = tableDataRaw['showHeader'] ?? true;
+
+    if (headers.isEmpty) {
+      _drawPlaceholderLines(canvas, x, y, w, h, scaleY);
+      return;
+    }
+
+    final colCount = headers.length;
+    final colW = w / colCount;
+    final rowH = (5.5 * scaleY).clamp(4.0, 14.0);
+    final fontSize = (9.0 * scaleY).clamp(2.0, 7.0);
+    final borderPaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = (0.5 * scaleX).clamp(0.2, 0.8);
+
+    double curY = y;
+
+    // Header row
+    if (showHeader) {
+      final headerRect = Rect.fromLTWH(x, curY, w, rowH);
+      canvas.drawRect(headerRect, Paint()..color = headerBg);
+      canvas.drawRect(headerRect, borderPaint);
+
+      for (int c = 0; c < colCount; c++) {
+        final tp = TextPainter(
+          text: TextSpan(
+            text: headers[c],
+            style: TextStyle(
+              fontSize: fontSize,
+              fontWeight: FontWeight.w700,
+              color: headerTextColor,
+            ),
+          ),
+          maxLines: 1,
+          ellipsis: '…',
+          textDirection: TextDirection.ltr,
+        );
+        tp.layout(maxWidth: colW - 2 * scaleX);
+        tp.paint(canvas, Offset(x + c * colW + 1.5 * scaleX, curY + 1 * scaleY));
+      }
+      curY += rowH;
+    }
+
+    // Data rows
+    for (int r = 0; r < rows.length && curY + rowH <= y + h; r++) {
+      final rowBg = r % 2 == 0 ? const Color(0xFFFFFFFF) : const Color(0xFFF9F7F5);
+      final rowRect = Rect.fromLTWH(x, curY, w, rowH);
+      canvas.drawRect(rowRect, Paint()..color = rowBg);
+      canvas.drawRect(rowRect, borderPaint);
+
+      for (int c = 0; c < colCount && c < rows[r].length; c++) {
+        final tp = TextPainter(
+          text: TextSpan(
+            text: rows[r][c],
+            style: TextStyle(
+              fontSize: fontSize,
+              color: cellTextColor,
+            ),
+          ),
+          maxLines: 1,
+          ellipsis: '…',
+          textDirection: TextDirection.ltr,
+        );
+        tp.layout(maxWidth: colW - 2 * scaleX);
+        tp.paint(canvas, Offset(x + c * colW + 1.5 * scaleX, curY + 1 * scaleY));
+      }
+      curY += rowH;
+    }
+  }
+
+
   void _drawRect(Canvas canvas, double x, double y, double w, double h,
       Color fill, Color border, double borderW)
   {
