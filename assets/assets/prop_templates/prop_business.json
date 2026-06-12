@@ -1,0 +1,360 @@
+{
+  "canvasBackground": "#FFFFFF",
+  "items": [
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 0, "y": 0, "w": 595, "h": 842,
+      "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom"
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 0, "y": 680, "w": 595, "h": 6,
+      "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom"
+    },
+    {
+      "type": "textSection",
+      "title": "Proposal Title",
+      "x": 50, "y": 220, "w": 495, "h": 100,
+      "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "BUSINESS PROPOSAL", "attributes": {"bold": true, "size": "32", "color": "#FFFFFF"}},
+        {"insert": "\n"},
+        {"insert": "Project Name / Service Title", "attributes": {"size": "16", "color": "#CC7E85"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Client Info",
+      "x": 50, "y": 380, "w": 495, "h": 80,
+      "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "PREPARED FOR", "attributes": {"bold": true, "size": "10", "color": "#CC7E85"}},
+        {"insert": "\n"},
+        {"insert": "Client Name", "attributes": {"bold": true, "size": "16", "color": "#FFFFFF"}},
+        {"insert": "\n"},
+        {"insert": "Client Company  |  client@company.com", "attributes": {"size": "11", "color": "#A0AEC0"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Author Info",
+      "x": 50, "y": 700, "w": 330, "h": 70,
+      "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Your Full Name", "attributes": {"bold": true, "size": "13", "color": "#FFFFFF"}},
+        {"insert": "\n"},
+        {"insert": "Your Company Name", "attributes": {"size": "11", "color": "#A0AEC0"}},
+        {"insert": "\n"},
+        {"insert": "email@company.com  |  +1 234 567 890", "attributes": {"size": "10", "color": "#A0AEC0"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Date",
+      "x": 400, "y": 720, "w": 150, "h": 30,
+      "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "January 15, 2026", "attributes": {"size": "11", "color": "#A0AEC0"}},
+        {"insert": "\n"}
+      ]
+    },
+
+    {
+      "type": "textSection",
+      "title": "Executive Summary Heading",
+      "x": 50, "y": 892, "w": 495, "h": 35,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "EXECUTIVE SUMMARY", "attributes": {"bold": true, "size": "18", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 50, "y": 927, "w": 60, "h": 3,
+      "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom"
+    },
+    {
+      "type": "textSection",
+      "title": "Executive Summary",
+      "x": 50, "y": 945, "w": 495, "h": 120,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "This proposal outlines our recommended approach for [project/service description]. Based on our understanding of your requirements, we have developed a comprehensive plan that addresses your key objectives while staying within the proposed timeline and budget.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "Our team brings [X years] of experience in [relevant field], and we are confident in our ability to deliver exceptional results that exceed your expectations.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Problem Statement Heading",
+      "x": 50, "y": 1100, "w": 495, "h": 35,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "THE CHALLENGE", "attributes": {"bold": true, "size": "18", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 50, "y": 1135, "w": 60, "h": 3,
+      "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom"
+    },
+    {
+      "type": "textSection",
+      "title": "Problem Statement",
+      "x": 50, "y": 1153, "w": 495, "h": 120,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "[Client Company] currently faces the following challenges:", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "•  Challenge one — describe the specific problem or pain point", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  Challenge two — describe the business impact", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  Challenge three — describe the urgency or opportunity cost", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Proposed Solution Heading",
+      "x": 50, "y": 1310, "w": 495, "h": 35,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "PROPOSED SOLUTION", "attributes": {"bold": true, "size": "18", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 50, "y": 1345, "w": 60, "h": 3,
+      "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom"
+    },
+    {
+      "type": "textSection",
+      "title": "Proposed Solution",
+      "x": 50, "y": 1363, "w": 495, "h": 160,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "We propose a [X]-phase approach to address these challenges:", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "Phase 1: Discovery & Planning", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "We will conduct a thorough analysis of your current situation, define success metrics, and create a detailed project roadmap.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "Phase 2: Implementation", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "Our team will execute the plan with regular check-ins and progress reports to ensure alignment with your goals.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "Phase 3: Review & Optimization", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "We will measure results against defined KPIs, make adjustments, and provide a final comprehensive report.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+
+    {
+      "type": "textSection",
+      "title": "Deliverables Heading",
+      "x": 50, "y": 1734, "w": 495, "h": 35,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "DELIVERABLES", "attributes": {"bold": true, "size": "18", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 50, "y": 1769, "w": 60, "h": 3,
+      "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom"
+    },
+    {
+      "type": "tableSection",
+      "title": "Deliverables Table",
+      "x": 50, "y": 1787, "w": 495, "h": 140,
+      "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "tableData": {
+        "headers": ["Deliverable", "Description", "Timeline"],
+        "rows": [
+          ["Project Plan", "Detailed roadmap with milestones and resource allocation", "Week 1"],
+          ["Phase 1 Report", "Discovery findings and strategic recommendations", "Week 2-3"],
+          ["Implementation", "Full execution of approved strategy", "Week 4-8"],
+          ["Final Report", "Results analysis, insights, and next steps", "Week 9-10"]
+        ],
+        "headerBgColor": "#0F172A",
+        "headerTextColor": "#FFFFFF",
+        "cellTextColor": "#333333",
+        "borderColor": "#E0E0E0",
+        "fontSize": 10,
+        "showHeader": true
+      }
+    },
+    {
+      "type": "textSection",
+      "title": "Pricing Heading",
+      "x": 50, "y": 1960, "w": 495, "h": 35,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "INVESTMENT", "attributes": {"bold": true, "size": "18", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 50, "y": 1995, "w": 60, "h": 3,
+      "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom"
+    },
+    {
+      "type": "tableSection",
+      "title": "Pricing Table",
+      "x": 50, "y": 2013, "w": 495, "h": 140,
+      "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "tableData": {
+        "headers": ["Item", "Description", "Amount"],
+        "rows": [
+          ["Discovery & Planning", "Research, analysis, and project roadmap", "$X,XXX"],
+          ["Implementation", "Full execution of approved strategy", "$X,XXX"],
+          ["Review & Optimization", "Performance analysis and final report", "$X,XXX"],
+          ["Total", "", "$X,XXX"]
+        ],
+        "headerBgColor": "#0F172A",
+        "headerTextColor": "#FFFFFF",
+        "cellTextColor": "#333333",
+        "borderColor": "#E0E0E0",
+        "fontSize": 10,
+        "showHeader": true
+      }
+    },
+    {
+      "type": "textSection",
+      "title": "Terms Heading",
+      "x": 50, "y": 2190, "w": 495, "h": 35,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "TERMS & CONDITIONS", "attributes": {"bold": true, "size": "18", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 50, "y": 2225, "w": 60, "h": 3,
+      "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom"
+    },
+    {
+      "type": "textSection",
+      "title": "Terms",
+      "x": 50, "y": 2243, "w": 495, "h": 120,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "•  Payment: 50% upfront, 50% upon project completion", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  This proposal is valid for 30 days from the date above", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  Additional revisions beyond the agreed scope will be billed at $XXX/hour", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  All intellectual property created during this engagement transfers to the client upon final payment", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Signature",
+      "x": 50, "y": 2400, "w": 240, "h": 80,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Accepted by:", "attributes": {"size": "10", "color": "#76818E"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "____________________________", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "Client Name  |  Date", "attributes": {"size": "10", "color": "#76818E"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Signature Author",
+      "x": 305, "y": 2400, "w": 240, "h": 80,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Submitted by:", "attributes": {"size": "10", "color": "#76818E"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "____________________________", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "Your Name  |  Date", "attributes": {"size": "10", "color": "#76818E"}},
+        {"insert": "\n"}
+      ]
+    }
+  ]
+}

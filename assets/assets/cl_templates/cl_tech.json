@@ -1,0 +1,320 @@
+{
+  "canvasBackground": "#FFFFFF",
+  "items": [
+    {
+      "type": "textSection",
+      "title": "Sender Address",
+      "x": 50,
+      "y": 40,
+      "w": 495,
+      "h": 70,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Your Full Name",
+          "attributes": {
+            "bold": true,
+            "size": "18",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "\n"
+        },
+        {
+          "insert": "Senior Software Engineer",
+          "attributes": {
+            "size": "12",
+            "color": "#0F766E"
+          }
+        },
+        {
+          "insert": "\n"
+        },
+        {
+          "insert": "email@example.com | github.com/you | linkedin.com/in/you | yoursite.com",
+          "attributes": {
+            "size": "10",
+            "color": "#555555"
+          }
+        },
+        {
+          "insert": "\n"
+        }
+      ],
+      "sectionType": "senderAddress"
+    },
+    {
+      "type": "line",
+      "title": "Divider",
+      "x": 50,
+      "y": 120,
+      "w": 495,
+      "h": 1,
+      "color": "#0F766E",
+      "borderColor": "#0F766E",
+      "borderWidth": 1,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Date",
+      "x": 50,
+      "y": 140,
+      "w": 495,
+      "h": 22,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "January 15, 2026",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n"
+        }
+      ],
+      "sectionType": "dateLine"
+    },
+    {
+      "type": "textSection",
+      "title": "Recipient Address",
+      "x": 50,
+      "y": 175,
+      "w": 495,
+      "h": 70,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Hiring Team",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "\n"
+        },
+        {
+          "insert": "[Company Name]",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n"
+        },
+        {
+          "insert": "[City, State]",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n"
+        }
+      ],
+      "sectionType": "recipientAddress"
+    },
+    {
+      "type": "textSection",
+      "title": "Salutation",
+      "x": 50,
+      "y": 265,
+      "w": 495,
+      "h": 30,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Hi [Company Name] Team,",
+          "attributes": {
+            "size": "12",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "\n"
+        }
+      ],
+      "sectionType": "salutation"
+    },
+    {
+      "type": "textSection",
+      "title": "Letter Body",
+      "x": 50,
+      "y": 310,
+      "w": 495,
+      "h": 410,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "I'm applying for the [Position Title] role at [Company Name]. After exploring your [product/tech blog/github], I'm excited about the engineering challenges you're solving \u2014 particularly [specific technical area or problem].",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n"
+        },
+        {
+          "insert": "\n"
+        },
+        {
+          "insert": "A bit about what I bring to the table:",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n"
+        },
+        {
+          "insert": "\u2022 [X years] building [type of systems \u2014 e.g., distributed systems at scale, mobile apps with millions of users]",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n"
+        },
+        {
+          "insert": "\u2022 Deep experience with [Tech 1, Tech 2, Tech 3] \u2014 your stack matches my strengths",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n"
+        },
+        {
+          "insert": "\u2022 Led [specific project] that [measurable outcome \u2014 e.g., reduced latency by 60%, scaled to 1M users]",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n"
+        },
+        {
+          "insert": "\n"
+        },
+        {
+          "insert": "Beyond the code, I care about [engineering culture/practices]. I've open-sourced [project name] (link) which has [stars/users], and I write about [topic] at [blog/medium].",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n"
+        },
+        {
+          "insert": "\n"
+        },
+        {
+          "insert": "I'd love to chat about how I can contribute. Code samples and references available on request.",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n"
+        }
+      ],
+      "sectionType": "coverLetterBody"
+    },
+    {
+      "type": "textSection",
+      "title": "Closing",
+      "x": 50,
+      "y": 740,
+      "w": 495,
+      "h": 30,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Thanks,",
+          "attributes": {
+            "size": "12",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "\n"
+        }
+      ],
+      "sectionType": "closing"
+    },
+    {
+      "type": "textSection",
+      "title": "Signature",
+      "x": 50,
+      "y": 785,
+      "w": 495,
+      "h": 30,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Your Name",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#0F766E"
+          }
+        },
+        {
+          "insert": "\n"
+        }
+      ],
+      "sectionType": "signature"
+    }
+  ]
+}

@@ -1,0 +1,479 @@
+{
+  "canvasBackground": "#16213E",
+  "items": [
+    {
+      "type": "rectangle",
+      "title": "Gold Bar Top",
+      "x": 0,
+      "y": 0,
+      "w": 595,
+      "h": 5,
+      "color": "#D4AF37",
+      "borderColor": "#D4AF37",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Full Name",
+      "x": 40,
+      "y": 32,
+      "w": 515,
+      "h": 40,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Your Full Name\n",
+          "attributes": {
+            "bold": true,
+            "size": "28",
+            "color": "#D4AF37"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Job Title",
+      "x": 40,
+      "y": 80,
+      "w": 515,
+      "h": 26,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Chief Technology Officer\n",
+          "attributes": {
+            "size": "14",
+            "color": "#C8CDD8"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Contact",
+      "x": 40,
+      "y": 116,
+      "w": 515,
+      "h": 24,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "email@example.com  |  +1 234 567 890  |  San Francisco, CA\n",
+          "attributes": {
+            "size": "10",
+            "color": "#8A92A6"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "Gold Divider 1",
+      "x": 40,
+      "y": 154,
+      "w": 515,
+      "h": 2,
+      "color": "#D4AF37",
+      "borderColor": "#D4AF37",
+      "borderWidth": 2,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Executive Summary",
+      "x": 40,
+      "y": 172,
+      "w": 515,
+      "h": 90,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "EXECUTIVE SUMMARY\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#D4AF37"
+          }
+        },
+        {
+          "insert": "Visionary technology leader with 15+ years driving digital transformation at Fortune 500 companies. Proven ability to scale engineering organizations from 20 to 200+.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Experience",
+      "x": 40,
+      "y": 280,
+      "w": 515,
+      "h": 210,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "LEADERSHIP EXPERIENCE\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#D4AF37"
+          }
+        },
+        {
+          "insert": "CTO  —  Enterprise Corp  |  2020 – Present\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#FFFFFF"
+          }
+        },
+        {
+          "insert": "• Scaled engineering team from 40 to 180 across 5 offices\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        },
+        {
+          "insert": "• Led cloud migration saving $2.4M annually\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        },
+        {
+          "insert": "• Established engineering culture and technical standards\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        },
+        {
+          "insert": "VP Engineering  —  Growth Startup  |  2015 – 2020\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#FFFFFF"
+          }
+        },
+        {
+          "insert": "• Built platform processing $500M+ in transactions\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        },
+        {
+          "insert": "• Achieved 99.99% uptime across all production services\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "Gold Divider 2",
+      "x": 40,
+      "y": 506,
+      "w": 515,
+      "h": 2,
+      "color": "#D4AF37",
+      "borderColor": "#D4AF37",
+      "borderWidth": 2,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Education",
+      "x": 40,
+      "y": 522,
+      "w": 515,
+      "h": 60,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "EDUCATION\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#D4AF37"
+          }
+        },
+        {
+          "insert": "MBA — Stanford GSB  |  MS Computer Science — MIT\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Board & Advisory",
+      "x": 40,
+      "y": 600,
+      "w": 515,
+      "h": 60,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "BOARD & ADVISORY\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#D4AF37"
+          }
+        },
+        {
+          "insert": "Board Member, TechNonprofit  •  Advisor, 3 Series-A startups  •  IEEE Member\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Skills",
+      "x": 40,
+      "y": 680,
+      "w": 515,
+      "h": 90,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "CORE COMPETENCIES\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#D4AF37"
+          }
+        },
+        {
+          "insert": "Strategic Leadership • Organizational Design • Cloud Architecture\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        },
+        {
+          "insert": "M&A • P&L Management • Board Communication • Technical Vision\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Awards",
+      "x": 40,
+      "y": 870,
+      "w": 515,
+      "h": 130,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "AWARDS & RECOGNITION\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#D4AF37"
+          }
+        },
+        {
+          "insert": "• CTO of the Year — Tech Leadership Awards | 2023\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        },
+        {
+          "insert": "• Top 50 CTOs in North America — Forbes | 2022\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        },
+        {
+          "insert": "• Innovation Excellence Award — Industry Council | 2021\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "Gold Divider 3",
+      "x": 40,
+      "y": 1020,
+      "w": 515,
+      "h": 2,
+      "color": "#D4AF37",
+      "borderColor": "#D4AF37",
+      "borderWidth": 2,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Speaking",
+      "x": 40,
+      "y": 1036,
+      "w": 515,
+      "h": 120,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "SPEAKING & PUBLICATIONS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#D4AF37"
+          }
+        },
+        {
+          "insert": "• Keynote Speaker — TechCrunch Disrupt 2023\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        },
+        {
+          "insert": "• Panel: \"Future of Engineering Leadership\" — AWS re:Invent 2022\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        },
+        {
+          "insert": "• Author of 12 articles on engineering management\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Languages",
+      "x": 40,
+      "y": 1175,
+      "w": 515,
+      "h": 50,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "LANGUAGES\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#D4AF37"
+          }
+        },
+        {
+          "insert": "English (Native) • Mandarin (Fluent) • Spanish (Intermediate)\n",
+          "attributes": {
+            "size": "11",
+            "color": "#D0D0D0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "rectangle",
+      "title": "Gold Bar Bottom",
+      "x": 0,
+      "y": 1679,
+      "w": 595,
+      "h": 5,
+      "color": "#D4AF37",
+      "borderColor": "#D4AF37",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    }
+  ]
+}

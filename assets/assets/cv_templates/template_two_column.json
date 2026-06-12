@@ -1,0 +1,813 @@
+{
+  "canvasBackground": "#FFFFFF",
+  "items": [
+    {
+      "type": "rectangle",
+      "title": "Sidebar BG P1",
+      "x": 0,
+      "y": 0,
+      "w": 200,
+      "h": 842,
+      "color": "#2C3E50",
+      "borderColor": "#2C3E50",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "rectangle",
+      "title": "Sidebar BG P2",
+      "x": 0,
+      "y": 842,
+      "w": 200,
+      "h": 842,
+      "color": "#2C3E50",
+      "borderColor": "#2C3E50",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "rectangle",
+      "title": "Red Accent",
+      "x": 200,
+      "y": 0,
+      "w": 395,
+      "h": 6,
+      "color": "#E74C3C",
+      "borderColor": "#E74C3C",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Contact",
+      "x": 16,
+      "y": 30,
+      "w": 168,
+      "h": 130,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "CONTACT\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#FFFFFF"
+          }
+        },
+        {
+          "insert": "email@example.com\n",
+          "attributes": {
+            "size": "9",
+            "color": "#ECF0F1"
+          }
+        },
+        {
+          "insert": "+1 234 567 890\n",
+          "attributes": {
+            "size": "9",
+            "color": "#ECF0F1"
+          }
+        },
+        {
+          "insert": "City, Country\n",
+          "attributes": {
+            "size": "9",
+            "color": "#ECF0F1"
+          }
+        },
+        {
+          "insert": "linkedin.com/in/you\n",
+          "attributes": {
+            "size": "9",
+            "color": "#ECF0F1"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Social Links",
+      "x": 16,
+      "y": 175,
+      "w": 168,
+      "h": 110,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "SOCIAL\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#FFFFFF"
+          }
+        },
+        {
+          "insert": "github.com/you\n",
+          "attributes": {
+            "size": "9",
+            "color": "#ECF0F1"
+          }
+        },
+        {
+          "insert": "twitter.com/you\n",
+          "attributes": {
+            "size": "9",
+            "color": "#ECF0F1"
+          }
+        },
+        {
+          "insert": "portfolio.you.com\n",
+          "attributes": {
+            "size": "9",
+            "color": "#ECF0F1"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Skills",
+      "x": 16,
+      "y": 305,
+      "w": 168,
+      "h": 150,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "SKILLS\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#FFFFFF"
+          }
+        },
+        {
+          "insert": "Figma\n",
+          "attributes": {
+            "size": "10",
+            "color": "#ECF0F1"
+          }
+        },
+        {
+          "insert": "Flutter\n",
+          "attributes": {
+            "size": "10",
+            "color": "#ECF0F1"
+          }
+        },
+        {
+          "insert": "React\n",
+          "attributes": {
+            "size": "10",
+            "color": "#ECF0F1"
+          }
+        },
+        {
+          "insert": "Node.js\n",
+          "attributes": {
+            "size": "10",
+            "color": "#ECF0F1"
+          }
+        },
+        {
+          "insert": "Python\n",
+          "attributes": {
+            "size": "10",
+            "color": "#ECF0F1"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Languages",
+      "x": 16,
+      "y": 470,
+      "w": 168,
+      "h": 110,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "LANGUAGES\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#FFFFFF"
+          }
+        },
+        {
+          "insert": "English — Native\n",
+          "attributes": {
+            "size": "10",
+            "color": "#ECF0F1"
+          }
+        },
+        {
+          "insert": "Spanish — Fluent\n",
+          "attributes": {
+            "size": "10",
+            "color": "#ECF0F1"
+          }
+        },
+        {
+          "insert": "French — Basic\n",
+          "attributes": {
+            "size": "10",
+            "color": "#ECF0F1"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Hobbies",
+      "x": 16,
+      "y": 595,
+      "w": 168,
+      "h": 110,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "INTERESTS\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#FFFFFF"
+          }
+        },
+        {
+          "insert": "Open Source\n",
+          "attributes": {
+            "size": "10",
+            "color": "#ECF0F1"
+          }
+        },
+        {
+          "insert": "UI Animation\n",
+          "attributes": {
+            "size": "10",
+            "color": "#ECF0F1"
+          }
+        },
+        {
+          "insert": "Tech Blogging\n",
+          "attributes": {
+            "size": "10",
+            "color": "#ECF0F1"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "References",
+      "x": 16,
+      "y": 870,
+      "w": 168,
+      "h": 200,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "REFERENCES\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#FFFFFF"
+          }
+        },
+        {
+          "insert": "Jane Smith\n",
+          "attributes": {
+            "bold": true,
+            "size": "10",
+            "color": "#FFFFFF"
+          }
+        },
+        {
+          "insert": "Former Manager\n",
+          "attributes": {
+            "size": "9",
+            "color": "#ECF0F1"
+          }
+        },
+        {
+          "insert": "jane@example.com\n",
+          "attributes": {
+            "size": "9",
+            "color": "#ECF0F1"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "9",
+            "color": "#ECF0F1"
+          }
+        },
+        {
+          "insert": "John Doe\n",
+          "attributes": {
+            "bold": true,
+            "size": "10",
+            "color": "#FFFFFF"
+          }
+        },
+        {
+          "insert": "Tech Lead\n",
+          "attributes": {
+            "size": "9",
+            "color": "#ECF0F1"
+          }
+        },
+        {
+          "insert": "john@example.com\n",
+          "attributes": {
+            "size": "9",
+            "color": "#ECF0F1"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Full Name",
+      "x": 225,
+      "y": 28,
+      "w": 345,
+      "h": 36,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Your Full Name\n",
+          "attributes": {
+            "bold": true,
+            "size": "24",
+            "color": "#1A1A1A"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Job Title",
+      "x": 225,
+      "y": 70,
+      "w": 345,
+      "h": 26,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Product Designer / UX Engineer\n",
+          "attributes": {
+            "size": "13",
+            "color": "#E74C3C"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Summary",
+      "x": 225,
+      "y": 110,
+      "w": 345,
+      "h": 90,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "SUMMARY\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Creative product designer and engineer with 6 years of experience crafting intuitive digital products. Bridges the gap between design and engineering.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "Main Divider 1",
+      "x": 225,
+      "y": 212,
+      "w": 345,
+      "h": 2,
+      "color": "#E74C3C",
+      "borderColor": "#E74C3C",
+      "borderWidth": 2,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Experience",
+      "x": 225,
+      "y": 228,
+      "w": 345,
+      "h": 200,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "EXPERIENCE\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Lead Product Designer  —  TechCorp  |  2021 – Present\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "• Redesigned core product, increasing user retention by 35%\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Led design system migration across 4 product teams\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Ran 50+ user research sessions\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "UI Engineer  —  StartupXYZ  |  2018 – 2021\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "• Built component library used across 3 products\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "Main Divider 2",
+      "x": 225,
+      "y": 440,
+      "w": 345,
+      "h": 2,
+      "color": "#E74C3C",
+      "borderColor": "#E74C3C",
+      "borderWidth": 2,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Education",
+      "x": 225,
+      "y": 456,
+      "w": 345,
+      "h": 80,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "EDUCATION\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "BSc Interaction Design  —  Design University  |  2014 – 2018\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Thesis: Reducing cognitive load in mobile onboarding flows.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "Main Divider 3",
+      "x": 225,
+      "y": 548,
+      "w": 345,
+      "h": 2,
+      "color": "#E74C3C",
+      "borderColor": "#E74C3C",
+      "borderWidth": 2,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Projects",
+      "x": 225,
+      "y": 564,
+      "w": 345,
+      "h": 130,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "PROJECTS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Design System Toolkit  —  Open Source\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Component library with 200+ components, used by 5K+ developers.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "UX Analytics Dashboard  —  Hackathon Winner\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Real-time user behavior analytics with heatmaps.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "Main Divider 4",
+      "x": 225,
+      "y": 710,
+      "w": 345,
+      "h": 2,
+      "color": "#E74C3C",
+      "borderColor": "#E74C3C",
+      "borderWidth": 2,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Certifications",
+      "x": 225,
+      "y": 726,
+      "w": 345,
+      "h": 90,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "CERTIFICATIONS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "• Google UX Design Certificate | 2023\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Nielsen Norman UX Certification | 2022\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Awards",
+      "x": 225,
+      "y": 870,
+      "w": 345,
+      "h": 130,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "AWARDS & HONORS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "• Awwwards Site of the Day | 2023\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Best Portfolio Award — Design Conference | 2022\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Top 30 Under 30 — Design Magazine | 2021\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "Main Divider 5",
+      "x": 225,
+      "y": 1010,
+      "w": 345,
+      "h": 2,
+      "color": "#E74C3C",
+      "borderColor": "#E74C3C",
+      "borderWidth": 2,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Volunteer",
+      "x": 225,
+      "y": 1026,
+      "w": 345,
+      "h": 130,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "VOLUNTEER EXPERIENCE\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Design Mentor  —  AIGA  |  2021 – Present\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Mentoring junior designers through 1:1 sessions and workshops.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    }
+  ]
+}

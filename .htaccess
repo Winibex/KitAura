@@ -1,0 +1,77 @@
+# ── SPA ROUTING (Flutter Web) ─────────────────────────────────────────────────
+# Redirects all routes to index.html so Flutter handles navigation client-side
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
+
+# ── GZIP COMPRESSION ──────────────────────────────────────────────────────────
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE application/javascript
+  AddOutputFilterByType DEFLATE application/json
+  AddOutputFilterByType DEFLATE text/html
+  AddOutputFilterByType DEFLATE text/css
+  AddOutputFilterByType DEFLATE text/javascript
+  AddOutputFilterByType DEFLATE application/wasm
+  AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+# ── EXPIRES (fallback for older proxies) ──────────────────────────────────────
+<IfModule mod_expires.c>
+  ExpiresActive On
+  # HTML must always be re-fetched
+  ExpiresByType text/html                "access plus 0 seconds"
+  # Fingerprinted assets — safe to cache forever
+  ExpiresByType application/javascript   "access plus 1 year"
+  ExpiresByType application/wasm         "access plus 1 year"
+  ExpiresByType text/css                 "access plus 1 year"
+  ExpiresByType image/png                "access plus 1 year"
+  ExpiresByType image/jpeg               "access plus 1 year"
+  ExpiresByType image/svg+xml            "access plus 1 year"
+  ExpiresByType font/ttf                 "access plus 1 year"
+  ExpiresByType font/woff2               "access plus 1 year"
+</IfModule>
+
+# ── CACHE-CONTROL HEADERS ─────────────────────────────────────────────────────
+<IfModule mod_headers.c>
+
+  # index.html — NEVER cache this file.
+  # Flutter bootstraps the entire app from here. If this is stale,
+  # the browser loads old JS/WASM even after a new deploy.
+  <FilesMatch "^index\.html$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </FilesMatch>
+
+  # Flutter fingerprints every JS/CSS/WASM/font filename on each build
+  # (e.g. main.dart.js?v=abc123) so it is safe to cache these forever.
+  # "immutable" tells the browser to never even revalidate them.
+  <FilesMatch "\.(js|css|wasm|ttf|woff2|png|jpg|jpeg|svg|ico|gif|webp)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+
+  # flutter_service_worker.js — must not be cached so the SW always updates
+  <FilesMatch "^flutter_service_worker\.js$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </FilesMatch>
+
+  # flutter.js bootstrap loader — same as above
+  <FilesMatch "^flutter\.js$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </FilesMatch>
+
+  # manifest.json — used by PWA install; keep fresh
+  <FilesMatch "^manifest\.json$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+
+</IfModule>

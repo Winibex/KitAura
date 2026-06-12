@@ -1,0 +1,703 @@
+{
+  "canvasBackground": "#FFFFFF",
+  "items": [
+    {
+      "type": "textSection",
+      "title": "Full Name",
+      "x": 50,
+      "y": 40,
+      "w": 495,
+      "h": 32,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Your Full Name\n",
+          "attributes": {
+            "bold": true,
+            "size": "20",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Contact",
+      "x": 50,
+      "y": 76,
+      "w": 495,
+      "h": 22,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "email@example.com | +1 234 567 890 | github.com/you | linkedin.com/in/you | yoursite.com\n",
+          "attributes": {
+            "size": "10",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Location",
+      "x": 50,
+      "y": 100,
+      "w": 495,
+      "h": 22,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "San Francisco, CA  |  Open to remote\n",
+          "attributes": {
+            "size": "10",
+            "color": "#555555",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "D0",
+      "x": 50,
+      "y": 132,
+      "w": 495,
+      "h": 1,
+      "color": "#000000",
+      "borderColor": "#000000",
+      "borderWidth": 1,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Summary",
+      "x": 50,
+      "y": 148,
+      "w": 495,
+      "h": 60,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "SUMMARY\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Senior Software Engineer with 6+ years building distributed systems at scale. Expert in Python, Go, and AWS. Track record of leading technical projects from design to production deployment serving millions of users.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "D1",
+      "x": 50,
+      "y": 216,
+      "w": 495,
+      "h": 1,
+      "color": "#000000",
+      "borderColor": "#000000",
+      "borderWidth": 1,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Skills",
+      "x": 50,
+      "y": 232,
+      "w": 495,
+      "h": 110,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "TECHNICAL SKILLS\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Languages: Python, Go, Java, JavaScript, TypeScript, SQL, Bash\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Frameworks: Django, FastAPI, React, Node.js, gRPC, Spring Boot\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Cloud/Infra: AWS (EC2, S3, Lambda, RDS, EKS), GCP, Docker, Kubernetes, Terraform\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Databases: PostgreSQL, MySQL, MongoDB, Redis, DynamoDB, Elasticsearch\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Tools: Git, GitHub Actions, Jenkins, Datadog, Prometheus, Grafana, Jira\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "D2",
+      "x": 50,
+      "y": 352,
+      "w": 495,
+      "h": 1,
+      "color": "#000000",
+      "borderColor": "#000000",
+      "borderWidth": 1,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Experience",
+      "x": 50,
+      "y": 368,
+      "w": 495,
+      "h": 320,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "PROFESSIONAL EXPERIENCE\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Senior Software Engineer | BigTech Corp | Jan 2022 – Present\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Mountain View, CA\n",
+          "attributes": {
+            "size": "10",
+            "color": "#555555",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Designed and implemented event-driven microservices architecture processing 10M+ events/day, reducing latency by 60%\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Led migration of monolithic application to Kubernetes, achieving 99.99% uptime and 40% cost reduction\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Mentored 6 junior engineers; established team coding standards adopted across org of 200+\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Owned on-call rotation for critical revenue-generating services with $50M+ annual impact\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Software Engineer | Mid-size Startup | Aug 2019 – Dec 2021\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "San Francisco, CA\n",
+          "attributes": {
+            "size": "10",
+            "color": "#555555",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Built core payment processing platform handling $200M+ annual transaction volume\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Reduced API p99 latency from 800ms to 120ms through caching strategy and query optimization\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Implemented OAuth 2.0 and SAML SSO integrations for enterprise customers\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Software Engineering Intern | StartupX | May 2018 – Aug 2018\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Built real-time notification system using Redis pub/sub serving 100K+ users\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "D3",
+      "x": 50,
+      "y": 698,
+      "w": 495,
+      "h": 1,
+      "color": "#000000",
+      "borderColor": "#000000",
+      "borderWidth": 1,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Projects",
+      "x": 50,
+      "y": 714,
+      "w": 495,
+      "h": 130,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "PROJECTS\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Distributed Cache Library | github.com/you/distcache (2.5K+ stars)\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Open-source distributed cache with consistent hashing, used by 50+ companies\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Tech: Go, gRPC, Raft consensus, Docker\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Real-time Log Analyzer | github.com/you/loganalyzer\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Processes 100GB+ daily logs with anomaly detection using ML\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Tech: Python, Kafka, Elasticsearch, scikit-learn\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Education",
+      "x": 50,
+      "y": 870,
+      "w": 495,
+      "h": 90,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "EDUCATION\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Master of Science in Computer Science | Stanford University | 2017 – 2019\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Specialization: Distributed Systems  |  GPA: 3.9/4.0\n",
+          "attributes": {
+            "size": "10",
+            "color": "#555555",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Bachelor of Engineering in Computer Science | IIT Bombay | 2013 – 2017\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "GPA: 9.2/10  |  Department Rank: 3/120\n",
+          "attributes": {
+            "size": "10",
+            "color": "#555555",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "D4",
+      "x": 50,
+      "y": 970,
+      "w": 495,
+      "h": 1,
+      "color": "#000000",
+      "borderColor": "#000000",
+      "borderWidth": 1,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Certifications",
+      "x": 50,
+      "y": 986,
+      "w": 495,
+      "h": 80,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "CERTIFICATIONS\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• AWS Certified Solutions Architect – Professional | 2024\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Certified Kubernetes Administrator (CKA) | 2023\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Google Cloud Professional Cloud Architect | 2022\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "D5",
+      "x": 50,
+      "y": 1076,
+      "w": 495,
+      "h": 1,
+      "color": "#000000",
+      "borderColor": "#000000",
+      "borderWidth": 1,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Awards",
+      "x": 50,
+      "y": 1092,
+      "w": 495,
+      "h": 80,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "AWARDS & PUBLICATIONS\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Best Paper Award | ACM Symposium on Cloud Computing | 2021\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Hackathon Winner — 1st Place | TechCrunch Disrupt | 2019\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Dean's List | Stanford University | 2017–2019\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "D6",
+      "x": 50,
+      "y": 1182,
+      "w": 495,
+      "h": 1,
+      "color": "#000000",
+      "borderColor": "#000000",
+      "borderWidth": 1,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Languages",
+      "x": 50,
+      "y": 1198,
+      "w": 495,
+      "h": 50,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "LANGUAGES\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "English (Native) | Hindi (Native) | German (Intermediate)\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    }
+  ]
+}
