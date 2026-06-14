@@ -32,6 +32,8 @@ class ViewportFitter {
     final tx = leftW + (viewW - pageW * scale) / 2 - outerPad * scale;
     final ty = appBar + topMargin - pageTop * scale;
 
-    return Matrix4.identity()..translate(tx, ty)..scale(scale, scale);
+    return Matrix4.identity()
+      ..translateByDouble(tx, ty, 0.0, 1.0)
+      ..scaleByDouble(scale, scale, 1.0, 1.0);
   }
 }

@@ -4,6 +4,7 @@
     {
       "type": "rectangle",
       "title": "",
+      "role": "hero",
       "x": 0, "y": 0, "w": 595, "h": 842,
       "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
@@ -12,6 +13,7 @@
     {
       "type": "rectangle",
       "title": "",
+      "role": "hero",
       "x": 0, "y": 680, "w": 595, "h": 6,
       "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
@@ -20,6 +22,7 @@
     {
       "type": "textSection",
       "title": "Proposal Title",
+      "role": "hero",
       "x": 50, "y": 220, "w": 495, "h": 100,
       "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
@@ -34,6 +37,7 @@
     {
       "type": "textSection",
       "title": "Client Info",
+      "role": "hero",
       "x": 50, "y": 380, "w": 495, "h": 80,
       "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
@@ -50,6 +54,7 @@
     {
       "type": "textSection",
       "title": "Author Info",
+      "role": "hero",
       "x": 50, "y": 700, "w": 330, "h": 70,
       "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
@@ -66,6 +71,7 @@
     {
       "type": "textSection",
       "title": "Date",
+      "role": "hero",
       "x": 400, "y": 720, "w": 150, "h": 30,
       "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
@@ -79,6 +85,8 @@
     {
       "type": "textSection",
       "title": "Executive Summary Heading",
+      "role": "heading",
+      "group": "execSummary",
       "x": 50, "y": 892, "w": 495, "h": 35,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
@@ -91,6 +99,8 @@
     {
       "type": "rectangle",
       "title": "",
+      "role": "underline",
+      "group": "execSummary",
       "x": 50, "y": 927, "w": 60, "h": 3,
       "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
@@ -114,6 +124,8 @@
     {
       "type": "textSection",
       "title": "Problem Statement Heading",
+      "role": "heading",
+      "group": "problem",
       "x": 50, "y": 1100, "w": 495, "h": 35,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
@@ -126,6 +138,8 @@
     {
       "type": "rectangle",
       "title": "",
+      "role": "underline",
+      "group": "problem",
       "x": 50, "y": 1135, "w": 60, "h": 3,
       "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
@@ -142,17 +156,19 @@
         {"insert": "[Client Company] currently faces the following challenges:", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
         {"insert": "\n"},
-        {"insert": "•  Challenge one — describe the specific problem or pain point", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\u2022  Challenge one \u2014 describe the specific problem or pain point", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "•  Challenge two — describe the business impact", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\u2022  Challenge two \u2014 describe the business impact", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "•  Challenge three — describe the urgency or opportunity cost", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\u2022  Challenge three \u2014 describe the urgency or opportunity cost", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"}
       ]
     },
     {
       "type": "textSection",
       "title": "Proposed Solution Heading",
+      "role": "heading",
+      "group": "solution",
       "x": 50, "y": 1310, "w": 495, "h": 35,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
@@ -165,6 +181,8 @@
     {
       "type": "rectangle",
       "title": "",
+      "role": "underline",
+      "group": "solution",
       "x": 50, "y": 1345, "w": 60, "h": 3,
       "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
@@ -201,6 +219,8 @@
     {
       "type": "textSection",
       "title": "Deliverables Heading",
+      "role": "heading",
+      "group": "deliverables",
       "x": 50, "y": 1734, "w": 495, "h": 35,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
@@ -213,6 +233,8 @@
     {
       "type": "rectangle",
       "title": "",
+      "role": "underline",
+      "group": "deliverables",
       "x": 50, "y": 1769, "w": 60, "h": 3,
       "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
@@ -244,6 +266,8 @@
     {
       "type": "textSection",
       "title": "Pricing Heading",
+      "role": "heading",
+      "group": "pricing",
       "x": 50, "y": 1960, "w": 495, "h": 35,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
@@ -256,6 +280,8 @@
     {
       "type": "rectangle",
       "title": "",
+      "role": "underline",
+      "group": "pricing",
       "x": 50, "y": 1995, "w": 60, "h": 3,
       "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
@@ -287,6 +313,8 @@
     {
       "type": "textSection",
       "title": "Terms Heading",
+      "role": "heading",
+      "group": "terms",
       "x": 50, "y": 2190, "w": 495, "h": 35,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
@@ -299,6 +327,8 @@
     {
       "type": "rectangle",
       "title": "",
+      "role": "underline",
+      "group": "terms",
       "x": 50, "y": 2225, "w": 60, "h": 3,
       "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
@@ -312,13 +342,13 @@
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
       "delta": [
-        {"insert": "•  Payment: 50% upfront, 50% upon project completion", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\u2022  Payment: 50% upfront, 50% upon project completion", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "•  This proposal is valid for 30 days from the date above", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\u2022  This proposal is valid for 30 days from the date above", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "•  Additional revisions beyond the agreed scope will be billed at $XXX/hour", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\u2022  Additional revisions beyond the agreed scope will be billed at $XXX/hour", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "•  All intellectual property created during this engagement transfers to the client upon final payment", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\u2022  All intellectual property created during this engagement transfers to the client upon final payment", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"}
       ]
     },
@@ -330,12 +360,12 @@
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
       "delta": [
-        {"insert": "Accepted by:", "attributes": {"size": "10", "color": "#76818E"}},
+        {"insert": "Accepted by:", "attributes": {"size": "10", "color": "#0F172A"}},
         {"insert": "\n"},
         {"insert": "\n"},
         {"insert": "____________________________", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "Client Name  |  Date", "attributes": {"size": "10", "color": "#76818E"}},
+        {"insert": "Client Name  |  Date", "attributes": {"size": "10", "color": "#0F172A"}},
         {"insert": "\n"}
       ]
     },
@@ -347,12 +377,12 @@
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
       "delta": [
-        {"insert": "Submitted by:", "attributes": {"size": "10", "color": "#76818E"}},
+        {"insert": "Submitted by:", "attributes": {"size": "10", "color": "#0F172A"}},
         {"insert": "\n"},
         {"insert": "\n"},
         {"insert": "____________________________", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "Your Name  |  Date", "attributes": {"size": "10", "color": "#76818E"}},
+        {"insert": "Your Name  |  Date", "attributes": {"size": "10", "color": "#0F172A"}},
         {"insert": "\n"}
       ]
     }

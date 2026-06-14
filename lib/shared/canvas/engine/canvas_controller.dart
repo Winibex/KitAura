@@ -782,6 +782,8 @@ class CanvasController extends ChangeNotifier {
       borderColor: hexColor(map['borderColor'] as String),
       borderWidth: (map['borderWidth'] as num? ?? 1).toDouble(),
       title: map['title'] as String? ?? '',
+      role: map['role'] as String?,
+      group: map['group'] as String?,
       flipX: map['flipX'] as bool? ?? false,
       flipY: map['flipY'] as bool? ?? false,
       sectionType: map['sectionType'] != null
@@ -856,7 +858,8 @@ class CanvasController extends ChangeNotifier {
     }
 
     autosizeAll(); // ← NEW: size text & tables to real content before paging
-    ReflowEngine.arrange(items, canvasH); // ← NEW: cascade so nothing overlaps
+    ReflowEngine.arrange(items, canvasH);
+    _buildContinuations();
 
     // Auto-calculate page count from item positions
     double maxY = 0;
@@ -882,7 +885,7 @@ class CanvasController extends ChangeNotifier {
   }
 
   Map<String, dynamic> exportTemplateJson() {
-    final itemsList = items.map((item) {
+    final itemsList = items.where((i) => !i.isContinuation).map((item) {
       final map = <String, dynamic>{
         'type': canvasItemTypeToString(item.type),
         'title': item.title,
@@ -898,6 +901,8 @@ class CanvasController extends ChangeNotifier {
         'flipY': item.flipY,
         'sectionType': item.sectionType.key,
       };
+      if (item.role != null) map['role'] = item.role;      // ← ADD
+      if (item.group != null) map['group'] = item.group;   // ← ADD
       if (item.isText && item.controller != null) {
         map['delta'] = item.controller!.document.toDelta().toJson();
       }
@@ -921,6 +926,7 @@ class CanvasController extends ChangeNotifier {
 
     final prev = {for (final i in items) i.id: i.position.dy};
     ReflowEngine.arrange(items, canvasH);
+    _buildContinuations();
 
     int moved = 0; double maxDelta = 0;
     for (final i in items) {
@@ -1262,7 +1268,7 @@ class CanvasController extends ChangeNotifier {
       'status': 'draft',
       'isArchived': false,
       'exportCount': 0,
-      'items': items.map((item) {
+      'items': items.where((i) => !i.isContinuation).map((item) {
         final map = <String, dynamic>{
           'type': canvasItemTypeToString(item.type),
           'title': item.title,
@@ -1278,6 +1284,8 @@ class CanvasController extends ChangeNotifier {
           'flipY': item.flipY,
           'sectionType': item.sectionType.key,
         };
+        if (item.role != null) map['role'] = item.role;      // ← ADD
+        if (item.group != null) map['group'] = item.group;   // ← ADD
         if (item.isText && item.controller != null) {
           map['delta'] = item.controller!.document.toDelta().toJson();
         }
@@ -1295,6 +1303,45 @@ class CanvasController extends ChangeNotifier {
     saveSnapshot();
     selected!.sectionType = newType;
     notifyListeners();
+  }
+
+  /// After reflow, create temporary continuation items for any section that
+  /// overflowed (has overflowOps). These render the leftover text on the next
+  /// page. They are disposable — cleared and rebuilt on every reflow, never saved.
+  void _buildContinuations() {
+    // 1. Remove old continuations.
+    items.removeWhere((i) {
+      if (i.isContinuation) { i.dispose(); return true; }
+      return false;
+    });
+
+    // 2. Create fresh ones for sections that overflowed.
+    final toAdd = <CanvasItem>[];
+    for (final item in items) {
+      if (item.overflowOps == null) continue;
+      final cont = CanvasItem(
+        type: CanvasItemType.textSection,
+        position: Offset(item.position.dx, item.overflowY), // ← use recorded Y
+        width: item.width,
+        height: AutoHeight.measureText(item.overflowOps!, item.width),
+        title: '',
+      );
+      cont.isContinuation = true;
+      debugPrint('➡️ CONTINUATION for "${item.title}" '
+          'at Y=${item.overflowY.toStringAsFixed(0)} '
+          'h=${cont.height.toStringAsFixed(0)} '
+          'origEndsAt=${(item.position.dy + item.height).toStringAsFixed(0)}');
+      // The continuation sits where the engine left the cursor gap. We need
+      // its real Y — recompute from the overflow reservation.
+      try {
+        final sanitized = _sanitizeDelta(item.overflowOps!);
+        cont.controller!.document = Document.fromJson(sanitized);
+      } catch (e) {
+        debugPrint('Continuation build failed: $e');
+      }
+      toAdd.add(cont);
+    }
+    items.addAll(toAdd);
   }
 
 }

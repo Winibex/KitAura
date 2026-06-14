@@ -1,124 +1,212 @@
 // lib/shared/canvas/engine/reflow_engine.dart
 //
-// Repositions content sections after auto-height so they never overlap.
-// Lane-aware (sidebars/main reflow independently), page-break aware (whole
-// blocks drop to the next page rather than straddling). Accent rules ride
-// with their heading; page backgrounds & sidebars are fixed furniture.
-// Mutates items in place. Call autosizeAll() FIRST so heights are correct.
+// Repositions content after auto-height. Engine OWNS all vertical spacing
+// (consistent rhythm), pins role:'hero' items to their original spot, pairs
+// role:'heading' + role:'underline' (same `group`) into atomic blocks, and
+// drops whole blocks to the next page with top+bottom margins (no edge bleed).
+// Mutates items in place. Call autosizeAll() FIRST.
 
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../models/canvas_item.dart';
-import '../../models/canvas_item_type.dart';
+import 'auto_height.dart';
 
 class ReflowEngine {
-  static const double gap = 12;        // min gap enforced between stacked rows
-  static const double topMargin = 50;  // top margin when a block spills to a new page
-  static const double topBandTol = 20; // sections within this top-distance = one row
+  // ── Rhythm constants (the single source of spacing) ──────────────
+  static const double topMargin = 50; // top of every page
+  static const double bottomMargin = 65; // reserved at page bottom (no bleed)
+  static const double headingGap = 8; // heading bottom → underline
+  static const double afterUnderline = 12; // underline bottom → body
+  static const double afterHeadingNoRule = 14; // heading → body (no underline)
+  static const double sectionGap = 22; // between consecutive blocks
+  static const double rowGap = 22; // between side-by-side rows
+  static const double minSplitText = 70; // ~4-5 lines; below this, don't split
 
   static void arrange(List<CanvasItem> items, double pageH) {
     if (items.isEmpty) return;
 
-    final content = items.where((i) => i.isText || i.isTable).toList();
-    if (content.isEmpty) return;
-    final deco = items.where((i) => !(i.isText || i.isTable)).toList();
+    debugPrint('🔧 REFLOW: ${items.length} items | '
+        'heroes=${items.where((i) => i.role == "hero").length} | '
+        'headings=${items.where((i) => i.role == "heading").length} | '
+        'underlines=${items.where((i) => i.role == "underline").length}');
+
+    final usableBottom = pageH - bottomMargin;
 
     bool xOverlap(CanvasItem a, CanvasItem b) =>
         !(a.position.dx + a.width <= b.position.dx ||
             b.position.dx + b.width <= a.position.dx);
 
-    // 1) furniture (never moved): sidebars, page backgrounds, large panels
-    bool isFurniture(CanvasItem d) {
-      if (d.type == CanvasItemType.rectangle) {
-        if (d.height >= 400) return true;
-        if (d.width >= 476 && d.height >= 120) return true;
-      }
-      return false;
+    // Hero items: pinned, never moved, not part of flow.
+    final heroes = items.where((i) => i.role == 'hero').toSet();
+
+    // Underlines are positioned relative to their heading, not flowed alone.
+    final underlines = <String, CanvasItem>{}; // group -> underline
+    for (final i in items) {
+      if (i.role == 'underline' && i.group != null) underlines[i.group!] = i;
     }
 
-    // 2) attach small decorations (accent rules, dividers) to the section above
-    final attached = <String, List<_Attached>>{};
-    for (final d in deco) {
-      if (isFurniture(d)) continue;
-      CanvasItem? host;
-      double bestTop = -1e9;
-      for (final s in content) {
-        if (!xOverlap(d, s)) continue;
-        final sTop = s.position.dy, sBot = s.position.dy + s.height;
-        if (d.position.dy >= sTop - 4 && d.position.dy <= sBot + 16 && sTop > bestTop) {
-          bestTop = sTop;
-          host = s;
-        }
-      }
-      if (host != null) {
-        attached.putIfAbsent(host.id, () => [])
-            .add(_Attached(d, d.position.dy - host.position.dy));
-      }
-    }
+    // Flowing content = text/table that isn't hero and isn't an underline.
+    final flow = items
+        .where(
+          (i) =>
+              !heroes.contains(i) &&
+              i.role != 'underline' &&
+              (i.isText || i.isTable),
+        )
+        .toList();
+    if (flow.isEmpty) return;
 
-    // 3) lanes = connected components of content by x-overlap (union-find)
-    final n = content.length;
-    final parent = List<int>.generate(n, (i) => i);
-    int find(int x) { while (parent[x] != x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; }
-    for (int i = 0; i < n; i++) {
-      for (int j = i + 1; j < n; j++) {
-        if (xOverlap(content[i], content[j])) parent[find(i)] = find(j);
-      }
-    }
-    final lanes = <int, List<CanvasItem>>{};
-    for (int i = 0; i < n; i++) {
-      lanes.putIfAbsent(find(i), () => []).add(content[i]);
-    }
+    // Keep document order (array order = intended reading order).
+    // Stable: sort by current Y as a tiebreak so loaded docs behave.
+    flow.sort((a, b) => a.position.dy.compareTo(b.position.dy));
 
-    // 4) reflow each lane
-    for (final lane in lanes.values) {
-      lane.sort((a, b) => a.position.dy.compareTo(b.position.dy));
-
-      // rows: a section joins a row ONLY if it sits BESIDE the members
-      // (vertical overlap but NO x-overlap → true side-by-side, e.g. signatures).
-      // If it x-overlaps (same column), it's stacked → its own row → gets pushed.
-      final rows = <List<CanvasItem>>[];
-      for (final s in lane) {
-        final sTop = s.position.dy, sBot = s.position.dy + s.height;
-        List<CanvasItem>? hit;
-        for (final row in rows) {
-          final rTop = row.map((e) => e.position.dy).reduce(math.min);
-          final rBot = row.map((e) => e.position.dy + e.height).reduce(math.max);
-          final vOverlap = sTop < rBot - 2 && sBot > rTop + 2;
-          if (vOverlap && row.every((e) => !xOverlap(s, e))) { hit = row; break; }
-        }
-        if (hit != null) { hit.add(s); } else { rows.add([s]); }
-      }
-      rows.sort((a, b) => a.map((e) => e.position.dy).reduce(math.min)
-          .compareTo(b.map((e) => e.position.dy).reduce(math.min)));
-
-      double cursor = -1e9;
+    // Group flow items into ROWS: items that are truly side-by-side
+    // (vertical overlap AND no x-overlap, e.g. the two signatures).
+    final rows = <List<CanvasItem>>[];
+    for (final s in flow) {
+      final sTop = s.position.dy, sBot = s.position.dy + s.height;
+      List<CanvasItem>? hit;
       for (final row in rows) {
-        final rowTop = row.map((s) => s.position.dy).reduce(math.min);
-        final rowH = row.map((s) => s.position.dy + s.height).reduce(math.max) - rowTop;
-        double newTop = math.max(rowTop, cursor);
+        final rTop = row.map((e) => e.position.dy).reduce(math.min);
+        final rBot = row.map((e) => e.position.dy + e.height).reduce(math.max);
+        final vOverlap = sTop < rBot - 2 && sBot > rTop + 2;
+        if (vOverlap && row.every((e) => !xOverlap(s, e))) {
+          hit = row;
+          break;
+        }
+      }
+      if (hit != null) {
+        hit.add(s);
+      } else {
+        rows.add([s]);
+      }
+    }
 
-        final startPage = (newTop / pageH).floor();
-        final endPage = ((newTop + rowH - 1) / pageH).floor();
-        if (endPage > startPage) newTop = endPage * pageH + topMargin;
+    // Walk rows top-to-bottom, assigning fresh positions with fixed rhythm.
+    // If hero items exist, they own page 1 — content starts on page 2.
+    double cursor = heroes.isNotEmpty ? pageH + topMargin : topMargin;
 
-        final delta = newTop - rowTop;
-        if (delta.abs() > 0.01) {
-          for (final s in row) {
-            s.position = Offset(s.position.dx, s.position.dy + delta);
-            for (final a in attached[s.id] ?? const <_Attached>[]) {
-              a.deco.position = Offset(a.deco.position.dx, s.position.dy + a.offsetY);
-            }
+    for (final row in rows) {
+      final isHeadingRow = row.length == 1 && row.first.role == 'heading';
+      final heading = isHeadingRow ? row.first : null;
+      final underline = heading != null ? underlines[heading.group] : null;
+
+      // Height of this block (heading + its underline counts as one unit).
+      double blockH;
+      if (heading != null) {
+        blockH =
+            heading.height +
+            (underline != null ? headingGap + underline.height : 0);
+      } else {
+        blockH = row.map((s) => s.height).reduce(math.max);
+      }
+
+      // Page-fit: if the block would cross the usable bottom, push to next page.
+      // EXCEPTION: single text sections handle their own page-fit via splitting
+      // below, so don't pre-push them here.
+      final isSplittableText = row.length == 1 &&
+          row.first.isText &&
+          row.first.role != 'heading';
+      if (!isSplittableText) {
+        final pageOfTop = (cursor / pageH).floor();
+        final blockBottom = cursor + blockH;
+        final pageBottomLimit = pageOfTop * pageH + usableBottom;
+        if (blockBottom > pageBottomLimit) {
+          cursor = (pageOfTop + 1) * pageH + topMargin;
+        }
+      }
+
+      // For a heading: also make sure the NEXT row (its body) has room on the
+      // same page — prevents an orphaned heading at the page bottom.
+      if (heading != null) {
+        final idx = rows.indexOf(row);
+        if (idx + 1 < rows.length) {
+          final next = rows[idx + 1];
+          final nextItem = next.first;
+          final minBody = nextItem.isTable ? 90.0 : 75.0;
+          final wantBottom = cursor + blockH + afterUnderline + minBody;
+          final limit = (cursor / pageH).floor() * pageH + usableBottom;
+          debugPrint('📐 HEADING "${heading.title}" @cursor=${cursor.toStringAsFixed(0)} '
+              'wantBottom=${wantBottom.toStringAsFixed(0)} limit=${limit.toStringAsFixed(0)} '
+              'willDrop=${wantBottom > limit} nextIsTable=${nextItem.isTable}');
+          if (wantBottom > limit) {
+            cursor = ((cursor / pageH).floor() + 1) * pageH + topMargin;
           }
         }
-        cursor = newTop + rowH + gap;
+      }
+
+      // Place the row at `cursor`.
+      if (heading != null) {
+        heading.position = Offset(heading.position.dx, cursor);
+        if (underline != null) {
+          underline.position = Offset(
+            underline.position.dx,
+            cursor + heading.height + headingGap,
+          );
+        }
+        cursor +=
+            blockH + (underline != null ? afterUnderline : afterHeadingNoRule);
+      } else if (row.length == 1 && row.first.isText) {
+        // Single text section — may need to split across the page boundary.
+        final s = row.first;
+        s.overflowOps = null; // reset any previous split
+
+        debugPrint('🔎 ENTER TEXT "${s.title}" pos.dy=${s.position.dy.toStringAsFixed(0)} '
+            'cursor=${cursor.toStringAsFixed(0)} h=${s.height.toStringAsFixed(0)}');
+
+        final pageOfTop = (cursor / pageH).floor();
+        final pageBottom = pageOfTop * pageH + usableBottom;
+        final fitsHere = cursor + s.height <= pageBottom;
+        debugPrint('📄 TEXT "${s.title}" h=${s.height.toStringAsFixed(0)} '
+            '@cursor=${cursor.toStringAsFixed(0)} pageBottom=${pageBottom.toStringAsFixed(0)} '
+            'fitsHere=$fitsHere');
+
+        if (fitsHere) {
+          s.position = Offset(s.position.dx, cursor);
+          cursor += s.height + sectionGap;
+        } else {
+          // Measure paragraphs to find how many fit before pageBottom.
+          final paras = AutoHeight.measureParagraphs(
+              s.controller!.document.toDelta().toJson(), s.width);
+          final avail = pageBottom - cursor;
+
+          final safeAvail = avail - 10; // small cushion so text doesn't kiss margin
+          double acc = 0;
+          int fitCount = 0;
+          for (int i = 0; i < paras.length; i++) {
+            final ph = paras[i].height +
+                (i > 0 ? AutoHeight.paragraphSpacing : 0);
+            if (acc + ph > safeAvail) break;
+            acc += ph;
+            fitCount++;
+          }
+
+          if (acc >= minSplitText && fitCount >= 1 && fitCount < paras.length) {
+            debugPrint('✂️ SPLIT "${s.title}" acc=${acc.toStringAsFixed(0)} '
+                'fitCount=$fitCount/${paras.length}');
+            final (firstOps, secondOps) =
+            AutoHeight.splitParagraphs(paras, fitCount);
+            s.position = Offset(s.position.dx, cursor);
+            s.height = acc + AutoHeight.textVPad;
+            s.overflowOps = secondOps;
+            // Continuation goes to top of next page.
+            final contY = (pageOfTop + 1) * pageH + topMargin;
+            s.overflowY = contY;                    // ← record it
+            final contH = AutoHeight.measureText(secondOps, s.width);
+            cursor = contY + contH + sectionGap;
+          } else {
+            // Can't fit even one paragraph → push whole section to next page.
+            cursor = (pageOfTop + 1) * pageH + topMargin;
+            s.position = Offset(s.position.dx, cursor);
+            cursor += s.height + sectionGap;
+          }
+        }
+      } else {
+        for (final s in row) {
+          s.position = Offset(s.position.dx, cursor);
+        }
+        cursor += blockH + sectionGap;
       }
     }
   }
-}
-
-class _Attached {
-  final CanvasItem deco;
-  final double offsetY;
-  _Attached(this.deco, this.offsetY);
 }

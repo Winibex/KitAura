@@ -429,7 +429,7 @@ class _PropTemplatePreviewModalState extends State<PropTemplatePreviewModal> {
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: _pages.length,
-                      separatorBuilder: (_, __) =>
+                      separatorBuilder: (_, _) =>
                       const SizedBox(width: 10),
                       itemBuilder: (_, idx) {
                         final isActive = idx == _currentPage;

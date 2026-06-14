@@ -76,10 +76,10 @@ class TableData {
   Map<String, dynamic> toJson() => {
     'headers': headers,
     'rows': rows.map((r) => {'cells': List<String>.from(r)}).toList(),
-    'headerBgColor': '#${headerBgColor.value.toRadixString(16).padLeft(8, '0').substring(2)}',
-    'headerTextColor': '#${headerTextColor.value.toRadixString(16).padLeft(8, '0').substring(2)}',
-    'cellTextColor': '#${cellTextColor.value.toRadixString(16).padLeft(8, '0').substring(2)}',
-    'borderColor': '#${borderColor.value.toRadixString(16).padLeft(8, '0').substring(2)}',
+    'headerBgColor': '#${headerBgColor.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}',
+    'headerTextColor': '#${headerTextColor.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}',
+    'cellTextColor': '#${cellTextColor.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}',
+    'borderColor': '#${borderColor.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}',
     'fontSize': fontSize,
     'showHeader': showHeader,
   };

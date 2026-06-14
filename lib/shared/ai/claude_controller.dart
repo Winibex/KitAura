@@ -578,23 +578,31 @@ class ClaudeController extends StateNotifier<ClaudeState> {
     // Only text + table sections are fillable. Each gets a stable id so
     // the AI can target it (two pricing tables won't collide).
     final manifest = <Map<String, dynamic>>[];
+    final keyToItem = <String, CanvasItem>{}; // NEW: maps slot key → item
+    int slot = 0;
     for (final item in items) {
       if (item.isText && item.controller != null) {
+        final key = 's$slot';
+        keyToItem[key] = item;
         manifest.add({
-          'id': item.id,
+          'id': key,
           'sectionType': item.sectionType.key,
           'title': item.title,
           'kind': 'text',
         });
+        slot++;
       } else if (item.isTable && item.tableData != null) {
+        final key = 's$slot';
+        keyToItem[key] = item;
         manifest.add({
-          'id': item.id,
+          'id': key,
           'sectionType': item.sectionType.key,
           'title': item.title,
           'kind': 'table',
           'headers': item.tableData!.headers,
           'columnCount': item.tableData!.columnCount,
         });
+        slot++;
       }
     }
 
@@ -632,17 +640,19 @@ class ClaudeController extends StateNotifier<ClaudeState> {
         return;
       }
 
-      // ── Apply, keyed by item id ───────────────────────────────────
+      debugPrint('🤖 [Proposal] returned keys: ${content.keys.toList()}');
+      debugPrint('🤖 [Proposal] expected keys: ${keyToItem.keys.toList()}');
+
+      // ── Apply, keyed by slot ──────────────────────────────────────
       int filled = 0;
-      for (final item in items) {
-        final sec = content[item.id];
-        if (sec is! Map) continue;
+      content.forEach((key, sec) {
+        final item = keyToItem[key];
+        if (item == null || sec is! Map) return;
         final map = Map<String, dynamic>.from(sec);
         final kind = map['kind'] as String?;
 
         try {
           if (item.isText && item.controller != null && kind != 'table') {
-            // Reuse the exact CV/CL text-apply path (style-preserving)
             final styles = _extractStyles(item.controller!.document);
             item.controller!.updateSelection(
                 const TextSelection.collapsed(offset: 0), ChangeSource.local);
@@ -652,16 +662,15 @@ class ClaudeController extends StateNotifier<ClaudeState> {
           } else if (item.isTable && item.tableData != null && kind == 'table') {
             final newRows = _coerceRows(map['rows'], item.tableData!.columnCount);
             if (newRows.isNotEmpty) {
-              item.tableData!.rows = newRows; // keep headers + styling
+              item.tableData!.rows = newRows;
               filled++;
             }
           }
         } catch (e) {
-          debugPrint('🤖 [ClaudeController] Apply failed for ${item.id}: $e');
+          debugPrint('🤖 [ClaudeController] Apply failed for $key: $e');
         }
-      }
+      });
 
-      // Re-measure heights + reflow so freshly-filled content fits & repages
       editor.canvas.autoArrange();
       editor.markDirty();
 

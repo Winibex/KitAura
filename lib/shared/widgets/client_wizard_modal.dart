@@ -81,6 +81,10 @@ class _ClientWizardModalState extends State<ClientWizardModal> {
   List<String> _channels = [];
   final _targetAudience = TextEditingController();
 
+  final Map<int, Map<String, TextEditingController>> _milestoneCtrls = {};
+  final Map<int, Map<String, TextEditingController>> _deliverableCtrls = {};
+  final Map<int, Map<String, TextEditingController>> _lineItemCtrls = {};
+
   @override
   void initState() {
     super.initState();
@@ -127,6 +131,11 @@ class _ClientWizardModalState extends State<ClientWizardModal> {
       _targetAudience,
     ]) {
       c.dispose();
+    }
+    for (final m in [..._milestoneCtrls.values, ..._deliverableCtrls.values, ..._lineItemCtrls.values]) {
+      for (final c in m.values) {
+        c.dispose();
+      }
     }
     super.dispose();
   }
@@ -414,8 +423,10 @@ class _ClientWizardModalState extends State<ClientWizardModal> {
   }
 
   Widget _deliverableCard(int index, DeliverableEntry entry) {
-    final nameCtrl = TextEditingController(text: entry.name);
-    final descCtrl = TextEditingController(text: entry.description ?? '');
+    final ctrls = _deliverableCtrls.putIfAbsent(index, () => {
+      'name': TextEditingController(text: entry.name),
+      'desc': TextEditingController(text: entry.description ?? ''),
+    });
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -429,25 +440,32 @@ class _ClientWizardModalState extends State<ClientWizardModal> {
           Row(children: [
             Expanded(
               child: TextField(
-                controller: nameCtrl,
-                onChanged: (v) => _deliverables[index] = entry.copyWith(name: v),
+                controller: ctrls['name'],
+                onChanged: (v) => _deliverables[index] = _deliverables[index].copyWith(name: v),
                 style: _inputStyle(),
                 decoration: _inputDeco('Deliverable name'),
               ),
             ),
             const SizedBox(width: 8),
-            _removeIconButton(() => setState(() => _deliverables.removeAt(index))),
+            _removeIconButton(() => _removeDeliverable(index)),
           ]),
           const SizedBox(height: 8),
           TextField(
-            controller: descCtrl,
-            onChanged: (v) => _deliverables[index] = entry.copyWith(description: v),
+            controller: ctrls['desc'],
+            onChanged: (v) => _deliverables[index] = _deliverables[index].copyWith(description: v),
             style: _inputStyle(),
             decoration: _inputDeco('Description (optional)'),
           ),
         ],
       ),
     );
+  }
+
+  void _removeDeliverable(int index) {
+    setState(() {
+      _deliverables.removeAt(index);
+      _deliverableCtrls.clear();
+    });
   }
 
   // ── STEP 4: Timeline ────────────────────────────────────────────
@@ -473,9 +491,11 @@ class _ClientWizardModalState extends State<ClientWizardModal> {
   }
 
   Widget _milestoneCard(int index, MilestoneEntry entry) {
-    final titleCtrl = TextEditingController(text: entry.title);
-    final dateCtrl = TextEditingController(text: entry.date ?? '');
-    final descCtrl = TextEditingController(text: entry.description ?? '');
+    final ctrls = _milestoneCtrls.putIfAbsent(index, () => {
+      'title': TextEditingController(text: entry.title),
+      'date': TextEditingController(text: entry.date ?? ''),
+      'desc': TextEditingController(text: entry.description ?? ''),
+    });
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -490,8 +510,8 @@ class _ClientWizardModalState extends State<ClientWizardModal> {
             Expanded(
               flex: 3,
               child: TextField(
-                controller: titleCtrl,
-                onChanged: (v) => _milestones[index] = entry.copyWith(title: v),
+                controller: ctrls['title'],
+                onChanged: (v) => _milestones[index] = _milestones[index].copyWith(title: v),
                 style: _inputStyle(),
                 decoration: _inputDeco('Milestone title'),
               ),
@@ -500,25 +520,32 @@ class _ClientWizardModalState extends State<ClientWizardModal> {
             Expanded(
               flex: 2,
               child: TextField(
-                controller: dateCtrl,
-                onChanged: (v) => _milestones[index] = entry.copyWith(date: v),
+                controller: ctrls['date'],
+                onChanged: (v) => _milestones[index] = _milestones[index].copyWith(date: v),
                 style: _inputStyle(),
                 decoration: _inputDeco('Date'),
               ),
             ),
             const SizedBox(width: 8),
-            _removeIconButton(() => setState(() => _milestones.removeAt(index))),
+            _removeIconButton(() => _removeMilestone(index)),
           ]),
           const SizedBox(height: 8),
           TextField(
-            controller: descCtrl,
-            onChanged: (v) => _milestones[index] = entry.copyWith(description: v),
+            controller: ctrls['desc'],
+            onChanged: (v) => _milestones[index] = _milestones[index].copyWith(description: v),
             style: _inputStyle(),
             decoration: _inputDeco('Description (optional)'),
           ),
         ],
       ),
     );
+  }
+
+  void _removeMilestone(int index) {
+    setState(() {
+      _milestones.removeAt(index);
+      _milestoneCtrls.clear(); // indices shifted — rebuild lazily via putIfAbsent
+    });
   }
 
   // ── STEP 5: Budget ──────────────────────────────────────────────
@@ -545,10 +572,12 @@ class _ClientWizardModalState extends State<ClientWizardModal> {
   }
 
   Widget _lineItemCard(int index, LineItemEntry entry) {
-    final itemCtrl = TextEditingController(text: entry.item);
-    final descCtrl = TextEditingController(text: entry.description ?? '');
-    final amtCtrl = TextEditingController(
-        text: entry.amount != null ? entry.amount!.toStringAsFixed(2) : '');
+    final ctrls = _lineItemCtrls.putIfAbsent(index, () => {
+      'item': TextEditingController(text: entry.item),
+      'desc': TextEditingController(text: entry.description ?? ''),
+      'amount': TextEditingController(
+          text: entry.amount != null ? entry.amount!.toStringAsFixed(2) : ''),
+    });
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -561,8 +590,8 @@ class _ClientWizardModalState extends State<ClientWizardModal> {
         Expanded(
           flex: 3,
           child: TextField(
-            controller: itemCtrl,
-            onChanged: (v) => _lineItems[index] = entry.copyWith(item: v),
+            controller: ctrls['item'],
+            onChanged: (v) => _lineItems[index] = _lineItems[index].copyWith(item: v),
             style: _inputStyle(),
             decoration: _inputDeco('Item name'),
           ),
@@ -571,8 +600,8 @@ class _ClientWizardModalState extends State<ClientWizardModal> {
         Expanded(
           flex: 3,
           child: TextField(
-            controller: descCtrl,
-            onChanged: (v) => _lineItems[index] = entry.copyWith(description: v),
+            controller: ctrls['desc'],
+            onChanged: (v) => _lineItems[index] = _lineItems[index].copyWith(description: v),
             style: _inputStyle(),
             decoration: _inputDeco('Description'),
           ),
@@ -581,18 +610,25 @@ class _ClientWizardModalState extends State<ClientWizardModal> {
         Expanded(
           flex: 2,
           child: TextField(
-            controller: amtCtrl,
+            controller: ctrls['amount'],
             onChanged: (v) => _lineItems[index] =
-                entry.copyWith(amount: double.tryParse(v)),
+                _lineItems[index].copyWith(amount: double.tryParse(v)),
             style: _inputStyle(),
             keyboardType: TextInputType.number,
             decoration: _inputDeco('Amount'),
           ),
         ),
         const SizedBox(width: 8),
-        _removeIconButton(() => setState(() => _lineItems.removeAt(index))),
+        _removeIconButton(() => _removeLineItem(index)),
       ]),
     );
+  }
+
+  void _removeLineItem(int index) {
+    setState(() {
+      _lineItems.removeAt(index);
+      _lineItemCtrls.clear();
+    });
   }
 
   // ── STEP 6: Additional Context ──────────────────────────────────

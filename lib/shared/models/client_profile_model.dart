@@ -482,7 +482,7 @@ class ClientProfileModel {
       specialRequirements: specialRequirements ?? this.specialRequirements,
       customNotes: customNotes ?? this.customNotes,
       typeSpecific: typeSpecific ?? this.typeSpecific,
-      createdAt: this.createdAt,
+      createdAt: createdAt,
       updatedAt: DateTime.now(),
     );
   }

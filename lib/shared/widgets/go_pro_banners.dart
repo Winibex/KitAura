@@ -32,16 +32,10 @@ import '../ai/claude_service.dart';
 class _ShimmerCta extends StatefulWidget {
   final String label;
   final VoidCallback onTap;
-  final Color textColor;
-  final Color bgColor;
-  final Color shimmerColor;
 
   const _ShimmerCta({
     required this.label,
     required this.onTap,
-    this.textColor = AppColors.darkRaspberry,
-    this.bgColor = AppColors.white,
-    this.shimmerColor = const Color(0x33FFFFFF),
   });
 
   @override
@@ -50,6 +44,10 @@ class _ShimmerCta extends StatefulWidget {
 
 class _ShimmerCtaState extends State<_ShimmerCta> with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
+
+  final Color textColor = AppColors.darkRaspberry;
+  final Color bgColor = AppColors.white;
+  final Color shimmerColor = const Color(0x33FFFFFF);
 
   @override
   void initState() {
@@ -78,11 +76,11 @@ class _ShimmerCtaState extends State<_ShimmerCta> with SingleTickerProviderState
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               decoration: BoxDecoration(
-                color: widget.bgColor,
+                color: bgColor,
                 borderRadius: BorderRadius.circular(999),
                 boxShadow: [
                   BoxShadow(
-                    color: widget.bgColor.withValues(alpha: 0.3),
+                    color: bgColor.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -105,7 +103,7 @@ class _ShimmerCtaState extends State<_ShimmerCta> with SingleTickerProviderState
                             gradient: LinearGradient(
                               colors: [
                                 Colors.transparent,
-                                widget.shimmerColor,
+                                shimmerColor,
                                 Colors.transparent,
                               ],
                             ),
@@ -117,7 +115,7 @@ class _ShimmerCtaState extends State<_ShimmerCta> with SingleTickerProviderState
                   Text(
                     widget.label,
                     style: TextStyle(
-                      color: widget.textColor,
+                      color: textColor,
                       fontSize: 13,
                       fontFamily: AppFonts.poppins,
                       fontWeight: FontWeight.w600,
@@ -141,13 +139,11 @@ class _PulsingIcon extends StatefulWidget {
   final IconData icon;
   final Color color;
   final Color glowColor;
-  final double size;
 
   const _PulsingIcon({
     required this.icon,
     required this.color,
     required this.glowColor,
-    this.size = 22,
   });
 
   @override
@@ -156,6 +152,7 @@ class _PulsingIcon extends StatefulWidget {
 
 class _PulsingIconState extends State<_PulsingIcon> with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
+  final double size = 22;
 
   @override
   void initState() {
@@ -185,7 +182,7 @@ class _PulsingIconState extends State<_PulsingIcon> with SingleTickerProviderSta
             color: widget.glowColor.withValues(alpha: glow),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(widget.icon, size: widget.size, color: widget.color),
+          child: Icon(widget.icon, size: size, color: widget.color),
         );
       },
     );
@@ -199,16 +196,16 @@ class _PulsingIconState extends State<_PulsingIcon> with SingleTickerProviderSta
 class _FeatureChip extends StatelessWidget {
   final IconData icon;
   final String label;
-  final Color color;
 
   const _FeatureChip({
     required this.icon,
     required this.label,
-    this.color = AppColors.white,
   });
 
   @override
   Widget build(BuildContext context) {
+    final Color color = AppColors.white;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(

@@ -115,7 +115,7 @@ class PropEditorController extends ChangeNotifier {
       state = state.copyWith(title: 'Untitled Proposal');
       canvas.init();
     } else if (info != null) {
-      state = state.copyWith(title: '${info.label}');
+      state = state.copyWith(title: info.label);
       final json = await PropTemplateData.loadTemplateJson(docId);
       canvas.applyTemplateJson(json);
     } else {

@@ -5,7 +5,6 @@
 
 import 'dart:convert';
 import 'dart:js_interop';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,9 +29,7 @@ import '../../../../shared/canvas/engine/canvas_item_widget.dart';
 import '../../../../shared/canvas/engine/shape_painter.dart';
 import '../../../../shared/canvas/engine/snap_guide.dart';
 import '../../../../shared/canvas/engine/viewport_fitter.dart';
-import '../../../../shared/models/ai_profile_model.dart';
 import '../../../../shared/models/canvas_item.dart';
-import '../../../../shared/services/firebase_service.dart';
 import '../../../cv/editor/view/spellcheck_panel.dart';
 import '../../../settings/view/upgrade_modal.dart';
 import '../../dashboard/controller/prop_dashboard_controller.dart';
