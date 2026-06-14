@@ -20,7 +20,7 @@
     {
       "type": "textSection",
       "title": "Header",
-      "x": 50, "y": 30, "w": 330, "h": 55,
+      "x": 50, "y": 30, "w": 330, "h": 60,
       "color": "#FFF1F5", "borderColor": "#FFF1F5", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -34,7 +34,7 @@
     {
       "type": "textSection",
       "title": "Contact",
-      "x": 380, "y": 35, "w": 175, "h": 50,
+      "x": 380, "y": 35, "w": 175, "h": 61,
       "color": "#FFF1F5", "borderColor": "#FFF1F5", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -64,7 +64,7 @@
     {
       "type": "textSection",
       "title": "Project Title",
-      "x": 50, "y": 190, "w": 495, "h": 50,
+      "x": 50, "y": 190, "w": 495, "h": 64,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -90,7 +90,7 @@
     {
       "type": "textSection",
       "title": "Understanding",
-      "x": 50, "y": 300, "w": 495, "h": 100,
+      "x": 50, "y": 300, "w": 495, "h": 166,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -123,7 +123,7 @@
     {
       "type": "textSection",
       "title": "Approach",
-      "x": 50, "y": 460, "w": 495, "h": 130,
+      "x": 50, "y": 460, "w": 495, "h": 240,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -162,7 +162,7 @@
     {
       "type": "tableSection",
       "title": "Deliverables Table",
-      "x": 50, "y": 655, "w": 495, "h": 120,
+      "x": 50, "y": 655, "w": 495, "h": 147,
       "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -198,7 +198,7 @@
     {
       "type": "tableSection",
       "title": "Pricing Table",
-      "x": 50, "y": 897, "w": 495, "h": 120,
+      "x": 50, "y": 897, "w": 495, "h": 147,
       "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -245,7 +245,7 @@
     {
       "type": "textSection",
       "title": "Next Steps",
-      "x": 50, "y": 1143, "w": 495, "h": 100,
+      "x": 50, "y": 1143, "w": 495, "h": 156,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -275,7 +275,7 @@
     {
       "type": "textSection",
       "title": "Signature",
-      "x": 50, "y": 1300, "w": 220, "h": 70,
+      "x": 50, "y": 1300, "w": 220, "h": 84,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -292,7 +292,7 @@
     {
       "type": "textSection",
       "title": "Freelancer Signature",
-      "x": 325, "y": 1300, "w": 220, "h": 70,
+      "x": 325, "y": 1300, "w": 220, "h": 84,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",

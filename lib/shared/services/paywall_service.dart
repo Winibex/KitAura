@@ -80,7 +80,8 @@ class PaywallService {
       _checkUsageLimit('aiRewriteCount', 'aiRewritePerMonth', 'AI rewrites this month');
 
   static Future<PaywallResult> _checkDocLimit(
-      String counterField, String limitField, String label) async {
+      String counterField, String limitField, String label) async
+  {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return const PaywallResult(allowed: false, message: 'Not signed in');
 
@@ -112,7 +113,8 @@ class PaywallService {
   }
 
   static Future<PaywallResult> _checkUsageLimit(
-      String counterField, String limitField, String label) async {
+      String counterField, String limitField, String label) async
+  {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return const PaywallResult(allowed: false, message: 'Not signed in');
 

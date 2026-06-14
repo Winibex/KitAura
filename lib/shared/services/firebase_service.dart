@@ -574,6 +574,46 @@ class FirebaseService {
       await _proposalsCollection(uid).orderBy('updatedAt', descending: true).get();
 
   // ===========================================================================
+  // CLIENT PROFILES — users/{uid}/clientProfiles/{clientId}
+  // ===========================================================================
+
+  static CollectionReference _clientProfilesCollection(String uid) =>
+      _userDoc(uid).collection('clientProfiles');
+
+  static Future<QuerySnapshot> getClientProfiles(String uid) async =>
+      await _clientProfilesCollection(uid)
+          .orderBy('updatedAt', descending: true)
+          .get();
+
+  static Future<DocumentSnapshot> getClientProfileById(
+      String uid, String clientId) async =>
+      await _clientProfilesCollection(uid).doc(clientId).get();
+
+  static Future<DocumentReference> createClientProfile(
+      String uid, Map<String, dynamic> data) async =>
+      await _clientProfilesCollection(uid).add(data);
+
+  static Future<void> updateClientProfile(
+      String uid, String clientId, Map<String, dynamic> data) async =>
+      await _clientProfilesCollection(uid).doc(clientId).update(data);
+
+  static Future<String> saveClientProfile(
+      String uid, Map<String, dynamic> data, {String? clientId}) async {
+    if (clientId != null) {
+      await _clientProfilesCollection(uid)
+          .doc(clientId)
+          .set(data, SetOptions(merge: true));
+      return clientId;
+    } else {
+      final ref = await createClientProfile(uid, data);
+      return ref.id;
+    }
+  }
+
+  static Future<void> deleteClientProfile(String uid, String clientId) async =>
+      await _clientProfilesCollection(uid).doc(clientId).delete();
+
+  // ===========================================================================
   // LINKEDIN SUMMARIES — users/{uid}/linkedinSummaries/{id}
   // ===========================================================================
 

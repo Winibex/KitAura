@@ -30,6 +30,7 @@ import '../../../../shared/canvas/engine/canvas_controller.dart';
 import '../../../../shared/canvas/engine/canvas_item_widget.dart';
 import '../../../../shared/canvas/engine/shape_painter.dart';
 import '../../../../shared/canvas/engine/snap_guide.dart';
+import '../../../../shared/canvas/engine/viewport_fitter.dart';
 import '../../../../shared/models/ai_profile_model.dart';
 import '../../../../shared/models/canvas_item.dart';
 import '../../../../shared/services/firebase_service.dart';
@@ -93,7 +94,7 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
           _rightPanelOpen = false;
           // Auto-fit canvas to screen width
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) _fitToScreen();
+            if (mounted) _fitToPage();
           });
         }
         setState(() {});
@@ -248,12 +249,19 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
 
   // ─── Zoom Functions ─────────────────────
 
-  void _fitToScreen() {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final canvasWidth = CanvasController.canvasW + 64; // 32px padding each side
-    final scale = (screenWidth / canvasWidth).clamp(0.3, 1.0);
-    _zoomCtrl.value = Matrix4.diagonal3Values(scale, scale, 1.0);
-    setState(() => _currentZoom = scale);
+  void _fitToPage([int? page]) {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null) return;
+    final m = ViewportFitter.fitToPage(
+      viewportSize: box.size,
+      page: page ?? _canvas.currentPage,
+      leftOpen: _leftPanelOpen,
+      rightOpen: _rightPanelOpen,
+      isMobile: _isMobile,
+    );
+    if (m == null) return;
+    _zoomCtrl.value = m;
+    setState(() => _currentZoom = m.getMaxScaleOnAxis());
   }
 
   void _zoomIn() {
@@ -416,7 +424,7 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           child: GestureDetector(
-                            onTap: _fitToScreen,
+                            onTap: _fitToPage,
                             child: Text(
                               '${(_currentZoom * 100).round()}%',
                               style: const TextStyle(
@@ -428,6 +436,7 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
                             ),
                           ),
                         ),
+                        _zoomBtn(LucideIcons.maximize, () => _fitToPage()),
                         _zoomBtn(LucideIcons.plus, _zoomIn),
                       ],
                     ),
@@ -857,6 +866,7 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
                 child: GestureDetector(
                   onTap: () {
                     _canvas.goToPage(i);
+                    _fitToPage(i);
                     _verticalScrollCtrl.animateTo(
                       i * (CanvasController.canvasH + 24) + 32,
                       duration: const Duration(milliseconds: 300),

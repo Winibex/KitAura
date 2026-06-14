@@ -45,8 +45,8 @@ class PropTemplateData {
       assetPath: 'assets/prop_templates/prop_project.json',
       isPremium: false,
       sortOrder: 2,
-      description: 'Technical project-focused layout with sections for '
-          'objectives, deliverables, milestones, and budget breakdown. '
+      description: 'Technical project-focused layout with objectives, '
+          'deliverables, milestones, and budget breakdown. '
           'Best for IT, engineering, and development projects.',
     ),
     PropTemplateInfo(
@@ -61,12 +61,34 @@ class PropTemplateData {
           'Perfect for designers, developers, writers, and consultants.',
     ),
     PropTemplateInfo(
+      id: 'prop_product',
+      label: 'Product Catalog',
+      category: 'product',
+      assetPath: 'assets/prop_templates/prop_product.json',
+      isPremium: false,
+      sortOrder: 4,
+      description: 'Product quotation with detailed specs, quantities, '
+          'unit pricing, and totals. Includes warranty and delivery terms. '
+          'Ideal for manufacturers, distributors, and suppliers.',
+    ),
+    PropTemplateInfo(
+      id: 'prop_service',
+      label: 'Service Agreement',
+      category: 'service',
+      assetPath: 'assets/prop_templates/prop_service.json',
+      isPremium: false,
+      sortOrder: 5,
+      description: 'Ongoing service contract with SLA tables, pricing tiers, '
+          'and clear responsibilities. Perfect for maintenance, support, '
+          'and managed service providers.',
+    ),
+    PropTemplateInfo(
       id: 'prop_creative',
       label: 'Creative Proposal',
       category: 'creative',
       assetPath: 'assets/prop_templates/prop_creative.json',
       isPremium: true,
-      sortOrder: 4,
+      sortOrder: 6,
       description: 'Bold modern design with vibrant accents and striking '
           'typography. For agencies, creative studios, and marketing teams. '
           'Makes a memorable first impression.',
@@ -77,10 +99,21 @@ class PropTemplateData {
       category: 'executive',
       assetPath: 'assets/prop_templates/prop_executive.json',
       isPremium: true,
-      sortOrder: 5,
+      sortOrder: 7,
       description: 'Premium dark-themed layout with gold accents. '
           'Designed for C-suite presentations, enterprise deals, and '
           'high-value engagements. Conveys authority and professionalism.',
+    ),
+    PropTemplateInfo(
+      id: 'prop_sales',
+      label: 'Sales Proposal',
+      category: 'sales',
+      assetPath: 'assets/prop_templates/prop_sales.json',
+      isPremium: true,
+      sortOrder: 8,
+      description: 'Client-facing sales pitch with ROI analysis, social proof, '
+          'and implementation timeline. Sidebar layout with bold CTA sections. '
+          'Built to close deals.',
     ),
   ];
 

@@ -19,12 +19,12 @@ class AppRoutes {
   static const String clTemplates   = '/cover-letters/templates';
   static const String clEditor      = '/cover-letters/edit/:docId';
 
-  // Proposal (future)
+  // Proposal
   static const String proposalDashboard = '/proposals';
   static const String proposalTemplates = '/proposals/templates';
   static const String proposalEditor    = '/proposals/edit/:docId';
 
-  // LinkedIn (future)
+  // LinkedIn
   static const String linkedin      = '/linkedin';
 
   // Settings

@@ -12,8 +12,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../../features/cover_letter/editor/controller/cl_editor_controller.dart';
+import '../../features/proposal/editor/controller/prop_editor_controller.dart';
 import '../models/ai_profile_model.dart';
 import '../models/canvas_item.dart';
+import '../models/client_profile_model.dart';
 import '../models/section_type.dart';
 import '../services/firebase_service.dart';
 import 'claude_service.dart';
@@ -525,6 +527,207 @@ class ClaudeController extends StateNotifier<ClaudeState> {
   Future<AiProfileModel?> _loadAiProfile(String uid) async {
     debugPrint('🤖 [ClaudeController] Loading default AI profile for $uid');
     return await FirebaseService.getDefaultAiProfile(uid);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // AI GENERATE PROPOSAL (one-shot, whole proposal: text + tables)
+  // ═══════════════════════════════════════════════════════════════════════
+
+  /// Generates an entire proposal in one call. Builds a manifest of the
+  /// canvas sections (text vs table + headers), sends client brief + AI
+  /// profile + optional CV, then applies returned content keyed by item id.
+  Future<void> fillAllProposalSections({
+    required List<CanvasItem> items,
+    required PropEditorController editor,
+  }) async
+  {
+    if (state.isActive) return;
+    debugPrint('🤖 [ClaudeController] fillAllProposalSections');
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      state = const ClaudeState(status: AiFillStatus.error, error: 'Please sign in.');
+      return;
+    }
+
+    state = const ClaudeState(status: AiFillStatus.loading, activeOperation: 'fill');
+
+    // Profile (sender)
+    try {
+      _cachedProfile ??= await _loadAiProfile(uid);
+    } catch (_) {}
+    final profile = _cachedProfile ?? const AiProfileModel();
+
+    // Client brief (the rich 6-step client profile)
+    final client = await editor.getLinkedClient();
+    if (client == null) {
+      state = const ClaudeState(
+        status: AiFillStatus.error,
+        error: 'No client linked. Select a client first.',
+      );
+      return;
+    }
+
+    // Optional linked CV
+    String? cvContent;
+    if (editor.state.linkedCvId != null) {
+      cvContent = await editor.getLinkedCvContent();
+    }
+
+    // ── Build the section manifest from the canvas ──────────────────
+    // Only text + table sections are fillable. Each gets a stable id so
+    // the AI can target it (two pricing tables won't collide).
+    final manifest = <Map<String, dynamic>>[];
+    for (final item in items) {
+      if (item.isText && item.controller != null) {
+        manifest.add({
+          'id': item.id,
+          'sectionType': item.sectionType.key,
+          'title': item.title,
+          'kind': 'text',
+        });
+      } else if (item.isTable && item.tableData != null) {
+        manifest.add({
+          'id': item.id,
+          'sectionType': item.sectionType.key,
+          'title': item.title,
+          'kind': 'table',
+          'headers': item.tableData!.headers,
+          'columnCount': item.tableData!.columnCount,
+        });
+      }
+    }
+
+    if (manifest.isEmpty) {
+      state = const ClaudeState(
+        status: AiFillStatus.error,
+        error: 'No fillable sections on this proposal.',
+      );
+      return;
+    }
+
+    // Client brief as a structured map (mirrors CL's jobDetails channel)
+    final clientBrief = _buildClientBrief(client);
+
+    try {
+      final content = await ClaudeService.aiFillSection(
+        sectionType: 'all',
+        tone: profile.tone,
+        experienceLevel: profile.experienceLevel,
+        profile: _sanitizeProfile(profile.toJson()),
+        tool: 'proposal',
+        documentId: editor.state.firestoreDocId,
+        documentTitle: editor.state.title,
+        jobDetails: clientBrief,
+        cvContent: cvContent,
+        sectionManifest: manifest,
+      );
+
+      if (!mounted) return;
+      if (content == null) {
+        state = const ClaudeState(
+          status: AiFillStatus.error,
+          error: 'AI returned no content. Add more client detail.',
+        );
+        return;
+      }
+
+      // ── Apply, keyed by item id ───────────────────────────────────
+      int filled = 0;
+      for (final item in items) {
+        final sec = content[item.id];
+        if (sec is! Map) continue;
+        final map = Map<String, dynamic>.from(sec);
+        final kind = map['kind'] as String?;
+
+        try {
+          if (item.isText && item.controller != null && kind != 'table') {
+            // Reuse the exact CV/CL text-apply path (style-preserving)
+            final styles = _extractStyles(item.controller!.document);
+            item.controller!.updateSelection(
+                const TextSelection.collapsed(offset: 0), ChangeSource.local);
+            item.controller!.document =
+                Document.fromJson(_buildStyledDelta(map, styles));
+            filled++;
+          } else if (item.isTable && item.tableData != null && kind == 'table') {
+            final newRows = _coerceRows(map['rows'], item.tableData!.columnCount);
+            if (newRows.isNotEmpty) {
+              item.tableData!.rows = newRows; // keep headers + styling
+              filled++;
+            }
+          }
+        } catch (e) {
+          debugPrint('🤖 [ClaudeController] Apply failed for ${item.id}: $e');
+        }
+      }
+
+      // Re-measure heights + reflow so freshly-filled content fits & repages
+      editor.canvas.autoArrange();
+      editor.markDirty();
+
+      state = ClaudeState(status: AiFillStatus.done, streamedChars: filled);
+      debugPrint('🤖 [ClaudeController] fillAllProposalSections OK — $filled filled');
+    } catch (e) {
+      if (!mounted) return;
+      final isPaywall = e.toString().contains('limit') || e.toString().contains('Upgrade');
+      state = ClaudeState(
+        status: isPaywall ? AiFillStatus.paywalled : AiFillStatus.error,
+        error: e.toString(),
+      );
+    }
+  }
+
+  /// Normalize AI rows to exactly [cols] cells each (pad/truncate defensively).
+  List<List<String>> _coerceRows(dynamic raw, int cols) {
+    if (raw is! List) return [];
+    final out = <List<String>>[];
+    for (final r in raw) {
+      if (r is! List) continue;
+      final cells = r.map((c) => c?.toString() ?? '').toList();
+      while (cells.length < cols) {
+        cells.add('');
+      }
+      out.add(cells.length > cols ? cells.sublist(0, cols) : cells);
+    }
+    return out;
+  }
+
+  /// Flatten the client profile into a compact brief for the prompt.
+  Map<String, dynamic> _buildClientBrief(ClientProfileModel c) {
+    return {
+      'clientName': c.clientName,
+      'clientCompany': c.clientCompany,
+      'industry': c.industry,
+      'projectTitle': c.projectTitle,
+      'projectType': c.projectType,
+      'projectDescription': c.projectDescription,
+      'problemStatement': c.problemStatement,
+      'projectGoals': c.projectGoals,
+      'deliverables': c.deliverables.map((d) => {
+        'name': d.name, 'description': d.description,
+      }).toList(),
+      'scopeNotes': c.scopeNotes,
+      'startDate': c.startDate,
+      'endDate': c.endDate,
+      'milestones': c.milestones.map((m) => {
+        'title': m.title, 'date': m.date, 'description': m.description,
+      }).toList(),
+      'budgetRange': c.budgetRange,
+      'pricingModel': c.pricingModel,
+      'lineItems': c.lineItems.map((l) => {
+        'item': l.item, 'description': l.description, 'amount': l.amount,
+      }).toList(),
+      'competitorInfo': c.competitorInfo,
+      'specialRequirements': c.specialRequirements,
+      'customNotes': c.customNotes,
+      'typeSpecific': {
+        'techStack': c.typeSpecific.techStack,
+        'platformTargets': c.typeSpecific.platformTargets,
+        'creativeBrief': c.typeSpecific.creativeBrief,
+        'channels': c.typeSpecific.channels,
+        'targetAudience': c.typeSpecific.targetAudience,
+      },
+    };
   }
 }
 

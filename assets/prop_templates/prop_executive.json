@@ -32,7 +32,7 @@
     {
       "type": "textSection",
       "title": "Title",
-      "x": 50, "y": 200, "w": 495, "h": 130,
+      "x": 50, "y": 200, "w": 495, "h": 168,
       "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -116,7 +116,7 @@
     {
       "type": "textSection",
       "title": "Executive Summary",
-      "x": 50, "y": 950, "w": 495, "h": 130,
+      "x": 50, "y": 950, "w": 495, "h": 132,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -151,7 +151,7 @@
     {
       "type": "textSection",
       "title": "Situation Analysis",
-      "x": 50, "y": 1163, "w": 495, "h": 150,
+      "x": 50, "y": 1163, "w": 495, "h": 180,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -190,7 +190,7 @@
     {
       "type": "textSection",
       "title": "Solution",
-      "x": 50, "y": 1403, "w": 495, "h": 150,
+      "x": 50, "y": 1403, "w": 495, "h": 240,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -249,7 +249,7 @@
     {
       "type": "tableSection",
       "title": "Implementation Table",
-      "x": 50, "y": 1791, "w": 495, "h": 160,
+      "x": 50, "y": 1791, "w": 495, "h": 204,
       "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -294,7 +294,7 @@
     {
       "type": "tableSection",
       "title": "Financial Table",
-      "x": 50, "y": 2038, "w": 495, "h": 140,
+      "x": 50, "y": 2038, "w": 495, "h": 175,
       "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -360,7 +360,7 @@
     {
       "type": "textSection",
       "title": "Risk",
-      "x": 50, "y": 2630, "w": 495, "h": 100,
+      "x": 50, "y": 2630, "w": 495, "h": 154,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -402,7 +402,7 @@
     {
       "type": "textSection",
       "title": "Credentials",
-      "x": 50, "y": 2823, "w": 495, "h": 80,
+      "x": 50, "y": 2823, "w": 495, "h": 99,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -429,7 +429,7 @@
     {
       "type": "textSection",
       "title": "Terms",
-      "x": 50, "y": 2975, "w": 495, "h": 80,
+      "x": 50, "y": 2975, "w": 495, "h": 82,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -455,7 +455,7 @@
     {
       "type": "textSection",
       "title": "Acceptance Client",
-      "x": 50, "y": 3115, "w": 220, "h": 80,
+      "x": 50, "y": 3115, "w": 220, "h": 82,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -472,7 +472,7 @@
     {
       "type": "textSection",
       "title": "Acceptance Author",
-      "x": 325, "y": 3115, "w": 220, "h": 80,
+      "x": 325, "y": 3115, "w": 220, "h": 82,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",

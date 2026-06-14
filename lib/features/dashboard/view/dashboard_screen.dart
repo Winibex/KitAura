@@ -337,8 +337,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         title: 'Write Proposal',
         subtitle: 'Win more clients',
         color: AppColors.dustyMauve,
-        onTap: () {}, // TODO
-        comingSoon: true,
+        onTap: () => context.go(AppRoutes.proposalTemplates),
+        comingSoon: false,
       ),
       _QuickStartData(
         icon: LucideIcons.mail,
@@ -562,6 +562,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 context.go('/cv/edit/${item.id}');
               } else if (item.type == 'coverLetter') {
                 context.go('/cover-letters/edit/${item.id}');
+              } else if (item.type == 'proposal') {
+                context.go('/proposals/edit/${item.id}');
               }
             },
             child: Row(
@@ -572,10 +574,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     color: AppColors.petalFrost,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(
-                    item.type == 'cv' ? LucideIcons.fileText : LucideIcons.mail,
-                    size: 16, color: AppColors.darkRaspberry,
-                  ),
+                  child: Icon(_iconForType(item.type),
+                      size: 16, color: AppColors.darkRaspberry),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -717,6 +717,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     color: AppColors.slateGrey,
   );
 
+  IconData _iconForType(String type) {
+    switch (type) {
+      case 'coverLetter': return LucideIcons.mail;
+      case 'proposal':    return LucideIcons.fileText;
+      case 'linkedin':    return LucideIcons.linkedin;
+      default:            return LucideIcons.fileText; // cv
+    }
+  }
+
   Widget _buildRecentRow(RecentItem item) {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -728,6 +737,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               break;
             case 'coverLetter':
               context.go('/cover-letters/edit/${item.id}');
+              break;
+            case 'proposal':
+              context.go('/proposals/edit/${item.id}');
               break;
             default:
               context.go('/cv/edit/${item.id}');
@@ -751,7 +763,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         color: AppColors.petalFrost,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(LucideIcons.fileText,
+                      child: Icon(_iconForType(item.type),
                           size: 14, color: AppColors.darkRaspberry),
                     ),
                     const SizedBox(width: 12),

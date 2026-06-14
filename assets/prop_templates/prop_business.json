@@ -99,7 +99,7 @@
     {
       "type": "textSection",
       "title": "Executive Summary",
-      "x": 50, "y": 945, "w": 495, "h": 120,
+      "x": 50, "y": 945, "w": 495, "h": 132,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -173,7 +173,7 @@
     {
       "type": "textSection",
       "title": "Proposed Solution",
-      "x": 50, "y": 1363, "w": 495, "h": 160,
+      "x": 50, "y": 1363, "w": 495, "h": 273,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -221,7 +221,7 @@
     {
       "type": "tableSection",
       "title": "Deliverables Table",
-      "x": 50, "y": 1787, "w": 495, "h": 140,
+      "x": 50, "y": 1787, "w": 495, "h": 147,
       "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -264,7 +264,7 @@
     {
       "type": "tableSection",
       "title": "Pricing Table",
-      "x": 50, "y": 2013, "w": 495, "h": 140,
+      "x": 50, "y": 2013, "w": 495, "h": 147,
       "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -325,7 +325,7 @@
     {
       "type": "textSection",
       "title": "Signature",
-      "x": 50, "y": 2400, "w": 240, "h": 80,
+      "x": 50, "y": 2400, "w": 240, "h": 85,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -342,7 +342,7 @@
     {
       "type": "textSection",
       "title": "Signature Author",
-      "x": 305, "y": 2400, "w": 240, "h": 80,
+      "x": 305, "y": 2400, "w": 240, "h": 85,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",

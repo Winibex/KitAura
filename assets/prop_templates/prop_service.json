@@ -1,0 +1,327 @@
+{
+  "canvasBackground": "#FFFFFF",
+  "items": [
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 0, "y": 0, "w": 595, "h": 6,
+      "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom"
+    },
+    {
+      "type": "textSection",
+      "title": "Company",
+      "x": 50, "y": 30, "w": 300, "h": 30,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "YOUR COMPANY NAME", "attributes": {"bold": true, "size": "13", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Title",
+      "x": 50, "y": 80, "w": 495, "h": 67,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Service Agreement", "attributes": {"bold": true, "size": "26", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "[Service Type] — Ongoing Support & Maintenance Contract", "attributes": {"size": "12", "color": "#76818E"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 50, "y": 155, "w": 495, "h": 1,
+      "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom"
+    },
+    {
+      "type": "textSection",
+      "title": "Parties",
+      "x": 50, "y": 172, "w": 240, "h": 84,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "SERVICE PROVIDER", "attributes": {"bold": true, "size": "9", "color": "#A36D90"}},
+        {"insert": "\n"},
+        {"insert": "Your Company Name", "attributes": {"bold": true, "size": "12", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "Address Line 1", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "contact@company.com", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Client",
+      "x": 350, "y": 172, "w": 195, "h": 84,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "CLIENT", "attributes": {"bold": true, "size": "9", "color": "#A36D90"}},
+        {"insert": "\n"},
+        {"insert": "Client Company Name", "attributes": {"bold": true, "size": "12", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "Client Address", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "client@company.com", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Agreement Date",
+      "x": 50, "y": 268, "w": 495, "h": 25,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Effective Date: January 15, 2026  |  Contract Period: 12 months  |  Auto-renewal: Yes", "attributes": {"size": "10", "color": "#76818E"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Scope Heading",
+      "x": 50, "y": 310, "w": 495, "h": 28,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "1. SCOPE OF SERVICES", "attributes": {"bold": true, "size": "14", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Scope",
+      "x": 50, "y": 340, "w": 495, "h": 141,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "The Service Provider agrees to provide the following services to the Client during the contract period:", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "•  [Primary service — e.g., Monthly maintenance and inspection]", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  [Secondary service — e.g., 24/7 emergency support and repair]", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  [Additional service — e.g., Quarterly performance reporting]", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  [Additional service — e.g., Annual equipment audit and replacement advisory]", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "SLA Heading",
+      "x": 50, "y": 445, "w": 495, "h": 28,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "2. SERVICE LEVEL AGREEMENT (SLA)", "attributes": {"bold": true, "size": "14", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "tableSection",
+      "title": "SLA Table",
+      "x": 50, "y": 478, "w": 495, "h": 167,
+      "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "tableData": {
+        "headers": ["Metric", "Standard", "Premium", "Penalty"],
+        "rows": [
+          ["Response Time", "4 business hours", "1 hour (24/7)", "$XXX per hour late"],
+          ["Resolution Time", "24 hours", "8 hours", "$XXX per hour late"],
+          ["Uptime Guarantee", "99.0%", "99.9%", "X% credit per 0.1% below"],
+          ["Scheduled Maintenance", "Monthly", "Bi-weekly", "Included"],
+          ["Emergency Visits", "2 per quarter", "Unlimited", "$XXX per additional visit"]
+        ],
+        "headerBgColor": "#0F172A",
+        "headerTextColor": "#FFFFFF",
+        "cellTextColor": "#333333",
+        "borderColor": "#E0E0E0",
+        "fontSize": 9,
+        "showHeader": true
+      }
+    },
+    {
+      "type": "textSection",
+      "title": "Service Plans Heading",
+      "x": 50, "y": 655, "w": 495, "h": 28,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "3. SERVICE PLANS & PRICING", "attributes": {"bold": true, "size": "14", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "tableSection",
+      "title": "Pricing Table",
+      "x": 50, "y": 688, "w": 495, "h": 167,
+      "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "tableData": {
+        "headers": ["Service Item", "Frequency", "Monthly Cost", "Annual Cost"],
+        "rows": [
+          ["Preventive Maintenance", "Monthly", "$X,XXX", "$XX,XXX"],
+          ["Emergency Support (24/7)", "As needed", "$XXX", "$X,XXX"],
+          ["Parts & Consumables", "As needed", "At cost + 15%", "Estimated $X,XXX"],
+          ["Performance Reporting", "Quarterly", "Included", "Included"],
+          ["Total Contract Value", "", "", "$XX,XXX/year"]
+        ],
+        "headerBgColor": "#0F172A",
+        "headerTextColor": "#FFFFFF",
+        "cellTextColor": "#333333",
+        "borderColor": "#E0E0E0",
+        "fontSize": 9,
+        "showHeader": true
+      }
+    },
+
+    {
+      "type": "textSection",
+      "title": "Responsibilities Heading",
+      "x": 50, "y": 892, "w": 495, "h": 28,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "4. RESPONSIBILITIES", "attributes": {"bold": true, "size": "14", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Provider Responsibilities",
+      "x": 50, "y": 925, "w": 240, "h": 105,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Service Provider:", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "•  Maintain qualified service team", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  Provide all tools and equipment", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  Submit service reports within 48hrs", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  Carry adequate liability insurance", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Client Responsibilities",
+      "x": 305, "y": 925, "w": 240, "h": 105,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Client:", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "•  Provide safe site access", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  Report issues promptly", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  Make equipment available as scheduled", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  Process invoices within payment terms", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Terms Heading",
+      "x": 50, "y": 1055, "w": 495, "h": 28,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "5. TERMS & CONDITIONS", "attributes": {"bold": true, "size": "14", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Terms",
+      "x": 50, "y": 1088, "w": 495, "h": 103,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "•  Contract auto-renews annually unless either party provides 60 days written notice", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  Price adjustments (if any) communicated 90 days before renewal date", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  Either party may terminate for cause with 30 days written notice", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  Liability limited to the annual contract value", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  Disputes resolved via arbitration in [jurisdiction]", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 50, "y": 1210, "w": 495, "h": 1,
+      "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom"
+    },
+    {
+      "type": "textSection",
+      "title": "Sig Provider",
+      "x": 50, "y": 1235, "w": 220, "h": 81,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "SERVICE PROVIDER", "attributes": {"bold": true, "size": "9", "color": "#A36D90"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "____________________________", "attributes": {"size": "10", "color": "#C5AFA4"}},
+        {"insert": "\n"},
+        {"insert": "Name  |  Title  |  Date", "attributes": {"size": "9", "color": "#76818E"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Sig Client",
+      "x": 325, "y": 1235, "w": 220, "h": 81,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "CLIENT", "attributes": {"bold": true, "size": "9", "color": "#A36D90"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "____________________________", "attributes": {"size": "10", "color": "#C5AFA4"}},
+        {"insert": "\n"},
+        {"insert": "Name  |  Title  |  Date", "attributes": {"size": "9", "color": "#76818E"}},
+        {"insert": "\n"}
+      ]
+    }
+  ]
+}

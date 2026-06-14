@@ -15,6 +15,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
+import 'package:kitaura/shared/canvas/engine/auto_height.dart';
+import 'package:kitaura/shared/canvas/engine/reflow_engine.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../models/canvas_item.dart';
@@ -330,6 +332,29 @@ class CanvasController extends ChangeNotifier {
     multiSelected.clear();
     notifyListeners();
     return item;
+  }
+
+  // ─── AUTO-HEIGHT (content-driven sizing — single source of truth) ─────
+  void autosizeItem(CanvasItem item, {bool notify = false}) {
+    double h = 0;
+    if (item.isText && item.controller != null) {
+      h = AutoHeight.measureText(
+        item.controller!.document.toDelta().toJson(),
+        item.width,
+        globalFont: globalFont,
+        globalFontSize: globalFontSize,
+      );
+    } else if (item.isTable && item.tableData != null) {
+      h = AutoHeight.measureTable(item.tableData!, item.width);
+    }
+    if (h > 0) item.height = double.parse(h.toStringAsFixed(1));
+    if (notify) notifyListeners();
+  }
+
+  void autosizeAll() {
+    for (final item in items) {
+      autosizeItem(item);
+    }
   }
 
   void addShape(CanvasItemType type) {
@@ -830,12 +855,16 @@ class CanvasController extends ChangeNotifier {
       items.add(item);
     }
 
+    autosizeAll(); // ← NEW: size text & tables to real content before paging
+    ReflowEngine.arrange(items, canvasH); // ← NEW: cascade so nothing overlaps
+
     // Auto-calculate page count from item positions
     double maxY = 0;
     for (final item in items) {
       final bottom = item.position.dy + item.height;
       if (bottom > maxY) maxY = bottom;
     }
+
     totalPages = (maxY / canvasH).ceil().clamp(1, 99);
     currentPage = 0;
 
@@ -882,6 +911,32 @@ class CanvasController extends ChangeNotifier {
       'canvasBackground': colorToHex(canvasBackground),
       'items': itemsList,
     };
+  }
+
+  /// Re-measure all content, reflow so nothing overlaps, repage. Safe to call
+  /// after edits or from an "Auto-arrange" button.
+  void autoArrange() {
+    saveSnapshot();
+    autosizeAll();
+
+    final prev = {for (final i in items) i.id: i.position.dy};
+    ReflowEngine.arrange(items, canvasH);
+
+    int moved = 0; double maxDelta = 0;
+    for (final i in items) {
+      final d = (i.position.dy - (prev[i.id] ?? i.position.dy)).abs();
+      if (d > 0.5) { moved++; if (d > maxDelta) maxDelta = d; }
+    }
+    debugPrint('🧹 autoArrange: MOVED $moved items, maxΔ=${maxDelta.toStringAsFixed(0)}px');
+
+    double maxY = 0;
+    for (final item in items) {
+      final b = item.position.dy + item.height;
+      if (b > maxY) maxY = b;
+    }
+    totalPages = (maxY / canvasH).ceil().clamp(1, 99);
+    if (currentPage >= totalPages) currentPage = totalPages - 1;
+    notifyListeners();
   }
 
   // ─── PDF ──────────────────────────────────────────────────────────────
@@ -1102,12 +1157,15 @@ class CanvasController extends ChangeNotifier {
         content = pw.SizedBox();
     }
 
+    final bool autoH = item.isText || item.isTable;
     return pw.Positioned(
       left: item.position.dx,
       top: item.position.dy,
       child: pw.Transform.rotateBox(
         angle: item.rotation,
-        child: pw.SizedBox(width: item.width, height: item.height, child: content),
+        child: autoH
+            ? pw.SizedBox(width: item.width, child: content)
+            : pw.SizedBox(width: item.width, height: item.height, child: content),
       ),
     );
   }

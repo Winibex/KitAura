@@ -98,7 +98,7 @@
     {
       "type": "textSection",
       "title": "Project Overview",
-      "x": 50, "y": 385, "w": 495, "h": 100,
+      "x": 50, "y": 385, "w": 495, "h": 115,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -125,7 +125,7 @@
     {
       "type": "textSection",
       "title": "Objectives",
-      "x": 50, "y": 545, "w": 495, "h": 120,
+      "x": 50, "y": 545, "w": 495, "h": 133,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -158,7 +158,7 @@
     {
       "type": "textSection",
       "title": "Scope",
-      "x": 50, "y": 725, "w": 495, "h": 90,
+      "x": 50, "y": 725, "w": 495, "h": 133,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -192,7 +192,7 @@
     {
       "type": "tableSection",
       "title": "Milestones Table",
-      "x": 50, "y": 935, "w": 495, "h": 155,
+      "x": 50, "y": 935, "w": 495, "h": 175,
       "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -228,7 +228,7 @@
     {
       "type": "tableSection",
       "title": "Deliverables Table",
-      "x": 50, "y": 1163, "w": 495, "h": 130,
+      "x": 50, "y": 1163, "w": 495, "h": 175,
       "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -264,7 +264,7 @@
     {
       "type": "tableSection",
       "title": "Budget Table",
-      "x": 50, "y": 1373, "w": 495, "h": 140,
+      "x": 50, "y": 1373, "w": 495, "h": 175,
       "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -301,7 +301,7 @@
     {
       "type": "textSection",
       "title": "About Us",
-      "x": 50, "y": 1769, "w": 495, "h": 100,
+      "x": 50, "y": 1769, "w": 495, "h": 115,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",

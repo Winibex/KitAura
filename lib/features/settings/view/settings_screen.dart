@@ -3,27 +3,31 @@
 // SaaS-style settings: left sidebar nav + right content area.
 // Sections: Profile, Account Security, Plan & Billing, Preferences, AI Profile.
 
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+
 import '../../../core/constants/app_assets.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_fonts.dart';
 import '../../../core/constants/app_routes.dart';
 import '../../../shared/models/ai_profile_model.dart';
+import '../../../shared/models/client_profile_model.dart';
 import '../../../shared/models/subscription_model.dart';
 import '../../../shared/models/user_preferences_model.dart';
 import '../../../shared/models/user_profile_model.dart';
 import '../../../shared/services/firebase_service.dart';
+import '../../../shared/widgets/client_wizard_modal.dart';
 import '../../../shared/widgets/go_pro_banners.dart';
 import '../../ai_setup/view/ai_setup_panel.dart';
 import '../../auth/controller/auth_controller.dart';
 import 'upgrade_modal.dart';
 
-enum SettingsTab { profile, security, billing, preferences, aiProfile }
+enum SettingsTab { profile, security, billing, preferences, aiProfile, clientProfiles }
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -51,6 +55,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   List<AiProfileModel> _aiProfiles = [];
   bool _loadingProfiles = true;
+
+  List<ClientProfileModel> _clientProfiles = [];
+  bool _loadingClients = true;
 
   @override
   void initState() {
@@ -95,6 +102,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+  Future<void> _loadClientProfiles() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    setState(() => _loadingClients = true);
+    try {
+      final snap = await FirebaseService.getClientProfiles(uid);
+      final profiles = snap.docs
+          .map((doc) => ClientProfileModel.fromJson(
+          doc.id, doc.data() as Map<String, dynamic>))
+          .toList();
+      if (mounted) setState(() { _clientProfiles = profiles; _loadingClients = false; });
+    } catch (e) {
+      debugPrint('Load client profiles error: $e');
+      if (mounted) setState(() => _loadingClients = false);
+    }
+  }
+
   Future<void> _loadData() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
@@ -136,6 +160,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         });
       }
       await _loadAiProfiles();
+      await _loadClientProfiles();
     } catch (e) {
       debugPrint('Settings load error: $e');
       if (mounted) setState(() => _isLoading = false);
@@ -408,6 +433,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         const SizedBox(height: 16),
         _navSectionLabel('WORKSPACE'),
         _navItem(SettingsTab.aiProfile, LucideIcons.sparkles, 'AI Profile'),
+        _navItem(SettingsTab.clientProfiles, LucideIcons.users, 'Client Profiles'),
         _navItem(SettingsTab.billing, LucideIcons.creditCard, 'Plan & Billing'),
         const SizedBox(height: 24),
         // Sign out at bottom
@@ -506,6 +532,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         return _preferencesContent();
       case SettingsTab.aiProfile:
         return _aiProfileContent();
+      case SettingsTab.clientProfiles:
+        return _clientProfilesContent();
     }
   }
 
@@ -1486,6 +1514,192 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  // ─── CLIENT PROFILES TAB ──────────────────────────────────────────────
+
+  Widget _clientProfilesContent() {
+    return Column(
+      key: const ValueKey('clients'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(child: _contentHeader('Client Profiles',
+                'Saved clients used to generate proposals')),
+            const SizedBox(width: 16),
+            SizedBox(
+              height: 40, width: 150,
+              child: ElevatedButton.icon(
+                onPressed: () => _openClientWizard(null),
+                icon: const Icon(LucideIcons.plus, size: 15),
+                label: const Text('New Client'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.darkRaspberry,
+                  foregroundColor: AppColors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  textStyle: const TextStyle(fontSize: 13, fontFamily: AppFonts.poppins, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        if (_loadingClients)
+          const Center(child: Padding(padding: EdgeInsets.all(40),
+              child: CircularProgressIndicator(color: AppColors.darkRaspberry)))
+        else if (_clientProfiles.isEmpty)
+          _buildEmptyClientState()
+        else
+          ..._clientProfiles.map((c) => _buildClientCard(c)),
+      ],
+    );
+  }
+
+  Widget _buildEmptyClientState() {
+    return _card(child: Column(children: [
+      const SizedBox(height: 20),
+      Container(
+        width: 56, height: 56,
+        decoration: BoxDecoration(color: AppColors.petalFrost, borderRadius: BorderRadius.circular(14)),
+        child: const Icon(LucideIcons.users, size: 24, color: AppColors.darkRaspberry),
+      ),
+      const SizedBox(height: 16),
+      const Text('No client profiles yet',
+          style: TextStyle(fontSize: 16, fontFamily: AppFonts.poppins,
+              fontWeight: FontWeight.w600, color: AppColors.prussianBlue)),
+      const SizedBox(height: 6),
+      const Text('Add a client so AI can tailor proposals to their project and needs.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 13, fontFamily: AppFonts.openSans,
+              color: AppColors.slateGrey, height: 1.5)),
+      const SizedBox(height: 20),
+      SizedBox(height: 40, child: ElevatedButton.icon(
+        onPressed: () => _openClientWizard(null),
+        icon: const Icon(LucideIcons.plus, size: 15),
+        label: const Text('Add Your First Client'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.darkRaspberry, foregroundColor: AppColors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          textStyle: const TextStyle(fontSize: 13, fontFamily: AppFonts.poppins, fontWeight: FontWeight.w600),
+        ),
+      )),
+      const SizedBox(height: 20),
+    ]));
+  }
+
+  Widget _buildClientCard(ClientProfileModel client) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFEDE8E3)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10, offset: const Offset(0, 2))],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40, height: 40,
+            decoration: BoxDecoration(color: AppColors.petalFrost, borderRadius: BorderRadius.circular(10)),
+            child: Center(child: Text(
+              client.clientName.isNotEmpty ? client.clientName[0].toUpperCase() : 'C',
+              style: const TextStyle(fontSize: 16, fontFamily: AppFonts.poppins,
+                  fontWeight: FontWeight.w700, color: AppColors.darkRaspberry),
+            )),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(client.clientName,
+                    style: const TextStyle(fontSize: 15, fontFamily: AppFonts.poppins,
+                        fontWeight: FontWeight.w600, color: AppColors.prussianBlue),
+                    overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 2),
+                Text([
+                  if ((client.clientCompany ?? '').isNotEmpty) client.clientCompany!,
+                  if (client.projectTitle.isNotEmpty) client.projectTitle,
+                ].join(' · '),
+                    style: const TextStyle(fontSize: 12, fontFamily: AppFonts.openSans,
+                        color: AppColors.slateGrey),
+                    overflow: TextOverflow.ellipsis),
+              ],
+            ),
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(LucideIcons.moreVertical, size: 18, color: AppColors.slateGrey),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            onSelected: (a) => _handleClientAction(a, client),
+            itemBuilder: (_) => [
+              const PopupMenuItem(value: 'edit', child: Row(children: [
+                Icon(LucideIcons.pencil, size: 14, color: AppColors.prussianBlue),
+                SizedBox(width: 10), Text('Edit', style: TextStyle(fontSize: 13))])),
+              const PopupMenuItem(value: 'duplicate', child: Row(children: [
+                Icon(LucideIcons.copy, size: 14, color: AppColors.prussianBlue),
+                SizedBox(width: 10), Text('Duplicate', style: TextStyle(fontSize: 13))])),
+              const PopupMenuItem(value: 'delete', child: Row(children: [
+                Icon(LucideIcons.trash2, size: 14, color: AppColors.error),
+                SizedBox(width: 10), Text('Delete', style: TextStyle(fontSize: 13, color: AppColors.error))])),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openClientWizard(ClientProfileModel? existing) async {
+    final result = await ClientWizardModal.show(context, existing: existing);
+    if (result == null) return; // cancelled
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final data = result.toJson()..remove('id');
+    if (existing?.id != null) {
+      await FirebaseService.updateClientProfile(uid, existing!.id!, data);
+    } else {
+      await FirebaseService.createClientProfile(uid, data);
+    }
+    await _loadClientProfiles();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(existing != null ? 'Client updated' : 'Client added'),
+          backgroundColor: AppColors.success));
+    }
+  }
+
+  void _handleClientAction(String action, ClientProfileModel client) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || client.id == null) return;
+    switch (action) {
+      case 'edit':
+        _openClientWizard(client);
+        break;
+      case 'duplicate':
+        final data = client.toJson();
+        data.remove('id');
+        data['clientName'] = '${client.clientName} (Copy)';
+        await FirebaseService.createClientProfile(uid, data);
+        await _loadClientProfiles();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Client duplicated'), backgroundColor: AppColors.success));
+        }
+        break;
+      case 'delete':
+        await FirebaseService.deleteClientProfile(uid, client.id!);
+        await _loadClientProfiles();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Client deleted'), backgroundColor: AppColors.success));
+        }
+        break;
+    }
+  }
+
   // ─── SHARED WIDGETS ───────────────────────────────────────────────────
 
   Widget _contentHeader(String title, String subtitle) {
@@ -1698,6 +1912,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       case SettingsTab.billing: return 'Plan & Billing';
       case SettingsTab.preferences: return 'Preferences';
       case SettingsTab.aiProfile: return 'AI Profile';
+      case SettingsTab.clientProfiles: return 'Clients';
     }
   }
 

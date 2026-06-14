@@ -256,6 +256,25 @@ class DashboardController extends StateNotifier<DashboardState> {
         debugPrint('Recent CLs load error: $e');
       }
 
+      // Load recent proposals too
+      int actualPropCount = 0;
+      try {
+        final propsSnapshot = await FirebaseService.getUserProposals(_uid!);
+        actualPropCount = propsSnapshot.docs.length;
+        for (final doc in propsSnapshot.docs.take(4)) {
+          final data = doc.data() as Map<String, dynamic>;
+          recentItems.add(RecentItem(
+            id: doc.id,
+            title: data['title'] ?? 'Untitled Proposal',
+            type: 'proposal',
+            templateId: data['templateId'] ?? 'custom',
+            updatedAt: (data['updatedAt'] as dynamic)?.toDate() ?? DateTime.now(),
+          ));
+        }
+      } catch (e) {
+        debugPrint('Recent proposals load error: $e');
+      }
+
       // Sort recent items by date
       recentItems.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
 
@@ -270,6 +289,7 @@ class DashboardController extends StateNotifier<DashboardState> {
         maxAiFills: maxAiFills == -1 ? 999 : maxAiFills,
         maxAiRewrites: maxAiRewrites == -1 ? 999 : maxAiRewrites,
         proPrice: proPrice,
+        proposalCount: actualPropCount,
       );
     } catch (e, stack) {
       debugPrint('Dashboard load error: $e\n$stack');

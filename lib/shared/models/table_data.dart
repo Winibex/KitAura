@@ -75,7 +75,7 @@ class TableData {
 
   Map<String, dynamic> toJson() => {
     'headers': headers,
-    'rows': rows.map((r) => List<String>.from(r)).toList(),
+    'rows': rows.map((r) => {'cells': List<String>.from(r)}).toList(),
     'headerBgColor': '#${headerBgColor.value.toRadixString(16).padLeft(8, '0').substring(2)}',
     'headerTextColor': '#${headerTextColor.value.toRadixString(16).padLeft(8, '0').substring(2)}',
     'cellTextColor': '#${cellTextColor.value.toRadixString(16).padLeft(8, '0').substring(2)}',
@@ -87,9 +87,12 @@ class TableData {
   factory TableData.fromJson(Map<String, dynamic> json) {
     return TableData(
       headers: List<String>.from(json['headers'] ?? []),
-      rows: (json['rows'] as List?)
-          ?.map((r) => List<String>.from(r as List))
-          .toList() ??
+      rows: (json['rows'] as List?)?.map<List<String>>((r) {
+        if (r is Map) {
+          return List<String>.from((r['cells'] as List?) ?? const []);
+        }
+        return List<String>.from(r as List); // legacy List<List<String>> (assets)
+      }).toList() ??
           [],
       headerBgColor: _parseColor(json['headerBgColor'], const Color(0xFF0F172A)),
       headerTextColor: _parseColor(json['headerTextColor'], const Color(0xFFFFFFFF)),

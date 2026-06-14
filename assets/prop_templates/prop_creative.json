@@ -32,7 +32,7 @@
     {
       "type": "textSection",
       "title": "Title",
-      "x": 50, "y": 180, "w": 495, "h": 120,
+      "x": 50, "y": 180, "w": 495, "h": 136,
       "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -46,7 +46,7 @@
     {
       "type": "textSection",
       "title": "Subtitle",
-      "x": 50, "y": 340, "w": 400, "h": 50,
+      "x": 50, "y": 340, "w": 400, "h": 51,
       "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -147,7 +147,7 @@
     {
       "type": "textSection",
       "title": "Strategy",
-      "x": 50, "y": 1263, "w": 495, "h": 130,
+      "x": 50, "y": 1263, "w": 495, "h": 228,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -186,7 +186,7 @@
     {
       "type": "tableSection",
       "title": "Deliverables Table",
-      "x": 50, "y": 1473, "w": 495, "h": 130,
+      "x": 50, "y": 1473, "w": 495, "h": 147,
       "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -230,7 +230,7 @@
     {
       "type": "tableSection",
       "title": "Timeline Table",
-      "x": 50, "y": 1777, "w": 495, "h": 130,
+      "x": 50, "y": 1777, "w": 495, "h": 147,
       "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -265,7 +265,7 @@
     {
       "type": "tableSection",
       "title": "Pricing Table",
-      "x": 50, "y": 1983, "w": 495, "h": 130,
+      "x": 50, "y": 1983, "w": 495, "h": 147,
       "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -288,7 +288,7 @@
     {
       "type": "textSection",
       "title": "Why Us",
-      "x": 50, "y": 2150, "w": 495, "h": 80,
+      "x": 50, "y": 2150, "w": 495, "h": 96,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",

@@ -328,6 +328,58 @@ RULES:
           cache_control: { type: "ephemeral" },
         }];
 
+
+} else if (tool === "proposal" && sectionType === "all") {
+    // ── PROPOSAL: GENERATE WHOLE PROPOSAL (text + tables) ──────────
+    const manifest = Array.isArray(req.data.sectionManifest) ? req.data.sectionManifest : [];
+    const manifestDesc = manifest.map((s) => {
+      if (s.kind === "table") {
+        return `- id "${s.id}" — ${s.title || s.sectionType} (TABLE, columns: [${(s.headers || []).join(", ")}])`;
+      }
+      return `- id "${s.id}" — ${s.title || s.sectionType} (TEXT)`;
+    }).join("\n");
+
+    sys = [{
+      type: "text",
+      text: `You are an expert proposal writer. Generate a complete, coherent client proposal where every section reinforces the others (the solution addresses the stated problem, pricing matches the deliverables, timeline aligns with scope).
+
+You will receive: the sender's profile, a client brief (the client, their project, goals, budget, deliverables, milestones), optionally the sender's CV, and a SECTION MANIFEST listing each section to fill.
+
+SECTION MANIFEST:
+${manifestDesc}
+
+OUTPUT: Return ONLY a JSON object keyed by the exact section id strings above. No markdown, no code fences.
+
+For TEXT sections, the value is:
+  {"kind":"text","heading":"SECTION HEADING","entries":[{"title":"","lines":["paragraph or bullet"]}]}
+  - Use heading for the section's title line (match the existing tone; UPPERCASE only if appropriate).
+  - For prose sections (executive summary, about, problem, solution), use ONE entry with title "" and lines = paragraphs.
+  - For list-style sections, each bullet is its own line starting with "• ".
+
+For TABLE sections, the value is:
+  {"kind":"table","rows":[["cell","cell","cell"], ...]}
+  - Each row MUST have exactly the same number of cells as the declared columns, in column order.
+  - Do NOT include the header row — only data rows.
+  - For pricing tables, use the client's line items and budget; compute a sensible total row if a total column exists.
+  - Amounts as plain strings (e.g. "$2,500"), no currency math errors.
+
+RULES:
+- Return EVERY section id from the manifest as a key.
+- Never invent facts not supported by the brief/profile. If data is thin, write professional generic content for that section rather than fabricating specifics.
+- Tone: ${tone}. Experience level: ${experienceLevel}.
+- Keep the whole proposal tight and client-ready.`,
+      cache_control: { type: "ephemeral" },
+    }];
+  } else if (tool === "proposal") {
+    // ── PROPOSAL: SINGLE SECTION (reuses CV-style shape) ──────────
+    sys = [{
+      type: "text",
+      text: `You are an expert proposal writer. Generate content for one proposal section.
+OUTPUT: Return ONLY a JSON object: {"heading":"","entries":[{"title":"","lines":["content"]}]}
+RULES: No markdown/code fences. Never invent facts. Tone: ${tone}. Level: ${experienceLevel}.`,
+      cache_control: { type: "ephemeral" },
+    }];
+
   } else {
     // ── CV: ORIGINAL PROMPT (unchanged) ──────────────────────────
     sys = [{
@@ -349,22 +401,24 @@ RULES:
   let userContent = `Section: ${sectionType}\n\nProfile:\n${JSON.stringify(profile,null,2)}`;
 
   if (tool === "coverLetter" || tool === "linkedin") {
-      if (jobDetails) {
-        userContent += `\n\nJob Details:\n${JSON.stringify(jobDetails, null, 2)}`;
-      }
-      if (cvContent) {
-        userContent += `\n\nCandidate's CV Content:\n${cvContent}`;
-      }
+      if (jobDetails) userContent += `\n\nJob Details:\n${JSON.stringify(jobDetails, null, 2)}`;
+      if (cvContent) userContent += `\n\nCandidate's CV Content:\n${cvContent}`;
+    }
+    if (tool === "proposal") {
+      if (jobDetails) userContent += `\n\nClient Brief:\n${JSON.stringify(jobDetails, null, 2)}`;
+      if (cvContent) userContent += `\n\nSender's CV Content:\n${cvContent}`;
     }
 
   userContent += "\n\nWrite now. JSON only.";
 
+  const maxTok = (tool === "proposal" && sectionType === "all") ? 4096 : 2048;
+
   let text, usage;
   try {
-    const r = await callClaude({ model: MODEL_SONNET, system: sys,
-      userContent, maxTokens: 2048, apiKey: ANTHROPIC_KEY.value() });
-    text = r.text; usage = r.usage;
-  } catch (err) {
+      const r = await callClaude({ model: MODEL_SONNET, system: sys,
+        userContent, maxTokens: maxTok, apiKey: ANTHROPIC_KEY.value() });
+      text = r.text; usage = r.usage;
+    } catch (err) {
     console.error("aiFill API error:", err?.response?.data || err.message);
     throw new HttpsError("internal", "AI generation failed.");
   }
@@ -377,10 +431,9 @@ RULES:
   }
 
   // For CL "all" mode, validate we got section keys
-  if ((tool === "coverLetter" || tool === "linkedin") && sectionType === "all") {
-      if (typeof content !== "object") {
-        throw new HttpsError("internal", "Unexpected AI output.");
-      }
+  if (((tool === "coverLetter" || tool === "linkedin") && sectionType === "all") ||
+        (tool === "proposal" && sectionType === "all")) {
+      if (typeof content !== "object") throw new HttpsError("internal", "Unexpected AI output.");
     } else {
       if (typeof content !== "object" || !Array.isArray(content.entries)) {
         throw new HttpsError("internal", "Unexpected AI output.");

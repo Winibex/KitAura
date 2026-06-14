@@ -196,9 +196,14 @@ class _TemplatePainter extends CustomPainter {
     }
 
     final headers = (tableDataRaw['headers'] as List?)?.cast<String>() ?? [];
-    final rows = (tableDataRaw['rows'] as List?)
-        ?.map((r) => (r as List).cast<String>())
-        .toList() ??
+    final rows = (tableDataRaw['rows'] as List?)?.map<List<String>>((r) {
+      if (r is Map) {
+        return ((r['cells'] as List?) ?? const [])
+            .map((c) => c.toString())
+            .toList();
+      }
+      return (r as List).map((c) => c.toString()).toList(); // legacy flat form
+    }).toList() ??
         [];
     final headerBg =
     _parseColor(tableDataRaw['headerBgColor'] as String? ?? '#0F172A');
@@ -278,7 +283,6 @@ class _TemplatePainter extends CustomPainter {
       curY += rowH;
     }
   }
-
 
   void _drawRect(Canvas canvas, double x, double y, double w, double h,
       Color fill, Color border, double borderW)

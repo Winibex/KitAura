@@ -57,6 +57,8 @@ class EditorLeftPanel extends StatelessWidget {
                     const SizedBox(height: 12),
                   ],
                   _buildLayersList(),
+                  const SizedBox(height: 12),
+                  _buildArrangeButton(),
                 ],
               ),
             ),
@@ -283,6 +285,43 @@ class EditorLeftPanel extends StatelessWidget {
               onTap: () => ctrl.select(item.id),
             );
           },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildArrangeButton() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const EditorSectionLabel('LAYOUT'),
+        const SizedBox(height: 6),
+        SizedBox(
+          width: double.infinity,
+          child: GestureDetector(
+            onTap: ctrl.autoArrange,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.petalFrost,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(LucideIcons.layoutGrid, size: 14, color: AppColors.darkRaspberry),
+                  SizedBox(width: 6),
+                  Text('Auto-arrange',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontFamily: AppFonts.poppins,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.darkRaspberry,
+                      )),
+                ],
+              ),
+            ),
+          ),
         ),
       ],
     );

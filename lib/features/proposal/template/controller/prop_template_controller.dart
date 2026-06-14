@@ -64,8 +64,11 @@ class PropTemplateController extends StateNotifier<PropTemplateState> {
     'Business',
     'Project',
     'Freelance',
+    'Product',
+    'Service',
     'Creative',
     'Executive',
+    'Sales',
   ];
 
   void loadTemplates() {

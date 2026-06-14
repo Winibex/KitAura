@@ -65,6 +65,7 @@ class ClaudeService {
     String beforeText = '',
     Map<String, dynamic>? jobDetails,
     String? cvContent,
+    List<Map<String, dynamic>>? sectionManifest, // ← NEW (proposal "all")
   }) async
   {
     debugPrint('🤖 [ClaudeService] aiFillSection(section=$sectionType, tone=$tone)');
@@ -82,6 +83,7 @@ class ClaudeService {
         'beforeText': beforeText,
         'jobDetails': jobDetails,
         'cvContent': cvContent,
+        'sectionManifest': sectionManifest, // ← NEW
       });
       final content = result.data['content'];
       if (content == null) {

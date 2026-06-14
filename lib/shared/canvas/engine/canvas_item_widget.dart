@@ -26,6 +26,7 @@ import 'package:vector_math/vector_math_64.dart' show Vector3;
 import 'table_section_renderer.dart';
 import 'table_editor_dialog.dart';
 import '../../models/table_data.dart';
+import 'auto_height.dart';
 
 class CanvasItemWidget extends StatefulWidget {
   final CanvasItem item;
@@ -83,6 +84,9 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
     _pos = widget.item.position;
     _w = widget.item.width;
     _h = widget.item.height;
+    if (widget.item.isText && widget.item.controller != null) {
+      widget.item.controller!.addListener(_onTextChangedAutosize);
+    }
   }
 
   @override
@@ -98,6 +102,14 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
       _editMode = false;
       widget.item.focusNode?.unfocus();
     }
+  }
+
+  @override
+  void dispose() {
+    if (widget.item.isText && widget.item.controller != null) {
+      widget.item.controller!.removeListener(_onTextChangedAutosize);
+    }
+    super.dispose();
   }
 
   void _commit() {
@@ -209,6 +221,36 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
     });
   }
 
+  bool _autosizeScheduled = false;
+
+  void _onTextChangedAutosize() {
+    if (_isDraggingSolo || _autosizeScheduled) return;
+    _autosizeScheduled = true;
+    // Defer until AFTER quill finishes its current compose, so we never
+    // setState mid-edit (that trips quill's "Not at line end" assertion).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _autosizeScheduled = false;
+      if (mounted) _autosizeSelf();
+    });
+  }
+
+  void _autosizeSelf() {
+    double h = 0;
+    if (widget.item.isTable && widget.item.tableData != null) {
+      h = AutoHeight.measureTable(widget.item.tableData!, _w);
+    } else if (widget.item.isText && widget.item.controller != null) {
+      h = AutoHeight.measureText(
+        widget.item.controller!.document.toDelta().toJson(),
+        _w,
+      );
+    }
+    if (h <= 0) return;
+    final nh = double.parse(h.toStringAsFixed(1));
+    if ((nh - _h).abs() < 0.5) return; // no meaningful change → skip rebuild
+    widget.item.height = nh;
+    setState(() => _h = nh);
+  }
+
   // ── BUILD ─────────────────────────────────────────────────────────
 
   @override
@@ -276,7 +318,7 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
             );
             if (result != null) {
               widget.item.tableData = result;
-              setState(() {});
+              _autosizeSelf();
             }
           },
           onPanStart: _onDragStart,
