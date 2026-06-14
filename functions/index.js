@@ -54,7 +54,7 @@ async function callClaude({ model, system, userContent, maxTokens, apiKey }) {
         "anthropic-version": API_VERSION,
         "anthropic-beta": "prompt-caching-2024-07-31",
       },
-      timeout: 60000,
+      timeout: 300000,
     }
   );
   const blocks = res.data.content || [];
@@ -193,7 +193,7 @@ async function uploadDetail(uid, activityId, detail) {
 // 1. AI FILL
 // ════════════════════════════════════════════════════════════════════════
 
-exports.aiFill = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", timeoutSeconds: 120 }, async (req) => {
+exports.aiFill = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", timeoutSeconds: 300 }, async (req) => {
   if (!req.auth) throw new HttpsError("unauthenticated", "Sign in required.");
   const uid = req.auth.uid;
   const t0 = Date.now();
@@ -411,7 +411,7 @@ RULES: No markdown/code fences. Never invent facts. Tone: ${tone}. Level: ${expe
 
   userContent += "\n\nWrite now. JSON only.";
 
-  const maxTok = (tool === "proposal" && sectionType === "all") ? 4096 : 2048;
+  const maxTok = (tool === "proposal" && sectionType === "all") ? 8192 : 2048;
 
   let text, usage;
   try {
@@ -423,12 +423,23 @@ RULES: No markdown/code fences. Never invent facts. Tone: ${tone}. Level: ${expe
     throw new HttpsError("internal", "AI generation failed.");
   }
 
-  const cleaned = text.replace(/```json/g,"").replace(/```/g,"").trim();
-  let content;
-  try { content = JSON.parse(cleaned); } catch(e) {
-    console.error("aiFill parse error:", cleaned);
-    throw new HttpsError("internal", "AI returned malformed content.");
-  }
+  let cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    // Salvage: if there's leading/trailing prose, extract the outermost JSON object.
+    const firstBrace = cleaned.indexOf("{");
+    const lastBrace = cleaned.lastIndexOf("}");
+    if (firstBrace > 0 || (lastBrace !== -1 && lastBrace < cleaned.length - 1)) {
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        cleaned = cleaned.slice(firstBrace, lastBrace + 1);
+      }
+    }
+    let content;
+    try {
+      content = JSON.parse(cleaned);
+    } catch (e) {
+      console.error("aiFill parse error. Length:", cleaned.length,
+        "| Last 200 chars:", cleaned.slice(-200));
+      throw new HttpsError("internal", "AI returned malformed content.");
+    }
 
   // For CL "all" mode, validate we got section keys
   if (((tool === "coverLetter" || tool === "linkedin") && sectionType === "all") ||
