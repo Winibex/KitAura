@@ -581,6 +581,9 @@ class ClaudeController extends StateNotifier<ClaudeState> {
     final keyToItem = <String, CanvasItem>{}; // NEW: maps slot key → item
     int slot = 0;
     for (final item in items) {
+      if (item.role == 'hero') continue; // cover slots are filled locally
+      final lt = item.title.trim().toLowerCase();
+      if (lt == 'signature' || lt == 'signature author') continue; // footer filled locally
       if (item.isText && item.controller != null) {
         final key = 's$slot';
         keyToItem[key] = item;
@@ -671,6 +674,8 @@ class ClaudeController extends StateNotifier<ClaudeState> {
         }
       });
 
+      _fillCoverSlots(items, client: client, profile: profile);
+      _fillSignatureSlots(items, client: client, profile: profile);
       editor.canvas.autoArrange();
       editor.markDirty();
 
@@ -737,6 +742,200 @@ class ClaudeController extends StateNotifier<ClaudeState> {
         'targetAudience': c.typeSpecific.targetAudience,
       },
     };
+  }
+
+  /// Fills the cover-page hero slots directly from the client brief + sender
+  /// profile, matching the template's per-line layout. Keeps each line's
+  /// existing formatting (label lines stay styled; only values are swapped).
+  void _fillCoverSlots(
+      List<CanvasItem> items, {
+        required ClientProfileModel client,
+        required AiProfileModel profile,
+      }) {
+    for (final item in items) {
+      if (item.role != 'hero' || !item.isText || item.controller == null) {
+        continue;
+      }
+      final title = item.title.trim().toLowerCase();
+
+      List<String>? values; // the value lines, in order, for this slot
+      switch (title) {
+        case 'proposal title':
+        // line 0 = "BUSINESS PROPOSAL" label (keep), line 1 = project title
+          values = [
+            _keepLine0,
+            (client.projectTitle.isNotEmpty
+                ? client.projectTitle
+                : 'Project Proposal'),
+          ];
+          break;
+        case 'client info':
+        // line 0 = "PREPARED FOR" label (keep), then name, then company | email
+          values = [
+            _keepLine0,
+            client.clientName.isNotEmpty ? client.clientName : 'Client Name',
+            _joinPipe([client.clientCompany, client.clientEmail]),
+          ];
+          break;
+        case 'author info':
+          values = [
+            profile.fullName.isNotEmpty ? profile.fullName : 'Your Name',
+            (profile.jobTitle ?? '').isNotEmpty
+                ? profile.jobTitle!
+                : (profile.industry),
+            _joinPipe([profile.email, profile.phone]),
+          ];
+          break;
+        case 'date':
+          values = [_todayLong()];
+          break;
+        default:
+          continue; // unknown hero slot — leave as-is
+      }
+
+      _applyCoverValues(item.controller!, values);
+    }
+  }
+
+  /// Sentinel: keep the existing line 0 text (a styled label like "PREPARED FOR").
+  static const String _keepLine0 = '\u0000KEEP\u0000';
+
+  /// Rewrites a hero text item line-by-line, preserving each line's existing
+  /// attributes. value[i] replaces line i; the _keepLine0 sentinel keeps the
+  /// original line text. Extra existing lines beyond `values` are dropped.
+  void _applyCoverValues(QuillController controller, List<String> values) {
+    final oldOps = controller.document.toDelta().toJson();
+
+    // Split old delta into lines, remembering each line's attributes.
+    final lineTexts = <String>[];
+    final lineAttrs = <Map<String, dynamic>>[];
+    String curText = '';
+    Map<String, dynamic> curAttrs = {};
+    for (final op in oldOps) {
+      final ins = op['insert'];
+      if (ins is! String) continue;
+      final attrs = Map<String, dynamic>.from((op['attributes'] as Map?) ?? {});
+      final parts = ins.split('\n');
+      for (int i = 0; i < parts.length; i++) {
+        curText += parts[i];
+        if (parts[i].isNotEmpty) curAttrs = attrs;
+        if (i < parts.length - 1) {
+          lineTexts.add(curText);
+          lineAttrs.add(curAttrs);
+          curText = '';
+          curAttrs = {};
+        }
+      }
+    }
+    if (curText.isNotEmpty) { lineTexts.add(curText); lineAttrs.add(curAttrs); }
+
+    Map<String, dynamic> attrsFor(int i) =>
+        i < lineAttrs.length ? lineAttrs[i] : (lineAttrs.isNotEmpty ? lineAttrs.last : {});
+
+    final ops = <Map<String, dynamic>>[];
+    for (int i = 0; i < values.length; i++) {
+      var text = values[i];
+      if (text == _keepLine0) text = i < lineTexts.length ? lineTexts[i] : '';
+      final a = attrsFor(i);
+      ops.add(a.isEmpty
+          ? {'insert': text}
+          : {'insert': text, 'attributes': Map<String, dynamic>.from(a)});
+      ops.add({'insert': '\n'}); // plain newline (engine + quill safe)
+    }
+    if (ops.isEmpty) ops.add({'insert': '\n'});
+
+    controller.updateSelection(
+        const TextSelection.collapsed(offset: 0), ChangeSource.local);
+    controller.document = Document.fromJson(ops);
+  }
+
+  String _joinPipe(List<String?> parts) =>
+      parts.where((p) => p != null && p.trim().isNotEmpty)
+          .map((p) => p!.trim())
+          .join('  |  ');
+
+  String _todayLong() {
+    const months = [
+      'January','February','March','April','May','June','July',
+      'August','September','October','November','December'
+    ];
+    final now = DateTime.now();
+    return '${months[now.month - 1]} ${now.day}, ${now.year}';
+  }
+
+  /// Fills the signature footer ("Accepted by" / "Submitted by") directly from
+  /// data, keeping the template's exact line structure and formatting. Only the
+  /// name line's value changes; "Date" and the signature rule stay as-is.
+  void _fillSignatureSlots(
+      List<CanvasItem> items, {
+        required ClientProfileModel client,
+        required AiProfileModel profile,
+      }) {
+    for (final item in items) {
+      if (!item.isText || item.controller == null) continue;
+      final t = item.title.trim().toLowerCase();
+
+      String? name; // the value to substitute into the "Name | Date" line
+      if (t == 'signature') {
+        name = client.clientName.isNotEmpty ? client.clientName : 'Client Name';
+      } else if (t == 'signature author') {
+        name = profile.fullName.isNotEmpty ? profile.fullName : 'Your Name';
+      } else {
+        continue;
+      }
+
+      // Rebuild line-by-line, preserving each line's attributes. We keep every
+      // line as-is EXCEPT the last non-empty line ("X Name  |  Date"), where we
+      // swap the part before the pipe with the real name.
+      final oldOps = item.controller!.document.toDelta().toJson();
+      final lineTexts = <String>[];
+      final lineAttrs = <Map<String, dynamic>>[];
+      String curText = '';
+      Map<String, dynamic> curAttrs = {};
+      for (final op in oldOps) {
+        final ins = op['insert'];
+        if (ins is! String) continue;
+        final attrs = Map<String, dynamic>.from((op['attributes'] as Map?) ?? {});
+        final parts = ins.split('\n');
+        for (int i = 0; i < parts.length; i++) {
+          curText += parts[i];
+          if (parts[i].isNotEmpty) curAttrs = attrs;
+          if (i < parts.length - 1) {
+            lineTexts.add(curText);
+            lineAttrs.add(curAttrs);
+            curText = '';
+            curAttrs = {};
+          }
+        }
+      }
+      if (curText.isNotEmpty) { lineTexts.add(curText); lineAttrs.add(curAttrs); }
+
+      // Find the "... | Date" line and replace the name part.
+      for (int i = 0; i < lineTexts.length; i++) {
+        if (lineTexts[i].contains('|')) {
+          final pipeIdx = lineTexts[i].indexOf('|');
+          final after = lineTexts[i].substring(pipeIdx); // "|  Date"
+          lineTexts[i] = '$name  $after';
+          break;
+        }
+      }
+
+      final ops = <Map<String, dynamic>>[];
+      for (int i = 0; i < lineTexts.length; i++) {
+        final a = i < lineAttrs.length ? lineAttrs[i] : {};
+        if (lineTexts[i].isNotEmpty) {
+          ops.add(a.isEmpty
+              ? {'insert': lineTexts[i]}
+              : {'insert': lineTexts[i], 'attributes': Map<String, dynamic>.from(a)});
+        }
+        ops.add({'insert': '\n'});
+      }
+      if (ops.isEmpty) ops.add({'insert': '\n'});
+
+      item.controller!.updateSelection(
+          const TextSelection.collapsed(offset: 0), ChangeSource.local);
+      item.controller!.document = Document.fromJson(ops);
+    }
   }
 }
 
