@@ -104,10 +104,10 @@ class ReflowEngine {
       // Page-fit: if the block would cross the usable bottom, push to next page.
       // EXCEPTION: single text sections handle their own page-fit via splitting
       // below, so don't pre-push them here.
-      final isSplittableText = row.length == 1 &&
-          row.first.isText &&
+      final selfPaginates = row.length == 1 &&
+          (row.first.isText || row.first.isTable) &&
           row.first.role != 'heading';
-      if (!isSplittableText) {
+      if (!selfPaginates) {
         final pageOfTop = (cursor / pageH).floor();
         final blockBottom = cursor + blockH;
         final pageBottomLimit = pageOfTop * pageH + usableBottom;
@@ -116,15 +116,40 @@ class ReflowEngine {
         }
       }
 
-      // For a heading: also make sure the NEXT row (its body) has room on the
-      // same page — prevents an orphaned heading at the page bottom.
+      // For a heading: make sure its body has room on the SAME page so the
+      // heading is never orphaned at the page bottom.
+      //  • text body  → it can split, so a few lines below is enough (75).
+      //  • table body → tables move as ONE block (no split yet), so require
+      //    the WHOLE table to fit. Glues Deliverables/Pricing to their tables
+      //    and removes the inconsistent gap.
       if (heading != null) {
         final idx = rows.indexOf(row);
         if (idx + 1 < rows.length) {
-          final next = rows[idx + 1];
-          final nextItem = next.first;
-          final minBody = nextItem.isTable ? 90.0 : 75.0;
-          final wantBottom = cursor + blockH + afterUnderline + minBody;
+          final nextItem = rows[idx + 1].first;
+          final pageContentH = usableBottom - topMargin; // a fresh page's room
+
+          double bodyNeeded;
+          if (nextItem.isTable) {
+            // Option A: heading may start a table if ≥4 rows INCL header fit
+            // under it (= header + 3 data rows). If the table is smaller than
+            // that, require the whole (small) table. If even this won't fit,
+            // the heading drops to the next page WITH its table.
+            final trh =
+            AutoHeight.measureTableRows(nextItem.tableData!, nextItem.width);
+            final hasHdr = nextItem.tableData!.showHeader;
+            final dStart = hasHdr ? 1 : 0;
+            final dRows = trh.length - dStart;
+            double need = hasHdr ? trh[0] : 0;
+            final dNeed = dRows < 3 ? dRows : 3;
+            for (int i = 0; i < dNeed; i++) {
+              need += trh[dStart + i];
+            }
+            bodyNeeded = need;
+          } else {
+            bodyNeeded = 110.0; // ~6 lines — keeps a heading off the very bottom
+          }
+
+          final wantBottom = cursor + blockH + afterUnderline + bodyNeeded;
           final limit = (cursor / pageH).floor() * pageH + usableBottom;
           debugPrint('📐 HEADING "${heading.title}" @cursor=${cursor.toStringAsFixed(0)} '
               'wantBottom=${wantBottom.toStringAsFixed(0)} limit=${limit.toStringAsFixed(0)} '
@@ -136,7 +161,8 @@ class ReflowEngine {
       }
 
       // Place the row at `cursor`.
-      if (heading != null) {
+      if (heading != null)
+      {
         heading.position = Offset(heading.position.dx, cursor);
         if (underline != null) {
           underline.position = Offset(
@@ -147,59 +173,209 @@ class ReflowEngine {
         cursor +=
             blockH + (underline != null ? afterUnderline : afterHeadingNoRule);
       } else if (row.length == 1 && row.first.isText) {
-        // Single text section — may need to split across the page boundary.
+        // Single text section — flow it across as many pages as needed,
+        // reserving the bottom margin on EVERY piece.
         final s = row.first;
-        s.overflowOps = null; // reset any previous split
+        s.overflowSegments = null; // reset any previous split
 
-        debugPrint('🔎 ENTER TEXT "${s.title}" pos.dy=${s.position.dy.toStringAsFixed(0)} '
-            'cursor=${cursor.toStringAsFixed(0)} h=${s.height.toStringAsFixed(0)}');
+        final paras = AutoHeight.measureParagraphs(
+            s.controller!.document.toDelta().toJson(), s.width);
 
-        final pageOfTop = (cursor / pageH).floor();
-        final pageBottom = pageOfTop * pageH + usableBottom;
-        final fitsHere = cursor + s.height <= pageBottom;
-        debugPrint('📄 TEXT "${s.title}" h=${s.height.toStringAsFixed(0)} '
-            '@cursor=${cursor.toStringAsFixed(0)} pageBottom=${pageBottom.toStringAsFixed(0)} '
-            'fitsHere=$fitsHere');
+        // Build a delta-op slice [start, end) from the measured paragraphs.
+        List<Map<String, dynamic>> sliceOps(int start, int end) {
+          final ops = <Map<String, dynamic>>[];
+          for (int i = start; i < end; i++) {
+            for (final op in paras[i].ops) {
+              ops.add(Map<String, dynamic>.from(op));
+            }
+            ops.add({'insert': '\n'}); // plain newline between paragraphs
+          }
+          if (ops.isEmpty) ops.add({'insert': '\n'});
+          return ops;
+        }
 
-        if (fitsHere) {
+        final segs = <OverflowSegment>[];
+        int start = 0;
+        bool first = true; // first PLACED piece stays on the section itself
+        int guard = 0;
+
+        while (start < paras.length) {
+          if (++guard > 300) {
+            debugPrint('⚠️ split guard tripped on "${s.title}"');
+            break;
+          }
+
+          final pageOfCursor = (cursor / pageH).floor();
+          final pageBottom = pageOfCursor * pageH + usableBottom;
+          final avail = pageBottom - cursor;
+          // Reserve the section's own padding PLUS a cushion so text always
+          // ends a few px ABOVE the bottom margin (no edge bleed).
+          final safeAvail = avail - AutoHeight.textVPad - 8;
+
+          // How many paragraphs from `start` fit in the room we have now?
+          double acc = 0;
+          int count = 0;
+          for (int i = start; i < paras.length; i++) {
+            final ph =
+                paras[i].height + (i > start ? AutoHeight.paragraphSpacing : 0);
+            if (acc + ph > safeAvail) break;
+            acc += ph;
+            count++;
+          }
+
+          final pageTop = pageOfCursor * pageH + topMargin;
+          final atPageTop = (cursor - pageTop).abs() < 1;
+          final remaining = paras.length - start;
+
+          void place(int from, int to, double h, {required bool isFirst}) {
+            if (isFirst) {
+              s.position = Offset(s.position.dx, cursor);
+              s.height = h;
+              s.displayOps = sliceOps(from, to);   // ← ADD THIS LINE
+            } else {
+              segs.add(OverflowSegment(
+                  ops: sliceOps(from, to), y: cursor, height: h));
+            }
+          }
+
+          if (count >= remaining) {
+            final h = acc + AutoHeight.textVPad;
+            place(start, paras.length, h, isFirst: first);
+            cursor += h + sectionGap;
+            start = paras.length;
+            first = false;
+          } else if (count >= 1 && (!first || acc >= minSplitText)) {
+            // Partial piece here, rest flows to the next page.
+            final h = acc + AutoHeight.textVPad;
+            place(start, start + count, h, isFirst: first);
+            start += count;
+            cursor = (pageOfCursor + 1) * pageH + topMargin;
+            first = false;
+          } else if (atPageTop) {
+            // Pathological: one paragraph taller than a whole page. Force it
+            // so we never loop forever; it will visually overflow but render.
+            final h = paras[start].height + AutoHeight.textVPad;
+            place(start, start + 1, h, isFirst: first);
+            start += 1;
+            cursor = (pageOfCursor + 1) * pageH + topMargin;
+            first = false;
+          } else {
+            // Too little room here (e.g. a tiny stub on the first page) →
+            // jump to a fresh page and retry. Keep `first` until we place.
+            cursor = (pageOfCursor + 1) * pageH + topMargin;
+          }
+        }
+
+        if (segs.isNotEmpty) {
+          s.overflowSegments = segs;
+        } else {
+          s.displayOps = null; // single piece → render the controller normally
+        }
+        debugPrint('✂️ FLOW "${s.title}" → ${segs.length + 1} piece(s)');
+      } else if (row.length == 1 && row.first.isTable) {
+        // Single table — flow across pages. Each piece repeats the header.
+        // Splits only where ≥4 rows (incl header) fit; else moves whole.
+        final s = row.first;
+        s.overflowSegments = null;
+        s.displayOps = null;   // ← add
+        final td = s.tableData!;
+        final rh = AutoHeight.measureTableRows(td, s.width);
+        final hasHeader = td.showHeader;
+        final headerH = hasHeader ? rh[0] : 0.0;
+        final dataStart = hasHeader ? 1 : 0;
+        final dataCount = rh.length - dataStart;
+
+        if (dataCount <= 0) {
           s.position = Offset(s.position.dx, cursor);
           cursor += s.height + sectionGap;
         } else {
-          // Measure paragraphs to find how many fit before pageBottom.
-          final paras = AutoHeight.measureParagraphs(
-              s.controller!.document.toDelta().toJson(), s.width);
-          final avail = pageBottom - cursor;
+          final segs = <OverflowSegment>[];
+          int start = 0;
+          bool first = true;
+          int guard = 0;
 
-          final safeAvail = avail - 10; // small cushion so text doesn't kiss margin
-          double acc = 0;
-          int fitCount = 0;
-          for (int i = 0; i < paras.length; i++) {
-            final ph = paras[i].height +
-                (i > 0 ? AutoHeight.paragraphSpacing : 0);
-            if (acc + ph > safeAvail) break;
-            acc += ph;
-            fitCount++;
+          double pieceH(int from, int n) {
+            double h = headerH;
+            for (int i = 0; i < n; i++) {
+              h += rh[dataStart + from + i];
+            }
+            return h + AutoHeight.tableSafety;
           }
 
-          if (acc >= minSplitText && fitCount >= 1 && fitCount < paras.length) {
-            debugPrint('✂️ SPLIT "${s.title}" acc=${acc.toStringAsFixed(0)} '
-                'fitCount=$fitCount/${paras.length}');
-            final (firstOps, secondOps) =
-            AutoHeight.splitParagraphs(paras, fitCount);
-            s.position = Offset(s.position.dx, cursor);
-            s.height = acc + AutoHeight.textVPad;
-            s.overflowOps = secondOps;
-            // Continuation goes to top of next page.
-            final contY = (pageOfTop + 1) * pageH + topMargin;
-            s.overflowY = contY;                    // ← record it
-            final contH = AutoHeight.measureText(secondOps, s.width);
-            cursor = contY + contH + sectionGap;
+          void place(int from, int to, double h, {required bool isFirst}) {
+            if (isFirst) {
+              s.position = Offset(s.position.dx, cursor);
+              s.height = h;
+              s.displayTableData = td.copyWith(
+                rows: td.rows.sublist(from, to)
+                    .map((r) => List<String>.from(r)).toList(),
+              );
+            } else {
+              final slice = td.copyWith(
+                rows: td.rows.sublist(from, to)
+                    .map((r) => List<String>.from(r)).toList(),
+              );
+              segs.add(OverflowSegment(tableData: slice, y: cursor, height: h));
+            }
+          }
+
+          while (start < dataCount) {
+            if (++guard > 300) {
+              debugPrint('⚠️ table split guard "${s.title}"');
+              break;
+            }
+            final pageOfCursor = (cursor / pageH).floor();
+            final pageBottom = pageOfCursor * pageH + usableBottom;
+            final avail = pageBottom - cursor;
+            final safeAvail = avail - AutoHeight.tableSafety - 8;
+            final roomForData = safeAvail - headerH; // header on every piece
+
+            double acc = 0;
+            int count = 0;
+            for (int i = start; i < dataCount; i++) {
+              final r = rh[dataStart + i];
+              if (acc + r > roomForData) break;
+              acc += r;
+              count++;
+            }
+
+            final pageTop = pageOfCursor * pageH + topMargin;
+            final atPageTop = (cursor - pageTop).abs() < 1;
+            final remaining = dataCount - start;
+            final rowsInclHeader = count + (hasHeader ? 1 : 0);
+
+            if (count >= remaining) {
+              final h = pieceH(start, count);
+              place(start, dataCount, h, isFirst: first);
+              cursor += h + sectionGap;
+              start = dataCount;
+              first = false;
+            } else if (count >= 1 && rowsInclHeader >= 4) {
+              final h = pieceH(start, count);
+              place(start, start + count, h, isFirst: first);
+              start += count;
+              cursor = (pageOfCursor + 1) * pageH + topMargin;
+              first = false;
+            } else if (atPageTop) {
+              // pathological: <4 rows fit even on a fresh page → force ≥1
+              final n = count >= 1 ? count : 1;
+              final h = pieceH(start, n);
+              place(start, start + n, h, isFirst: first);
+              start += n;
+              cursor = (pageOfCursor + 1) * pageH + topMargin;
+              first = false;
+            } else {
+              // only 2–3 rows fit here → move the whole piece to the next page
+              cursor = (pageOfCursor + 1) * pageH + topMargin;
+            }
+          }
+
+          if (segs.isNotEmpty) {
+            s.overflowSegments = segs;
           } else {
-            // Can't fit even one paragraph → push whole section to next page.
-            cursor = (pageOfTop + 1) * pageH + topMargin;
-            s.position = Offset(s.position.dx, cursor);
-            cursor += s.height + sectionGap;
+            s.displayTableData = null;
           }
+          debugPrint('📊 TABLE FLOW "${s.title}" → ${segs.length + 1} piece(s)');
         }
       } else {
         for (final s in row) {

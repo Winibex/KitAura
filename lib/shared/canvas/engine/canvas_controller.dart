@@ -857,7 +857,8 @@ class CanvasController extends ChangeNotifier {
       items.add(item);
     }
 
-    autosizeAll(); // ← NEW: size text & tables to real content before paging
+    _clearContinuations();        // ← clear stale continuations FIRST
+    autosizeAll();
     ReflowEngine.arrange(items, canvasH);
     _buildContinuations();
 
@@ -922,6 +923,7 @@ class CanvasController extends ChangeNotifier {
   /// after edits or from an "Auto-arrange" button.
   void autoArrange() {
     saveSnapshot();
+    _clearContinuations();        // ← clear stale continuations FIRST
     autosizeAll();
 
     final prev = {for (final i in items) i.id: i.position.dy};
@@ -1305,43 +1307,83 @@ class CanvasController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// After reflow, create temporary continuation items for any section that
-  /// overflowed (has overflowOps). These render the leftover text on the next
-  /// page. They are disposable — cleared and rebuilt on every reflow, never saved.
-  void _buildContinuations() {
-    // 1. Remove old continuations.
+  /// Removes all continuation items. Must run BEFORE reflow so the engine
+  /// never sees stale continuations as real content.
+  void _clearContinuations() {
     items.removeWhere((i) {
       if (i.isContinuation) { i.dispose(); return true; }
       return false;
     });
-
-    // 2. Create fresh ones for sections that overflowed.
-    final toAdd = <CanvasItem>[];
-    for (final item in items) {
-      if (item.overflowOps == null) continue;
-      final cont = CanvasItem(
-        type: CanvasItemType.textSection,
-        position: Offset(item.position.dx, item.overflowY), // ← use recorded Y
-        width: item.width,
-        height: AutoHeight.measureText(item.overflowOps!, item.width),
-        title: '',
-      );
-      cont.isContinuation = true;
-      debugPrint('➡️ CONTINUATION for "${item.title}" '
-          'at Y=${item.overflowY.toStringAsFixed(0)} '
-          'h=${cont.height.toStringAsFixed(0)} '
-          'origEndsAt=${(item.position.dy + item.height).toStringAsFixed(0)}');
-      // The continuation sits where the engine left the cursor gap. We need
-      // its real Y — recompute from the overflow reservation.
-      try {
-        final sanitized = _sanitizeDelta(item.overflowOps!);
-        cont.controller!.document = Document.fromJson(sanitized);
-      } catch (e) {
-        debugPrint('Continuation build failed: $e');
-      }
-      toAdd.add(cont);
+    // Also clear overflow markers on real items so reflow starts clean.
+    // Clear overflow markers on real items so reflow starts clean.
+    for (final i in items) {
+      i.overflowSegments = null;
+      i.displayOps = null;
+      i.displayTableData = null;
+      i.displayController?.dispose();
+      i.displayController = null;
     }
-    items.addAll(toAdd);
   }
 
+  /// After reflow, create one continuation item per overflow segment. These
+  /// render leftover text on later pages. Disposable — rebuilt every reflow,
+  /// never saved (excluded via !isContinuation in toFirestoreJson/export).
+  void _buildContinuations() {
+    final toAdd = <CanvasItem>[];
+    for (final item in items) {
+      final segs = item.overflowSegments;
+      if (segs == null) continue;
+      for (final seg in segs) {
+        if (seg.tableData != null) {
+          final cont = CanvasItem(
+            type: CanvasItemType.tableSection,
+            position: Offset(item.position.dx, seg.y),
+            width: item.width,
+            height: seg.height,
+            title: '',
+            tableData: seg.tableData,
+          );
+          cont.isContinuation = true;
+          toAdd.add(cont);
+          debugPrint('➡️ CONT-TBL "${item.title}" Y=${seg.y.toStringAsFixed(0)} '
+              'h=${seg.height.toStringAsFixed(0)} '
+              'rows=${seg.tableData!.rowCount}');
+        } else {
+          final cont = CanvasItem(
+            type: CanvasItemType.textSection,
+            position: Offset(item.position.dx, seg.y),
+            width: item.width,
+            height: seg.height,
+            title: '',
+          );
+          cont.isContinuation = true;
+          try {
+            cont.controller!.document =
+                Document.fromJson(_sanitizeDelta(seg.ops!));
+          } catch (e) {
+            debugPrint('Continuation build failed: $e');
+          }
+          toAdd.add(cont);
+          debugPrint('➡️ CONT "${item.title}" Y=${seg.y.toStringAsFixed(0)} '
+              'h=${seg.height.toStringAsFixed(0)}');
+        }
+      }
+    }
+    items.addAll(toAdd);
+
+    // Build read-only display controllers for split text parents so they
+    // render ONLY their kept paragraphs (full text stays in `controller`).
+    for (final item in items) {
+      if (item.isText && item.displayOps != null) {
+        item.displayController?.dispose();
+        final c = QuillController.basic();
+        try {
+          c.document = Document.fromJson(_sanitizeDelta(item.displayOps!));
+        } catch (e) {
+          debugPrint('display build failed: $e');
+        }
+        item.displayController = c;
+      }
+    }
+  }
 }

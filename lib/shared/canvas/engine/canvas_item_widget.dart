@@ -235,6 +235,14 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
   }
 
   void _autosizeSelf() {
+    // Engine-managed sections keep the height the reflow engine assigned.
+    // A SPLIT parent (overflowSegments != null) was deliberately shrunk to its
+    // kept portion; a continuation is sized by the engine too. Re-measuring
+    // them to full content height undoes the split and paints the tail twice
+    // (the overlap) and pushes text past the bottom margin. Skip them.
+    if (widget.item.overflowSegments != null || widget.item.isContinuation) {
+      return;
+    }
     double h = 0;
     if (widget.item.isTable && widget.item.tableData != null) {
       h = AutoHeight.measureTable(widget.item.tableData!, _w);
@@ -303,6 +311,8 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
   Widget _buildBody() {
     // ── TABLE SECTION ──────────────────────────────────────────
     if (widget.item.isTable) {
+      final data = widget.item.displayTableData ??
+          widget.item.tableData ?? TableData.empty();
       return MouseRegion(
         cursor: SystemMouseCursors.move,
         child: GestureDetector(
@@ -313,7 +323,7 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
             widget.onSaveSnapshot();
             final result = await TableEditorDialog.show(
               context,
-              initialData: widget.item.tableData ?? TableData.empty(),
+              initialData: widget.item.tableData ?? TableData.empty(), // full table
               title: widget.item.title.isNotEmpty ? widget.item.title : 'Edit Table',
             );
             if (result != null) {
@@ -324,11 +334,7 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
           onPanStart: _onDragStart,
           onPanUpdate: _onDragUpdate,
           onPanEnd: _onDragEnd,
-          child: TableSectionRenderer(
-            data: widget.item.tableData ?? TableData.empty(),
-            width: _w,
-            height: _h,
-          ),
+          child: TableSectionRenderer(data: data, width: _w, height: _h),
         ),
       );
     }
@@ -365,9 +371,15 @@ class _CanvasItemWidgetState extends State<CanvasItemWidget> {
           onPanStart: _onDragStart,
           onPanUpdate: _onDragUpdate,
           onPanEnd: _onDragEnd,
+          // Clip the displayed text to the section's reserved height (_h).
+          // Split sections keep their FULL text in the controller but _h is
+          // shrunk to the kept portion; the tail is drawn by the continuation
+          // item on the next page. Without this clip the full text paints past
+          // _h and bleeds off the page. Non-split sections have _h == content
+          // height, so nothing is clipped. Edit mode is untouched (scrollable).
           child: AbsorbPointer(
             child: QuillEditor(
-              controller: widget.item.controller!,
+              controller: widget.item.displayController ?? widget.item.controller!,
               focusNode: widget.item.focusNode!,
               scrollController: widget.item.scrollController!,
               config: QuillEditorConfig(

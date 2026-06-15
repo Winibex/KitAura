@@ -70,7 +70,11 @@ class ClaudeService {
   {
     debugPrint('🤖 [ClaudeService] aiFillSection(section=$sectionType, tone=$tone)');
     try {
-      final result = await _fn.httpsCallable('aiFill').call<Map<String, dynamic>>({
+      final result = await _fn.httpsCallable('aiFill',
+          options: HttpsCallableOptions(
+            timeout: const Duration(seconds: 300), // proposal "all" can be slow
+          ),
+      ).call<Map<String, dynamic>>({
         'sectionType': sectionType,
         'tone': tone,
         'experienceLevel': experienceLevel,
