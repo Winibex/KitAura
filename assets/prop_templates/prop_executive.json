@@ -7,7 +7,8 @@
       "x": 0, "y": 0, "w": 595, "h": 842,
       "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
+      "sectionType": "custom",
+      "role": "hero"
     },
     {
       "type": "rectangle",
@@ -15,7 +16,8 @@
       "x": 50, "y": 180, "w": 80, "h": 3,
       "color": "#C9A84C", "borderColor": "#C9A84C", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
+      "sectionType": "custom",
+      "role": "hero"
     },
     {
       "type": "textSection",
@@ -24,6 +26,7 @@
       "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "hero",
       "delta": [
         {"insert": "YOUR COMPANY", "attributes": {"bold": true, "size": "11", "color": "#C9A84C"}},
         {"insert": "\n"}
@@ -36,13 +39,14 @@
       "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "hero",
       "delta": [
         {"insert": "EXECUTIVE", "attributes": {"bold": true, "size": "36", "color": "#FFFFFF"}},
         {"insert": "\n"},
         {"insert": "PROPOSAL", "attributes": {"bold": true, "size": "36", "color": "#C9A84C"}},
         {"insert": "\n"},
         {"insert": "\n"},
-        {"insert": "Strategic Partnership for [Project Name]", "attributes": {"size": "14", "color": "#A0AEC0"}},
+        {"insert": "Strategic Partnership for Project Name", "attributes": {"size": "14", "color": "#A0AEC0"}},
         {"insert": "\n"}
       ]
     },
@@ -53,6 +57,7 @@
       "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "hero",
       "delta": [
         {"insert": "PREPARED FOR", "attributes": {"bold": true, "size": "9", "color": "#C9A84C"}},
         {"insert": "\n"},
@@ -68,7 +73,8 @@
       "x": 50, "y": 700, "w": 495, "h": 1,
       "color": "#C9A84C", "borderColor": "#C9A84C", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
+      "sectionType": "custom",
+      "role": "hero"
     },
     {
       "type": "textSection",
@@ -77,6 +83,7 @@
       "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "hero",
       "delta": [
         {"insert": "CONFIDENTIAL", "attributes": {"bold": true, "size": "9", "color": "#C9A84C"}},
         {"insert": "\n"},
@@ -84,7 +91,6 @@
         {"insert": "\n"}
       ]
     },
-
     {
       "type": "rectangle",
       "title": "",
@@ -100,6 +106,8 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "execSummary",
       "delta": [
         {"insert": "EXECUTIVE SUMMARY", "attributes": {"bold": true, "size": "18", "color": "#0F172A"}},
         {"insert": "\n"}
@@ -111,7 +119,9 @@
       "x": 50, "y": 931, "w": 50, "h": 3,
       "color": "#C9A84C", "borderColor": "#C9A84C", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
+      "sectionType": "custom",
+      "role": "underline",
+      "group": "execSummary"
     },
     {
       "type": "textSection",
@@ -121,10 +131,9 @@
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
       "delta": [
-        {"insert": "[Your Company] is pleased to present this proposal for a strategic engagement with [Client Company]. This initiative addresses the critical need for [key business challenge] and positions [Client Company] for [strategic outcome].", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "Your Company is pleased to present this proposal for a strategic engagement with the client. This initiative addresses the critical business need and positions the organization for a clear strategic outcome.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "\n"},
-        {"insert": "The proposed investment of $XX,XXX delivers [primary value proposition] with an estimated ROI of [X]% within [timeframe]. Our approach is informed by [X years] of experience serving [industry] leaders including [notable clients].", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "The proposed investment delivers measurable value with strong ROI within the project timeframe. Our approach is informed by years of experience serving industry leaders.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"}
       ]
     },
@@ -135,6 +144,8 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "situation",
       "delta": [
         {"insert": "SITUATION ANALYSIS", "attributes": {"bold": true, "size": "18", "color": "#0F172A"}},
         {"insert": "\n"}
@@ -146,7 +157,9 @@
       "x": 50, "y": 1145, "w": 50, "h": 3,
       "color": "#C9A84C", "borderColor": "#C9A84C", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
+      "sectionType": "custom",
+      "role": "underline",
+      "group": "situation"
     },
     {
       "type": "textSection",
@@ -158,12 +171,11 @@
       "delta": [
         {"insert": "Current State", "attributes": {"bold": true, "size": "12", "color": "#0F172A"}},
         {"insert": "\n"},
-        {"insert": "[Client Company] currently [describe current state]. Key challenges include [challenge 1], [challenge 2], and [challenge 3]. These issues are estimated to cost $[X] annually in [lost revenue/inefficiency/risk].", "attributes": {"size": "11", "color": "#333333"}},
-        {"insert": "\n"},
+        {"insert": "Describe the client's current operating state and the key challenges costing the business in efficiency, revenue, or risk.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
         {"insert": "Market Context", "attributes": {"bold": true, "size": "12", "color": "#0F172A"}},
         {"insert": "\n"},
-        {"insert": "Industry trends including [trend 1] and [trend 2] make this initiative strategically urgent. Competitors including [competitor] have already [competitive action], making timely execution critical.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "Industry trends make this initiative strategically urgent; competitors are moving first and timely execution is critical.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"}
       ]
     },
@@ -174,6 +186,8 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "solution",
       "delta": [
         {"insert": "RECOMMENDED SOLUTION", "attributes": {"bold": true, "size": "18", "color": "#0F172A"}},
         {"insert": "\n"}
@@ -185,7 +199,9 @@
       "x": 50, "y": 1385, "w": 50, "h": 3,
       "color": "#C9A84C", "borderColor": "#C9A84C", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
+      "sectionType": "custom",
+      "role": "underline",
+      "group": "solution"
     },
     {
       "type": "textSection",
@@ -195,29 +211,22 @@
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
       "delta": [
-        {"insert": "We recommend a [X]-phase engagement that addresses both immediate needs and long-term strategic positioning:", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "We recommend a multi-phase engagement that addresses immediate needs and long-term strategic positioning.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
+        {"insert": "Phase 1 — Assessment & Strategy", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
         {"insert": "\n"},
-        {"insert": "•  Phase 1 — Assessment & Strategy ", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
-        {"insert": "(Weeks 1-3)", "attributes": {"size": "11", "color": "#76818E"}},
+        {"insert": "Comprehensive audit, stakeholder interviews, strategic framework development.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "   Comprehensive audit, stakeholder interviews, strategic framework development.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "Phase 2 — Implementation", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
         {"insert": "\n"},
+        {"insert": "Execution of approved strategy with dedicated project management.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "•  Phase 2 — Implementation ", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
-        {"insert": "(Weeks 4-10)", "attributes": {"size": "11", "color": "#76818E"}},
+        {"insert": "Phase 3 — Optimization & Transition", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
         {"insert": "\n"},
-        {"insert": "   Execution of approved strategy with dedicated project management.", "attributes": {"size": "11", "color": "#333333"}},
-        {"insert": "\n"},
-        {"insert": "\n"},
-        {"insert": "•  Phase 3 — Optimization & Transition ", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
-        {"insert": "(Weeks 11-12)", "attributes": {"size": "11", "color": "#76818E"}},
-        {"insert": "\n"},
-        {"insert": "   Performance optimization, knowledge transfer, and ongoing support planning.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "Performance optimization, knowledge transfer, and ongoing support planning.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"}
       ]
     },
-
     {
       "type": "rectangle",
       "title": "",
@@ -233,6 +242,8 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "implementation",
       "delta": [
         {"insert": "IMPLEMENTATION PLAN", "attributes": {"bold": true, "size": "18", "color": "#0F172A"}},
         {"insert": "\n"}
@@ -244,7 +255,9 @@
       "x": 50, "y": 1773, "w": 50, "h": 3,
       "color": "#C9A84C", "borderColor": "#C9A84C", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
+      "sectionType": "custom",
+      "role": "underline",
+      "group": "implementation"
     },
     {
       "type": "tableSection",
@@ -278,6 +291,8 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "financial",
       "delta": [
         {"insert": "FINANCIAL OVERVIEW", "attributes": {"bold": true, "size": "18", "color": "#0F172A"}},
         {"insert": "\n"}
@@ -289,7 +304,9 @@
       "x": 50, "y": 2020, "w": 50, "h": 3,
       "color": "#C9A84C", "borderColor": "#C9A84C", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
+      "sectionType": "custom",
+      "role": "underline",
+      "group": "financial"
     },
     {
       "type": "tableSection",
@@ -328,7 +345,6 @@
         {"insert": "\n"}
       ]
     },
-
     {
       "type": "rectangle",
       "title": "",
@@ -344,6 +360,8 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "risk",
       "delta": [
         {"insert": "RISK MITIGATION", "attributes": {"bold": true, "size": "18", "color": "#0F172A"}},
         {"insert": "\n"}
@@ -355,7 +373,9 @@
       "x": 50, "y": 2611, "w": 50, "h": 3,
       "color": "#C9A84C", "borderColor": "#C9A84C", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
+      "sectionType": "custom",
+      "role": "underline",
+      "group": "risk"
     },
     {
       "type": "textSection",
@@ -365,17 +385,21 @@
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
       "delta": [
-        {"insert": "•  Scope Management: ", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
-        {"insert": "Formal change request process with impact assessment for any scope modifications", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "Scope Management", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
         {"insert": "\n"},
-        {"insert": "•  Quality Assurance: ", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
-        {"insert": "Dedicated QA lead with weekly quality reviews and stakeholder sign-offs", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "Formal change request process with impact assessment for any scope modifications.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "•  Communication: ", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
-        {"insert": "Bi-weekly executive briefings and real-time project dashboard access", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "Quality Assurance", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
         {"insert": "\n"},
-        {"insert": "•  Contingency: ", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
-        {"insert": "10% budget reserve and flexible timeline buffer built into the plan", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "Dedicated QA lead with weekly quality reviews and stakeholder sign-offs.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "Communication", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "Bi-weekly executive briefings and real-time project dashboard access.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "Contingency", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "10% budget reserve and flexible timeline buffer built into the plan.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"}
       ]
     },
@@ -386,6 +410,8 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "credentials",
       "delta": [
         {"insert": "OUR CREDENTIALS", "attributes": {"bold": true, "size": "18", "color": "#0F172A"}},
         {"insert": "\n"}
@@ -397,7 +423,9 @@
       "x": 50, "y": 2805, "w": 50, "h": 3,
       "color": "#C9A84C", "borderColor": "#C9A84C", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
+      "sectionType": "custom",
+      "role": "underline",
+      "group": "credentials"
     },
     {
       "type": "textSection",
@@ -407,10 +435,9 @@
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
       "delta": [
-        {"insert": "[Your Company] has delivered [X]+ enterprise engagements across [industries]. Our client portfolio includes [notable clients]. Key differentiators:", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "Your Company has delivered many enterprise engagements across multiple industries. The portfolio includes notable named clients.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "\n"},
-        {"insert": "•  [X] years in [industry/domain]  •  [X]+ completed projects  •  [X]% client retention rate", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "Key differentiators: deep domain experience, proven execution track record, and high client retention.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"}
       ]
     },
@@ -421,6 +448,8 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "terms",
       "delta": [
         {"insert": "TERMS", "attributes": {"bold": true, "size": "18", "color": "#0F172A"}},
         {"insert": "\n"}
@@ -459,6 +488,7 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "signature",
       "delta": [
         {"insert": "ACCEPTED BY", "attributes": {"bold": true, "size": "9", "color": "#C9A84C"}},
         {"insert": "\n"},
@@ -476,6 +506,7 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "signature",
       "delta": [
         {"insert": "SUBMITTED BY", "attributes": {"bold": true, "size": "9", "color": "#C9A84C"}},
         {"insert": "\n"},

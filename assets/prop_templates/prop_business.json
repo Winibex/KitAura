@@ -342,19 +342,20 @@
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
       "delta": [
-        {"insert": "\u2022  Payment: 50% upfront, 50% upon project completion", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "Payment", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
         {"insert": "\n"},
-        {"insert": "\u2022  This proposal is valid for 30 days from the date above", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "50% upfront, 50% upon project completion.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "\u2022  Additional revisions beyond the agreed scope will be billed at $XXX/hour", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "Validity", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
         {"insert": "\n"},
-        {"insert": "\u2022  All intellectual property created during this engagement transfers to the client upon final payment", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "This proposal is valid for 30 days from the date above.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"}
       ]
     },
     {
       "type": "textSection",
       "title": "Signature",
+      "role": "signature",
       "x": 50, "y": 2400, "w": 240, "h": 85,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
@@ -371,6 +372,7 @@
     },
     {
       "type": "textSection",
+      "role": "signature",
       "title": "Signature Author",
       "x": 305, "y": 2400, "w": 240, "h": 85,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,

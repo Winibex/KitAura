@@ -13,6 +13,7 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../../features/cover_letter/editor/controller/cl_editor_controller.dart';
 import '../../features/proposal/editor/controller/prop_editor_controller.dart';
+import '../../features/proposal/template/data/prop_template_data.dart';
 import '../models/ai_profile_model.dart';
 import '../models/canvas_item.dart';
 import '../models/client_profile_model.dart';
@@ -557,6 +558,7 @@ class ClaudeController extends StateNotifier<ClaudeState> {
       _cachedProfile ??= await _loadAiProfile(uid);
     } catch (_) {}
     final profile = _cachedProfile ?? const AiProfileModel();
+    final templateId = editor.state.templateId ?? '';
 
     // Client brief (the rich 6-step client profile)
     final client = await editor.getLinkedClient();
@@ -581,17 +583,25 @@ class ClaudeController extends StateNotifier<ClaudeState> {
     final keyToItem = <String, CanvasItem>{}; // NEW: maps slot key → item
     int slot = 0;
     for (final item in items) {
-      if (item.role == 'hero') continue; // cover slots are filled locally
+      if (item.role == 'hero' ||
+          item.role == 'top_band' ||
+          item.role == 'signature' ||
+          item.role == 'heading' ||
+          item.role == 'underline') {
+        continue;
+      }
       final lt = item.title.trim().toLowerCase();
       if (lt == 'signature' || lt == 'signature author') continue; // footer filled locally
       if (item.isText && item.controller != null) {
         final key = 's$slot';
         keyToItem[key] = item;
+        final shape = PropTemplateData.getContentShape(templateId, item.title);
         manifest.add({
           'id': key,
           'sectionType': item.sectionType.key,
           'title': item.title,
           'kind': 'text',
+          if (shape != null) 'shape': shape,
         });
         slot++;
       } else if (item.isTable && item.tableData != null) {
@@ -604,6 +614,7 @@ class ClaudeController extends StateNotifier<ClaudeState> {
           'kind': 'table',
           'headers': item.tableData!.headers,
           'columnCount': item.tableData!.columnCount,
+          'maxRows': item.tableData!.rowCount, // keep AI from bloating tables
         });
         slot++;
       }
@@ -753,7 +764,8 @@ class ClaudeController extends StateNotifier<ClaudeState> {
         required AiProfileModel profile,
       }) {
     for (final item in items) {
-      if (item.role != 'hero' || !item.isText || item.controller == null) {
+      final isCover = item.role == 'hero' || item.role == 'top_band';
+      if (!isCover || !item.isText || item.controller == null) {
         continue;
       }
       final title = item.title.trim().toLowerCase();
@@ -789,6 +801,66 @@ class ClaudeController extends StateNotifier<ClaudeState> {
         case 'date':
           values = [_todayLong()];
           break;
+        case 'header':
+        // Freelance template: line 0 = freelancer name (bold), line 1 = title | "Freelance Professional"
+          values = [
+            profile.fullName.isNotEmpty ? profile.fullName : 'Your Name',
+            _joinPipe([
+              (profile.jobTitle ?? '').isNotEmpty
+                  ? profile.jobTitle!
+                  : profile.industry,
+              'Freelance Professional',
+            ]),
+          ];
+          break;
+
+        case 'contact':
+        // Freelance: 3 lines — email, phone, website
+          values = [
+            profile.email.isNotEmpty ? profile.email : 'email@example.com',
+            profile.phone.isNotEmpty ? profile.phone : '+1 234 567 890',
+            (profile.website ?? '').isNotEmpty
+                ? profile.website!
+                : 'www.yourwebsite.com',
+          ];
+          break;
+
+        case 'proposal for':
+        // Freelance: single line "Proposal for {client}  |  {date}"
+        // The template's delta has 3 inline ops (label / client bold / date),
+        // but they live on ONE logical line — replace line 0 fully.
+          final clientName = client.clientName.isNotEmpty
+              ? client.clientName
+              : 'Client Name';
+          values = ['Proposal for $clientName  |  ${_todayLong()}'];
+          break;
+        case 'title':
+        // Executive template: lines 0-2 stay as template ("EXECUTIVE" / "PROPOSAL" / blank).
+        // Line 3 is the tagline — fill with project title.
+          final projectName = client.projectTitle.isNotEmpty
+              ? client.projectTitle
+              : 'Project Name';
+          values = [
+            _keepLine0,
+            _keepLine0,
+            _keepLine0,
+            'Strategic Partnership for $projectName',
+          ];
+          break;
+
+        case 'client':
+        // Executive: line 0 = "PREPARED FOR" label (keep),
+        // line 1 = "Client Name, Title", line 2 = "Company  |  Date"
+          final clientName = client.clientName.isNotEmpty
+              ? client.clientName
+              : 'Client Name';
+          values = [
+            _keepLine0,
+            clientName,
+            _joinPipe([client.clientCompany, _todayLong()]),
+          ];
+          break;
+      // 'company' and 'confidential' intentionally NOT matched — they stay static.
         default:
           continue; // unknown hero slot — leave as-is
       }
@@ -872,13 +944,14 @@ class ClaudeController extends StateNotifier<ClaudeState> {
         required AiProfileModel profile,
       }) {
     for (final item in items) {
-      if (!item.isText || item.controller == null) continue;
-      final t = item.title.trim().toLowerCase();
-
-      String? name; // the value to substitute into the "Name | Date" line
-      if (t == 'signature') {
+      if (item.role != 'signature' || !item.isText || item.controller == null) {
+        continue;
+      }
+      final plain = item.controller!.document.toPlainText().toLowerCase();
+      String name;
+      if (plain.contains('accepted')) {
         name = client.clientName.isNotEmpty ? client.clientName : 'Client Name';
-      } else if (t == 'signature author') {
+      } else if (plain.contains('submitted')) {
         name = profile.fullName.isNotEmpty ? profile.fullName : 'Your Name';
       } else {
         continue;

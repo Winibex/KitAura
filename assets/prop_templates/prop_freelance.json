@@ -7,7 +7,8 @@
       "x": 0, "y": 0, "w": 595, "h": 160,
       "color": "#FFF1F5", "borderColor": "#FFF1F5", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
+      "sectionType": "custom",
+      "role": "top_band"
     },
     {
       "type": "rectangle",
@@ -15,7 +16,8 @@
       "x": 0, "y": 160, "w": 595, "h": 3,
       "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
+      "sectionType": "custom",
+      "role": "top_band"
     },
     {
       "type": "textSection",
@@ -24,6 +26,7 @@
       "color": "#FFF1F5", "borderColor": "#FFF1F5", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "top_band",
       "delta": [
         {"insert": "Your Full Name", "attributes": {"bold": true, "size": "22", "color": "#0F172A"}},
         {"insert": "\n"},
@@ -38,6 +41,7 @@
       "color": "#FFF1F5", "borderColor": "#FFF1F5", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "top_band",
       "delta": [
         {"insert": "email@example.com", "attributes": {"size": "10", "color": "#333333"}},
         {"insert": "\n"},
@@ -54,6 +58,7 @@
       "color": "#FFF1F5", "borderColor": "#FFF1F5", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "top_band",
       "delta": [
         {"insert": "Proposal for ", "attributes": {"size": "13", "color": "#76818E"}},
         {"insert": "Client Name", "attributes": {"bold": true, "size": "13", "color": "#831843"}},
@@ -82,6 +87,8 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "understanding",
       "delta": [
         {"insert": "Project Understanding", "attributes": {"bold": true, "size": "15", "color": "#831843"}},
         {"insert": "\n"}
@@ -95,16 +102,15 @@
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
       "delta": [
-        {"insert": "Based on our conversation, I understand that you need [describe the client's need/problem in your own words]. The goal is to [desired outcome] so that [business benefit].", "attributes": {"size": "11", "color": "#333333"}},
-        {"insert": "\n"},
+        {"insert": "Based on our conversation, I understand that you need a clear, well-scoped solution to your stated need. The goal is to deliver work that moves your business forward measurably.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
         {"insert": "Here's what I see as the key priorities:", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "•  [Priority 1 — most important thing to get right]", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "•  Priority 1 — most important thing to get right", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "•  [Priority 2 — second focus area]", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "•  Priority 2 — second focus area", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "•  [Priority 3 — nice-to-have or future phase]", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "•  Priority 3 — nice-to-have or future phase", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"}
       ]
     },
@@ -115,6 +121,8 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "approach",
       "delta": [
         {"insert": "My Approach", "attributes": {"bold": true, "size": "15", "color": "#831843"}},
         {"insert": "\n"}
@@ -128,20 +136,17 @@
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
       "delta": [
-        {"insert": "I'll work in [X] clear phases to keep things on track and transparent:", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "I'll work in clear phases to keep things on track and transparent.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "\n"},
-        {"insert": "Step 1 — Discovery", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
+        {"insert": "Step 1 — Discovery", "attributes": {"bold": true, "size": "11", "color": "#831843"}},
         {"insert": "\n"},
         {"insert": "Deep dive into your requirements, audience, and goals. Deliverable: project brief.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "\n"},
-        {"insert": "Step 2 — Creation", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
+        {"insert": "Step 2 — Creation", "attributes": {"bold": true, "size": "11", "color": "#831843"}},
         {"insert": "\n"},
         {"insert": "Build out the core deliverables with regular check-ins for feedback.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "\n"},
-        {"insert": "Step 3 — Refine & Deliver", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
+        {"insert": "Step 3 — Refine & Deliver", "attributes": {"bold": true, "size": "11", "color": "#831843"}},
         {"insert": "\n"},
         {"insert": "Polish based on feedback, final handoff with all files and documentation.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"}
@@ -154,6 +159,8 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "deliverables",
       "delta": [
         {"insert": "What You'll Get", "attributes": {"bold": true, "size": "15", "color": "#831843"}},
         {"insert": "\n"}
@@ -182,7 +189,6 @@
         "showHeader": true
       }
     },
-
     {
       "type": "textSection",
       "title": "Investment Heading",
@@ -190,6 +196,8 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "investment",
       "delta": [
         {"insert": "Investment", "attributes": {"bold": true, "size": "15", "color": "#831843"}},
         {"insert": "\n"}
@@ -226,7 +234,7 @@
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
       "delta": [
-        {"insert": "Payment: 50% upfront to begin, 50% upon completion. Additional revisions beyond scope billed at $XXX/hr. This proposal is valid for 14 days.", "attributes": {"size": "10", "color": "#76818E"}},
+        {"insert": "Payment: 50% upfront to begin, 50% upon completion. Additional revisions beyond scope billed hourly. This proposal is valid for 14 days.", "attributes": {"size": "10", "color": "#76818E"}},
         {"insert": "\n"}
       ]
     },
@@ -237,6 +245,8 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "nextSteps",
       "delta": [
         {"insert": "Next Steps", "attributes": {"bold": true, "size": "15", "color": "#831843"}},
         {"insert": "\n"}
@@ -252,13 +262,11 @@
       "delta": [
         {"insert": "Ready to move forward? Here's how we get started:", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "\n"},
         {"insert": "1.  Reply to this proposal or sign below to confirm", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
         {"insert": "2.  I'll send an invoice for the first 50% deposit", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
         {"insert": "3.  We'll schedule a kickoff call to align on details", "attributes": {"size": "11", "color": "#333333"}},
-        {"insert": "\n"},
         {"insert": "\n"},
         {"insert": "Looking forward to working together!", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"}
@@ -279,6 +287,7 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "signature",
       "delta": [
         {"insert": "Accepted by:", "attributes": {"size": "10", "color": "#76818E"}},
         {"insert": "\n"},
@@ -296,6 +305,7 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "signature",
       "delta": [
         {"insert": "Submitted by:", "attributes": {"size": "10", "color": "#76818E"}},
         {"insert": "\n"},

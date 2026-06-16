@@ -333,41 +333,59 @@ RULES:
     // ── PROPOSAL: GENERATE WHOLE PROPOSAL (text + tables) ──────────
     const manifest = Array.isArray(req.data.sectionManifest) ? req.data.sectionManifest : [];
     const manifestDesc = manifest.map((s) => {
-      if (s.kind === "table") {
-        return `- id "${s.id}" — ${s.title || s.sectionType} (TABLE, columns: [${(s.headers || []).join(", ")}])`;
-      }
-      return `- id "${s.id}" — ${s.title || s.sectionType} (TEXT)`;
-    }).join("\n");
+          if (s.kind === "table") {
+            const maxRows = s.maxRows ? `, exactly ${s.maxRows} data rows` : "";
+            return `- id "${s.id}" — ${s.title || s.sectionType} (TABLE, columns: [${(s.headers || []).join(", ")}]${maxRows})`;
+          }
+          const shape = s.shape ? `, SHAPE=${s.shape}` : "";
+          return `- id "${s.id}" — ${s.title || s.sectionType} (TEXT${shape})`;
+        }).join("\n");
 
     sys = [{
       type: "text",
       text: `You are an expert proposal writer. Generate a complete, coherent client proposal where every section reinforces the others (the solution addresses the stated problem, pricing matches the deliverables, timeline aligns with scope).
 
-You will receive: the sender's profile, a client brief (the client, their project, goals, budget, deliverables, milestones), optionally the sender's CV, and a SECTION MANIFEST listing each section to fill.
+      You will receive: the sender's profile, a client brief (the client, their project, goals, budget, deliverables, milestones), optionally the sender's CV, and a SECTION MANIFEST listing each section to fill.
 
-SECTION MANIFEST:
-${manifestDesc}
+      SECTION MANIFEST:
+      ${manifestDesc}
 
-OUTPUT: Return ONLY a JSON object keyed by the exact section id strings above. No markdown, no code fences.
+      OUTPUT: Return ONLY a JSON object keyed by the exact section id strings above. No markdown, no code fences.
 
-For TEXT sections, the value is:
-  {"kind":"text","heading":"SECTION HEADING","entries":[{"title":"","lines":["paragraph or bullet"]}]}
-  - Use heading for the section's title line (match the existing tone; UPPERCASE only if appropriate).
-  - For prose sections (executive summary, about, problem, solution), use ONE entry with title "" and lines = paragraphs.
-  - For list-style sections, each bullet is its own line starting with "• ".
+      HOW THE SHAPE RENDERS (use it deliberately):
+      Each TEXT section is {"kind":"text","heading":"","entries":[ {"title":"","lines":["",...]} ]}.
+        - "heading": usually leave "" (the section already has a styled heading on the page).
+        - Each entry "title" renders as a BOLD label line.
+        - Each entry "lines" render as normal body text under that label (one line each).
+      So:
+        - PROSE section (executive summary, problem, overview, about) = ONE entry, title "", lines = 1-2 short paragraphs.
+        - LABELLED section (terms, phased solution) = MANY entries, each title = the bold label, lines = the short body. This is how you make bold labels. Do NOT write "**label:**" markdown inside a line; put the label in "title".
+        - Pure BULLET list = ONE entry, title "", each bullet its own line starting with "• ".
 
-For TABLE sections, the value is:
-  {"kind":"table","rows":[["cell","cell","cell"], ...]}
-  - Each row MUST have exactly the same number of cells as the declared columns, in column order.
-  - Do NOT include the header row — only data rows.
-  - For pricing tables, use the client's line items and budget; compute a sensible total row if a total column exists.
-  - Amounts as plain strings (e.g. "$2,500"), no currency math errors.
+      SHAPE GUIDE — produce exactly the structure for each section's SHAPE:
+        - SHAPE=prose      → ONE entry, title "", lines = 1-2 short paragraphs.
+        - SHAPE=phases     → MANY entries, each title = phase label (e.g. "Phase 1: Discovery & Planning"), lines = ONE short sentence. 3-5 phases max.
+        - SHAPE=clauses    → MANY entries, each title = clause label (e.g. "Payment Schedule", "Scope Changes"), lines = ONE concise sentence. 4-7 clauses max.
+        - SHAPE=bullets    → ONE entry, title "", each line starts with "• ".
+        - SHAPE=numbered   → ONE entry, title "", each line starts with "1. " then "2. " etc.
+        - SHAPE=oneLiner   → ONE entry, title "", lines = ONE short sentence. Do NOT add multiple entries or clauses.
+        - SHAPE=titleLine  → ONE entry, title = the project title (bold), lines = ONE short subtitle/tagline (one sentence).
+        - No SHAPE given   → infer from the title using your best judgment, defaulting to prose.
 
-RULES:
-- Return EVERY section id from the manifest as a key.
-- Never invent facts not supported by the brief/profile. If data is thin, write professional generic content for that section rather than fabricating specifics.
-- Tone: ${tone}. Experience level: ${experienceLevel}.
-- Keep the whole proposal tight and client-ready.`,
+      For TABLE sections, generate EXACTLY the declared "data rows" count when stated. Do not add or remove rows.
+
+      For TABLE sections, the value is:
+        {"kind":"table","rows":[["cell","cell","cell"], ...]}
+        - Each row MUST have exactly the same number of cells as the declared columns, in column order.
+        - Do NOT include the header row — only data rows.
+        - For pricing tables use the client's line items and budget; include a total row if a total column exists.
+        - Amounts as plain strings (e.g. "$2,500"), no math errors.
+
+      RULES:
+      - Return EVERY section id from the manifest as a key.
+      - Keep it tight: labels short, bodies 1-2 sentences. No filler, no repetition.
+      - Never invent facts not supported by the brief/profile. If data is thin, write professional generic content rather than fabricating specifics.
+      - Tone: ${tone}. Experience level: ${experienceLevel}.`,
       cache_control: { type: "ephemeral" },
     }];
   } else if (tool === "proposal") {

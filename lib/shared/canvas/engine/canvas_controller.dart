@@ -1004,24 +1004,26 @@ class CanvasController extends ChangeNotifier {
 
     switch (item.type) {
       case CanvasItemType.textSection:
-      // Build line-by-line rich text from Quill delta
-      // Each \n in the delta marks a new line
-        final lines = <pw.Widget>[];
-        List<pw.InlineSpan> currentLine = [];
+      // Mirror AutoHeight.measureText EXACTLY so the PDF fills the same
+      // box the engine reserved: line height 1.5, 8px paragraph spacing,
+      // 10px vertical padding, empty line = fontSize × 1.5.
+        final pdfDoc = item.displayController?.document ?? item.controller!.document;
 
-        for (final op in item.controller!.document.toDelta().toList()) {
+        // 1) Group delta ops into paragraphs (split on '\n').
+        final paragraphs = <List<pw.InlineSpan>>[];
+        var cur = <pw.InlineSpan>[];
+        void flushPara() { paragraphs.add(cur); cur = <pw.InlineSpan>[]; }
+
+        for (final op in pdfDoc.toDelta().toList()) {
           if (!op.isInsert) continue;
           final raw = op.data as String? ?? '';
           if (raw.isEmpty) continue;
           final a = op.attributes;
 
-          // Parse font size from delta (stored as string like "13")
           double fontSize = globalFontSize;
           if (a?['size'] != null) {
             fontSize = double.tryParse(a!['size'].toString()) ?? globalFontSize;
           }
-
-          // Parse color from delta (stored as hex like "#1B2A4A")
           PdfColor textColor = PdfColors.black;
           if (a?['color'] != null) {
             try {
@@ -1031,46 +1033,51 @@ class CanvasController extends ChangeNotifier {
             } catch (_) {}
           }
 
-          // Split by newlines to handle line breaks
+          final style = pw.TextStyle(
+            font: getFont(a?['font'] as String? ?? globalFont),
+            fontSize: fontSize,
+            fontWeight: a?['bold'] == true ? pw.FontWeight.bold : pw.FontWeight.normal,
+            fontStyle: a?['italic'] == true ? pw.FontStyle.italic : pw.FontStyle.normal,
+            color: textColor,
+            lineSpacing: fontSize * (AutoHeight.textLineHeight - 1.0),
+          );
+
           final parts = raw.split('\n');
           for (int i = 0; i < parts.length; i++) {
-            final text = parts[i];
-            if (text.isNotEmpty) {
-              currentLine.add(pw.TextSpan(
-                text: text,
-                style: pw.TextStyle(
-                  font: getFont(a?['font'] as String? ?? globalFont),
-                  fontSize: fontSize,
-                  fontWeight: a?['bold'] == true ? pw.FontWeight.bold : pw.FontWeight.normal,
-                  fontStyle: a?['italic'] == true ? pw.FontStyle.italic : pw.FontStyle.normal,
-                  color: textColor,
-                ),
-              ));
+            if (parts[i].isNotEmpty) {
+              cur.add(pw.TextSpan(text: parts[i], style: style));
             }
-            // Newline encountered — flush current line
-            if (i < parts.length - 1) {
-              if (currentLine.isNotEmpty) {
-                lines.add(pw.RichText(
-                  text: pw.TextSpan(children: List.from(currentLine)),
-                ));
-              } else {
-                // Empty line — add spacing
-                lines.add(pw.SizedBox(height: fontSize * 0.3));
-              }
-              currentLine = [];
-            }
+            if (i < parts.length - 1) flushPara();
           }
         }
-        // Flush remaining line
-        if (currentLine.isNotEmpty) {
-          lines.add(pw.RichText(
-            text: pw.TextSpan(children: List.from(currentLine)),
-          ));
+        if (cur.isNotEmpty) flushPara();
+
+        // 2) Build one widget per paragraph, with 8px gaps between them,
+        //    matching AutoHeight.paragraphSpacing.
+        final paraWidgets = <pw.Widget>[];
+        for (int p = 0; p < paragraphs.length; p++) {
+          final spans = paragraphs[p];
+          if (p > 0) {
+            paraWidgets.add(pw.SizedBox(height: AutoHeight.paragraphSpacing)); // 8px
+          }
+          if (spans.isEmpty) {
+            // Empty paragraph occupies a full line, like the engine reserves.
+            paraWidgets.add(pw.SizedBox(height: AutoHeight.defaultFontSize * AutoHeight.textLineHeight));
+          } else {
+            paraWidgets.add(pw.RichText(
+              text: pw.TextSpan(children: List.of(spans)),
+            ));
+          }
         }
 
-        content = pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: lines,
+        // 3) Wrap with the same 10px vertical padding (textVPad) the engine
+        //    adds, split half top / half bottom.
+        content = pw.Padding(
+          padding: pw.EdgeInsets.symmetric(vertical: AutoHeight.textVPad / 2),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: paraWidgets,
+          ),
         );
         break;
       case CanvasItemType.line:
@@ -1116,7 +1123,9 @@ class CanvasController extends ChangeNotifier {
         );
         break;
       case CanvasItemType.tableSection:
-        final td = item.tableData;
+      // Split table parents render only their kept rows (display copy);
+      // remaining rows are drawn by the continuation table item.
+        final td = item.displayTableData ?? item.tableData;
         if (td == null || td.headers.isEmpty) {
           content = pw.SizedBox();
           break;
@@ -1127,7 +1136,7 @@ class CanvasController extends ChangeNotifier {
           rows.add(pw.TableRow(
             decoration: pw.BoxDecoration(color: toPdfColor(td.headerBgColor)),
             children: td.headers.map((h) => pw.Padding(
-              padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              padding: pw.EdgeInsets.symmetric(horizontal: AutoHeight.cellHPad, vertical: AutoHeight.headerVPad),
               child: pw.Text(h, style: pw.TextStyle(
                 font: getFont(globalFont),
                 fontSize: td.fontSize,
@@ -1146,7 +1155,7 @@ class CanvasController extends ChangeNotifier {
             children: List.generate(td.columnCount, (c) {
               final val = c < td.rows[r].length ? td.rows[r][c] : '';
               return pw.Padding(
-                padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                padding: pw.EdgeInsets.symmetric(horizontal: AutoHeight.cellHPad, vertical: AutoHeight.cellVPad),
                 child: pw.Text(val, style: pw.TextStyle(
                   font: getFont(globalFont),
                   fontSize: td.fontSize,
@@ -1156,8 +1165,14 @@ class CanvasController extends ChangeNotifier {
             }),
           ));
         }
+        debugPrint('📊 PDF TBL "${item.title}" boxH=${item.height.toStringAsFixed(1)} '
+            'rows=${td.rowCount} reservedByEngine=${item.height.toStringAsFixed(1)}');
         content = pw.Table(
           border: pw.TableBorder.all(color: toPdfColor(td.borderColor), width: 0.5),
+          columnWidths: {
+            for (int c = 0; c < td.columnCount; c++)
+              c: const pw.FlexColumnWidth(1),  // equal columns, matches measureTable
+          },
           children: rows,
         );
         break;
@@ -1184,6 +1199,9 @@ class CanvasController extends ChangeNotifier {
     final doc = pw.Document();
     for (int p = 0; p < totalPages; p++) {
       final pageOffset = p * canvasH;
+      debugPrint('📄 PDF page $p: canvasH=$canvasH pageOffset=$pageOffset '
+          'a4=${PdfPageFormat.a4.width.toStringAsFixed(1)}x${PdfPageFormat.a4.height.toStringAsFixed(1)} '
+          'items=${items.where((i) => (i.position.dy / canvasH).floor() == p).length}');
       final pageItems = items.where((item) {
         final itemPage = (item.position.dy / canvasH).floor();
         return itemPage == p;

@@ -20,7 +20,7 @@ class ReflowEngine {
   static const double afterHeadingNoRule = 14; // heading → body (no underline)
   static const double sectionGap = 22; // between consecutive blocks
   static const double rowGap = 22; // between side-by-side rows
-  static const double minSplitText = 70; // ~4-5 lines; below this, don't split
+  static const double minSplitText = 30; // ~2 lines; fill pages tighter
 
   static void arrange(List<CanvasItem> items, double pageH) {
     if (items.isEmpty) return;
@@ -29,6 +29,10 @@ class ReflowEngine {
         'heroes=${items.where((i) => i.role == "hero").length} | '
         'headings=${items.where((i) => i.role == "heading").length} | '
         'underlines=${items.where((i) => i.role == "underline").length}');
+
+    debugPrint('📏 GEOMETRY: pageH=$pageH topMargin=$topMargin '
+        'bottomMargin=$bottomMargin usableBottom=${pageH - bottomMargin} '
+        'minSplitText=$minSplitText');
 
     final usableBottom = pageH - bottomMargin;
 
@@ -39,20 +43,27 @@ class ReflowEngine {
     // Hero items: pinned, never moved, not part of flow.
     final heroes = items.where((i) => i.role == 'hero').toSet();
 
+    // Top-band items: pinned at their template Y on page 1 (like heroes),
+    // but content flows on the SAME page right after them — unlike heroes,
+    // which own page 1 entirely.
+    final topBand = items.where((i) => i.role == 'top_band').toSet();
+
     // Underlines are positioned relative to their heading, not flowed alone.
     final underlines = <String, CanvasItem>{}; // group -> underline
     for (final i in items) {
       if (i.role == 'underline' && i.group != null) underlines[i.group!] = i;
     }
 
-    // Flowing content = text/table that isn't hero and isn't an underline.
+    // Flowing content = text/table that isn't hero, isn't a top-band item,
+    // and isn't an underline.
     final flow = items
         .where(
           (i) =>
-              !heroes.contains(i) &&
-              i.role != 'underline' &&
-              (i.isText || i.isTable),
-        )
+      !heroes.contains(i) &&
+          !topBand.contains(i) &&
+          i.role != 'underline' &&
+          (i.isText || i.isTable),
+    )
         .toList();
     if (flow.isEmpty) return;
 
@@ -83,8 +94,21 @@ class ReflowEngine {
     }
 
     // Walk rows top-to-bottom, assigning fresh positions with fixed rhythm.
-    // If hero items exist, they own page 1 — content starts on page 2.
-    double cursor = heroes.isNotEmpty ? pageH + topMargin : topMargin;
+    // - Heroes own page 1 entirely → content starts on page 2.
+    // - Top-band items live at the top of page 1 → content starts right
+    //   below the lowest top-band bottom edge (with sectionGap breathing room).
+    // - Otherwise → content starts at topMargin on page 1.
+    double cursor;
+    if (heroes.isNotEmpty) {
+      cursor = pageH + topMargin;
+    } else if (topBand.isNotEmpty) {
+      final bandBottom = topBand
+          .map((i) => i.position.dy + i.height)
+          .reduce(math.max);
+      cursor = bandBottom + sectionGap;
+    } else {
+      cursor = topMargin;
+    }
 
     for (final row in rows) {
       final isHeadingRow = row.length == 1 && row.first.role == 'heading';
@@ -211,6 +235,9 @@ class ReflowEngine {
           // Reserve the section's own padding PLUS a cushion so text always
           // ends a few px ABOVE the bottom margin (no edge bleed).
           final safeAvail = avail - AutoHeight.textVPad - 8;
+          debugPrint('   ↳ "${s.title}" page=$pageOfCursor cursor=${cursor.toStringAsFixed(0)} '
+              'pageBottom=${pageBottom.toStringAsFixed(0)} avail=${avail.toStringAsFixed(0)} '
+              'safeAvail=${safeAvail.toStringAsFixed(0)}');
 
           // How many paragraphs from `start` fit in the room we have now?
           double acc = 0;
@@ -375,6 +402,9 @@ class ReflowEngine {
           } else {
             s.displayTableData = null;
           }
+          debugPrint('📊 TBL MEASURE "${s.title}" reservedH=${s.height.toStringAsFixed(1)} '
+              'rows=${s.tableData?.rowCount} cols=${s.tableData?.columnCount} '
+              'width=${s.width.toStringAsFixed(0)} fontSize=${s.tableData?.fontSize}');
           debugPrint('📊 TABLE FLOW "${s.title}" → ${segs.length + 1} piece(s)');
         }
       } else {

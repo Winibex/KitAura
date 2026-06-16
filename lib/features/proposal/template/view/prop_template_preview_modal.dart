@@ -145,6 +145,34 @@ class _PropTemplatePreviewModalState extends State<PropTemplatePreviewModal> {
           child: SingleChildScrollView(
             child: Column(
               children: [
+
+                // Page navigation bar (mobile) — only shown for multi-page templates
+                if (_pages.length > 1)
+                  Container(
+                    height: 40,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    color: AppColors.prussianBlue,
+                    child: Row(
+                      children: [
+                        Text(
+                          'Page ${_currentPage + 1} of ${_pages.length}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontFamily: AppFonts.poppins,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.white,
+                          ),
+                        ),
+                        const Spacer(),
+                        _pageNavBtn(LucideIcons.chevronLeft,
+                            _currentPage > 0, () => setState(() => _currentPage--)),
+                        const SizedBox(width: 4),
+                        _pageNavBtn(LucideIcons.chevronRight,
+                            _currentPage < _pages.length - 1,
+                                () => setState(() => _currentPage++)),
+                      ],
+                    ),
+                  ),
                 Container(
                   height: 300,
                   width: double.infinity,
@@ -152,8 +180,7 @@ class _PropTemplatePreviewModalState extends State<PropTemplatePreviewModal> {
                   padding: const EdgeInsets.all(16),
                   child: Center(
                     child: _loading
-                        ? const CircularProgressIndicator(
-                        color: AppColors.darkRaspberry)
+                        ? const CircularProgressIndicator(color: AppColors.darkRaspberry)
                         : AspectRatio(
                       aspectRatio: 595 / 842,
                       child: _pages.isNotEmpty

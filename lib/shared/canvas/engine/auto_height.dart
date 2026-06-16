@@ -113,8 +113,12 @@ class AutoHeight {
     }
     final cellStyle = TextStyle(fontSize: data.fontSize, fontFamily: 'OpenSans');
     for (int r = 0; r < data.rowCount; r++) {
-      total += rowH(data.rows[r], cellStyle, cellVPad);
+      final h = rowH(data.rows[r], cellStyle, cellVPad);
+      debugPrint('   📊 row $r h=${h.toStringAsFixed(1)}');
+      total += h;
     }
+    debugPrint('   📊 measureTable total=${(total + tableSafety).toStringAsFixed(1)} '
+        'rows=${data.rowCount} fontSize=${data.fontSize}');
     return total + tableSafety;
   }
 

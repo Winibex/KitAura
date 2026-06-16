@@ -151,4 +151,47 @@ class PropTemplateData {
     }
     return set.toList();
   }
+
+  /// Maps an item's `title` (within a template) to a content shape hint that
+  /// tells the AI exactly what structure to generate for that slot. Avoids
+  /// the AI guessing from the title.
+  ///
+  /// Shapes:
+  ///   - "prose"     → 1-2 short paragraphs as lines
+  ///   - "phases"    → multiple entries with bold label + 1-line body
+  ///   - "clauses"   → multiple entries (clause label + 1-line body), 4-7 max
+  ///   - "bullets"   → one entry, each line starts with "• "
+  ///   - "numbered"  → one entry, each line starts with "1. " etc.
+  ///   - "oneLiner"  → single short sentence, no labels
+  ///   - "titleLine" → bold project title line + muted subtitle line
+  static const Map<String, Map<String, String>> contentShapes = {
+    'prop_business': {
+      'Executive Summary': 'prose',
+      'Problem Statement': 'prose',
+      'Proposed Solution': 'phases',
+      'Terms':             'clauses',
+    },
+    'prop_freelance': {
+      'Project Title':  'titleLine',
+      'Understanding':  'prose',
+      'Approach':       'phases',
+      'Payment Note':   'oneLiner',
+      'Next Steps':     'numbered',
+    },
+    'prop_executive': {
+      'Executive Summary':  'prose',
+      'Situation Analysis': 'phases',
+      'Solution':           'phases',
+      'Payment Terms':      'oneLiner',
+      'Risk':               'clauses',
+      'Credentials':        'prose',
+      'Terms':              'bullets',
+    },
+  };
+
+  /// Looks up the content shape for a given template + item title.
+  /// Returns null if no shape is declared (AI uses default behavior).
+  static String? getContentShape(String templateId, String itemTitle) {
+    return contentShapes[templateId]?[itemTitle];
+  }
 }

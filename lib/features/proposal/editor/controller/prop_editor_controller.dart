@@ -23,6 +23,7 @@ class PropEditorState {
   final String? paywallMessage;
 
   // Proposal-specific
+  final String? templateId;
   final String? linkedClientId;
   final String? linkedCvId;
   final String? clientName;
@@ -37,6 +38,7 @@ class PropEditorState {
     this.firestoreDocId,
     this.error,
     this.paywallMessage,
+    this.templateId,
     this.linkedClientId,
     this.linkedCvId,
     this.clientName,
@@ -54,6 +56,7 @@ class PropEditorState {
     String? firestoreDocId,
     String? error,
     String? paywallMessage,
+    String? templateId,
     String? linkedClientId,
     String? linkedCvId,
     String? clientName,
@@ -68,6 +71,7 @@ class PropEditorState {
       firestoreDocId: firestoreDocId ?? this.firestoreDocId,
       error: error,
       paywallMessage: paywallMessage,
+      templateId: templateId ?? this.templateId,
       linkedClientId: linkedClientId ?? this.linkedClientId,
       linkedCvId: linkedCvId ?? this.linkedCvId,
       clientName: clientName ?? this.clientName,
@@ -115,7 +119,7 @@ class PropEditorController extends ChangeNotifier {
       state = state.copyWith(title: 'Untitled Proposal');
       canvas.init();
     } else if (info != null) {
-      state = state.copyWith(title: info.label);
+      state = state.copyWith(title: info.label, templateId: docId);
       final json = await PropTemplateData.loadTemplateJson(docId);
       canvas.applyTemplateJson(json);
     } else {
@@ -149,6 +153,7 @@ class PropEditorController extends ChangeNotifier {
         final data = doc.data() as Map<String, dynamic>;
         state = state.copyWith(
           title: data['title'] ?? 'Untitled Proposal',
+          templateId: data['templateId'],
           linkedClientId: data['linkedClientId'],
           linkedCvId: data['linkedCvId'],
           clientName: data['clientName'],
@@ -384,6 +389,7 @@ class PropEditorController extends ChangeNotifier {
   Map<String, dynamic> _toFirestoreJson() {
     final data = canvas.toFirestoreJson(_uid!, state.title);
     data['title'] = state.title;
+    data['templateId'] = state.templateId;
     data['linkedClientId'] = state.linkedClientId;
     data['linkedCvId'] = state.linkedCvId;
     data['clientName'] = state.clientName;
