@@ -1,14 +1,9 @@
 // lib/shared/widgets/client_wizard_modal.dart
 //
 // 6-step ADAPTIVE modal wizard for creating/editing client profiles.
-// Fields shown per step are driven by ClientTypeConfig.forType(projectType):
-//   - Product quotes show a product line-item table + tax/shipping totals,
-//     and hide problem/goals/milestones.
-//   - Development shows tech stack / platform / integrations.
-//   - Marketing shows channels / audience / KPIs. etc.
-//
-// Depends on: ClientProfileModel (with ProductLineItem + tax fields),
-//             ClientTypeConfig, aiProfilesProvider (cached profiles).
+// Fields shown per step are driven by ClientTypeConfig.forType(projectType).
+// All inputs share a unified 48px height + InfoLabel for inline help.
+// Layout adapts: phone <600px (stacked) / tablet 600–900 / desktop 900+.
 //
 // Used from: proposal editor panel, settings > client profiles.
 import 'package:flutter/material.dart';
@@ -18,11 +13,12 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_fonts.dart';
 import '../../features/dashboard/controller/dashboard_controller.dart';
 import '../../features/settings/view/upgrade_modal.dart';
-import '../ai/claude_service.dart';
 import '../models/ai_profile_model.dart';
 import '../models/client_profile_model.dart';
 import '../providers/ai_profiles_provider.dart';
+import 'client_ai_chat_modal.dart';
 import 'client_type_config.dart';
+import 'info_label.dart';
 
 class ClientWizardModal extends ConsumerStatefulWidget {
   final ClientProfileModel? existing;
@@ -33,12 +29,10 @@ class ClientWizardModal extends ConsumerStatefulWidget {
     this.title = 'New Client',
   });
 
-  /// Shows the wizard and returns the filled model, or null if cancelled.
   static Future<ClientProfileModel?> show(
     BuildContext context, {
     ClientProfileModel? existing,
-  })
-  {
+  }) {
     return showDialog<ClientProfileModel>(
       context: context,
       barrierDismissible: false,
@@ -58,63 +52,58 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
   int _step = 0;
   static const _totalSteps = 6;
 
-  // Step 1: Client Info
+  bool get _isPhone => MediaQuery.of(context).size.width < 600;
+  bool get _isTablet =>
+      MediaQuery.of(context).size.width >= 600 &&
+      MediaQuery.of(context).size.width < 900;
+
+  // Step 1
   final _clientName = TextEditingController();
   final _clientCompany = TextEditingController();
   final _clientEmail = TextEditingController();
   final _clientPhone = TextEditingController();
   final _clientWebsite = TextEditingController();
   final _industry = TextEditingController();
-
-  // Sender (your) info
   final _senderCompany = TextEditingController();
   final _senderName = TextEditingController();
   final _senderEmail = TextEditingController();
   final _senderPhone = TextEditingController();
-
-  // Tax / registration (shown for product & service)
   final _senderTaxId = TextEditingController();
   final _senderRegNumber = TextEditingController();
   final _clientTaxId = TextEditingController();
 
-  // Step 2: Project Overview
+  // Step 2
   final _projectTitle = TextEditingController();
   String _projectType = 'general';
   final _projectDescription = TextEditingController();
   final _problemStatement = TextEditingController();
   List<String> _projectGoals = [];
   final _goalInput = TextEditingController();
-
-  // Type-specific (text)
   final _platformTargets = TextEditingController();
   final _integrationNeeds = TextEditingController();
   final _creativeBrief = TextEditingController();
   final _campaignGoals = TextEditingController();
   final _targetAudience = TextEditingController();
-  // Type-specific (numbers)
   final _sprintCount = TextEditingController();
   final _designRevisions = TextEditingController();
-  // Type-specific (bool)
   bool? _brandGuidelines;
-  // Type-specific (lists)
   List<String> _techStack = [];
   List<String> _channels = [];
   List<String> _kpiMetrics = [];
 
-  // Step 3: Deliverables / Product table
+  // Step 3
   List<DeliverableEntry> _deliverables = [];
   final _scopeNotes = TextEditingController();
   final _warrantyTerms = TextEditingController();
   final _shippingTerms = TextEditingController();
   List<ProductLineItem> _productItems = [];
 
-  // Step 4: Timeline
+  // Step 4
   final _startDate = TextEditingController();
-  final _endDate =
-      TextEditingController(); // product: reused as "Delivery / Lead Time"
+  final _endDate = TextEditingController();
   List<MilestoneEntry> _milestones = [];
 
-  // Step 5: Budget
+  // Step 5
   String? _budgetRange;
   String? _pricingModel;
   List<LineItemEntry> _lineItems = [];
@@ -122,19 +111,18 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
   final _shippingCost = TextEditingController();
   final _paymentTerms = TextEditingController();
 
-  // Step 6: Additional
+  // Step 6
   final _competitorInfo = TextEditingController();
   final _specialRequirements = TextEditingController();
   final _customNotes = TextEditingController();
 
-  // AI profile dropdown
+  // AI
   String? _selectedProfileId;
-
   final _briefCtrl = TextEditingController();
-  bool _aiBusy = false;
   bool _briefOpen = false;
+  bool _aiBusy = false;
 
-  // Controller maps for list editors (rebuilt lazily via putIfAbsent)
+  // List editor controller caches
   final Map<int, Map<String, TextEditingController>> _milestoneCtrls = {};
   final Map<int, Map<String, TextEditingController>> _deliverableCtrls = {};
   final Map<int, Map<String, TextEditingController>> _lineItemCtrls = {};
@@ -148,7 +136,6 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
     if (widget.existing != null) _loadExisting(widget.existing!);
   }
 
-  // Snapshot copy: pull sender fields from the chosen profile.
   void _applyProfile(String? profileId, List<AiProfileModel> profiles) {
     setState(() => _selectedProfileId = profileId);
     if (profileId == null) return;
@@ -176,13 +163,11 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
     _senderTaxId.text = p.senderTaxId ?? '';
     _senderRegNumber.text = p.senderRegNumber ?? '';
     _clientTaxId.text = p.clientTaxId ?? '';
-
     _projectTitle.text = p.projectTitle;
     _projectType = p.projectType;
     _projectDescription.text = p.projectDescription ?? '';
     _problemStatement.text = p.problemStatement ?? '';
     _projectGoals = List.from(p.projectGoals);
-
     _deliverables = p.deliverables.map((e) => e.copyWith()).toList();
     _scopeNotes.text = p.scopeNotes ?? '';
     _startDate.text = p.startDate ?? '';
@@ -194,7 +179,6 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
     _competitorInfo.text = p.competitorInfo ?? '';
     _specialRequirements.text = p.specialRequirements ?? '';
     _customNotes.text = p.customNotes ?? '';
-
     final ts = p.typeSpecific;
     _techStack = List.from(ts.techStack);
     _platformTargets.text = ts.platformTargets ?? '';
@@ -270,62 +254,59 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
     super.dispose();
   }
 
-  ClientProfileModel _buildModel() {
-    return ClientProfileModel(
-      id: widget.existing?.id,
-      clientName: _clientName.text.trim(),
-      clientCompany: _nz(_clientCompany),
-      clientEmail: _nz(_clientEmail),
-      clientPhone: _nz(_clientPhone),
-      clientWebsite: _nz(_clientWebsite),
-      industry: _nz(_industry),
-      senderCompany: _nz(_senderCompany),
-      senderName: _nz(_senderName),
-      senderEmail: _nz(_senderEmail),
-      senderPhone: _nz(_senderPhone),
-      senderTaxId: _nz(_senderTaxId),
-      senderRegNumber: _nz(_senderRegNumber),
-      clientTaxId: _nz(_clientTaxId),
-      projectTitle: _projectTitle.text.trim(),
-      projectType: _projectType,
-      projectDescription: _nz(_projectDescription),
-      problemStatement: _nz(_problemStatement),
-      projectGoals: _projectGoals,
-      deliverables: _deliverables,
-      scopeNotes: _nz(_scopeNotes),
-      startDate: _nz(_startDate),
-      endDate: _nz(_endDate),
-      milestones: _milestones,
-      budgetRange: _budgetRange,
-      pricingModel: _pricingModel,
-      lineItems: _lineItems,
-      competitorInfo: _nz(_competitorInfo),
-      specialRequirements: _nz(_specialRequirements),
-      customNotes: _nz(_customNotes),
-      typeSpecific: TypeSpecificFields(
-        techStack: _techStack,
-        platformTargets: _nz(_platformTargets),
-        integrationNeeds: _nz(_integrationNeeds),
-        sprintCount: int.tryParse(_sprintCount.text.trim()),
-        brandGuidelines: _brandGuidelines,
-        designRevisions: int.tryParse(_designRevisions.text.trim()),
-        creativeBrief: _nz(_creativeBrief),
-        channels: _channels,
-        targetAudience: _nz(_targetAudience),
-        campaignGoals: _nz(_campaignGoals),
-        kpiMetrics: _kpiMetrics,
-        warrantyTerms: _nz(_warrantyTerms),
-        shippingTerms: _nz(_shippingTerms),
-        paymentTerms: _nz(_paymentTerms),
-        productItems: _productItems,
-        taxPercent: double.tryParse(_taxPercent.text.trim()),
-        shippingCost: double.tryParse(_shippingCost.text.trim()),
-      ),
-      createdAt: widget.existing?.createdAt,
-    );
-  }
+  ClientProfileModel _buildModel() => ClientProfileModel(
+    id: widget.existing?.id,
+    clientName: _clientName.text.trim(),
+    clientCompany: _nz(_clientCompany),
+    clientEmail: _nz(_clientEmail),
+    clientPhone: _nz(_clientPhone),
+    clientWebsite: _nz(_clientWebsite),
+    industry: _nz(_industry),
+    senderCompany: _nz(_senderCompany),
+    senderName: _nz(_senderName),
+    senderEmail: _nz(_senderEmail),
+    senderPhone: _nz(_senderPhone),
+    senderTaxId: _nz(_senderTaxId),
+    senderRegNumber: _nz(_senderRegNumber),
+    clientTaxId: _nz(_clientTaxId),
+    projectTitle: _projectTitle.text.trim(),
+    projectType: _projectType,
+    projectDescription: _nz(_projectDescription),
+    problemStatement: _nz(_problemStatement),
+    projectGoals: _projectGoals,
+    deliverables: _deliverables,
+    scopeNotes: _nz(_scopeNotes),
+    startDate: _nz(_startDate),
+    endDate: _nz(_endDate),
+    milestones: _milestones,
+    budgetRange: _budgetRange,
+    pricingModel: _pricingModel,
+    lineItems: _lineItems,
+    competitorInfo: _nz(_competitorInfo),
+    specialRequirements: _nz(_specialRequirements),
+    customNotes: _nz(_customNotes),
+    typeSpecific: TypeSpecificFields(
+      techStack: _techStack,
+      platformTargets: _nz(_platformTargets),
+      integrationNeeds: _nz(_integrationNeeds),
+      sprintCount: int.tryParse(_sprintCount.text.trim()),
+      brandGuidelines: _brandGuidelines,
+      designRevisions: int.tryParse(_designRevisions.text.trim()),
+      creativeBrief: _nz(_creativeBrief),
+      channels: _channels,
+      targetAudience: _nz(_targetAudience),
+      campaignGoals: _nz(_campaignGoals),
+      kpiMetrics: _kpiMetrics,
+      warrantyTerms: _nz(_warrantyTerms),
+      shippingTerms: _nz(_shippingTerms),
+      paymentTerms: _nz(_paymentTerms),
+      productItems: _productItems,
+      taxPercent: double.tryParse(_taxPercent.text.trim()),
+      shippingCost: double.tryParse(_shippingCost.text.trim()),
+    ),
+    createdAt: widget.existing?.createdAt,
+  );
 
-  /// null if empty, trimmed otherwise.
   String? _nz(TextEditingController c) =>
       c.text.trim().isEmpty ? null : c.text.trim();
 
@@ -343,16 +324,20 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
   // ─── BUILD ──────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final screenW = MediaQuery.of(context).size.width;
-    final dialogW = screenW < 650 ? screenW - 32 : 600.0;
+    final screen = MediaQuery.of(context).size;
+    final dialogW = _isPhone
+        ? screen.width - 16
+        : _isTablet
+        ? screen.width * 0.85
+        : 620.0;
+    final maxH = _isPhone ? screen.height * 0.94 : screen.height * 0.88;
+
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(16),
+      insetPadding: EdgeInsets.all(_isPhone ? 8 : 16),
       child: Container(
         width: dialogW,
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.88,
-        ),
+        constraints: BoxConstraints(maxHeight: maxH),
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(16),
@@ -377,23 +362,24 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
     );
   }
 
-  // ─── HEADER ─────────────────────────────────────────────────────
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 20, 16, 12),
+      padding: EdgeInsets.fromLTRB(_isPhone ? 16 : 22, 16, 12, 8),
       child: Row(
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
-              color: AppColors.petalFrost,
+              gradient: const LinearGradient(
+                colors: [AppColors.darkRaspberry, AppColors.magentaBloom],
+              ),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               LucideIcons.userPlus,
-              size: 16,
-              color: AppColors.darkRaspberry,
+              size: 18,
+              color: AppColors.white,
             ),
           ),
           const SizedBox(width: 12),
@@ -403,15 +389,15 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
               children: [
                 Text(
                   widget.title,
-                  style: const TextStyle(
-                    fontSize: 16,
+                  style: TextStyle(
+                    fontSize: _isPhone ? 15 : 16,
                     fontFamily: AppFonts.poppins,
                     fontWeight: FontWeight.bold,
                     color: AppColors.prussianBlue,
                   ),
                 ),
                 Text(
-                  _stepLabels[_step],
+                  'Step ${_step + 1} of $_totalSteps',
                   style: const TextStyle(
                     fontSize: 11,
                     fontFamily: AppFonts.openSans,
@@ -421,40 +407,66 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
               ],
             ),
           ),
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F0EC),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                LucideIcons.x,
-                size: 14,
-                color: AppColors.slateGrey,
-              ),
-            ),
+          _iconButton(
+            LucideIcons.x,
+            () => Navigator.pop(context),
+            tooltip: 'Close',
           ),
         ],
       ),
     );
   }
 
-  static const _stepLabels = [
-    'Step 1 of 6 — Client Info',
-    'Step 2 of 6 — Project Overview',
-    'Step 3 of 6 — Scope & Deliverables',
-    'Step 4 of 6 — Timeline',
-    'Step 5 of 6 — Budget',
-    'Step 6 of 6 — Additional Context',
-  ];
+  Widget _iconButton(IconData icon, VoidCallback onTap, {String? tooltip}) {
+    final btn = GestureDetector(
+      onTap: onTap,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF5F0EC),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 15, color: AppColors.slateGrey),
+        ),
+      ),
+    );
+    return tooltip != null ? Tooltip(message: tooltip, child: btn) : btn;
+  }
 
-  // ─── STEP INDICATOR ─────────────────────────────────────────────
   Widget _buildStepIndicator() {
+    if (_isPhone) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(_totalSteps, (i) {
+            final isActive = i == _step;
+            final isDone = i < _step;
+            return GestureDetector(
+              onTap: () => setState(() => _step = i),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: isActive ? 22 : 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: isActive
+                      ? AppColors.darkRaspberry
+                      : isDone
+                      ? AppColors.magentaBloom
+                      : AppColors.almondSilk.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            );
+          }),
+        ),
+      );
+    }
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
       child: Row(
         children: List.generate(_totalSteps, (i) {
           final isActive = i == _step;
@@ -481,10 +493,14 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
     );
   }
 
-  // ─── STEP CONTENT ───────────────────────────────────────────────
   Widget _buildStepContent() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
+      padding: EdgeInsets.fromLTRB(
+        _isPhone ? 16 : 22,
+        12,
+        _isPhone ? 16 : 22,
+        8,
+      ),
       child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 200),
         child: KeyedSubtree(
@@ -503,75 +519,118 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
     );
   }
 
-  // ── STEP 1: Client Info ─────────────────────────────────────────
+  /// Two-up row that auto-stacks on phone.
+  Widget _pair(Widget a, Widget b) {
+    if (_isPhone) return Column(children: [a, b]);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: a),
+        const SizedBox(width: 12),
+        Expanded(child: b),
+      ],
+    );
+  }
+
+  // ── STEP 1 ─────────────────────────────────────────────────────
   Widget _buildStep1() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildAiAutoFill(),
         _buildProfileDropdown(),
-        const SizedBox(height: 6),
-        _sectionLabel('Your Details'),
-        _field('Your Company', _senderCompany, hint: 'Your Company Ltd.'),
-        _field('Your Name', _senderName, hint: 'Ahmad Ali Khan'),
-        Row(
-          children: [
-            Expanded(
-              child: _field(
-                'Your Email',
-                _senderEmail,
-                hint: 'you@company.com',
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _field('Your Phone', _senderPhone, hint: '+1 234 567 890'),
-            ),
-          ],
-        ),
-        if (_cfg.showTaxFields) ...[
-          Row(
-            children: [
-              Expanded(
-                child: _field(
-                  'Your Tax ID (NTN/VAT)',
-                  _senderTaxId,
-                  hint: '1234567-8',
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _field(
-                  'Company Reg. No.',
-                  _senderRegNumber,
-                  hint: 'Optional',
-                ),
-              ),
-            ],
-          ),
-        ],
         const SizedBox(height: 8),
-        _sectionLabel('Client Details'),
-        _field('Client Name *', _clientName, hint: 'John Smith'),
-        _field('Company', _clientCompany, hint: 'Acme Corporation'),
-        Row(
-          children: [
-            Expanded(
-              child: _field('Email', _clientEmail, hint: 'john@acme.com'),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _field('Phone', _clientPhone, hint: '+1 234 567 890'),
-            ),
-          ],
+        _sectionLabel('Your Details'),
+        _field(
+          'Your Company',
+          _senderCompany,
+          hint: 'Your Company Ltd.',
+          info: 'The name shown on the proposal as the sender.',
+        ),
+        _field(
+          'Your Name',
+          _senderName,
+          hint: 'Ahmad Ali Khan',
+          info: 'Who the client will see as the proposal\'s author.',
+        ),
+        _pair(
+          _field(
+            'Your Email',
+            _senderEmail,
+            hint: 'you@company.com',
+            info: 'Used in the proposal contact block.',
+          ),
+          _field(
+            'Your Phone',
+            _senderPhone,
+            hint: '+1 234 567 890',
+            info: 'Optional. Shown in the contact block.',
+          ),
         ),
         if (_cfg.showTaxFields)
-          _field('Client Tax ID (NTN/VAT)', _clientTaxId, hint: 'Optional'),
-        _field('Website', _clientWebsite, hint: 'www.acme.com'),
+          _pair(
+            _field(
+              'Your Tax ID (NTN/VAT)',
+              _senderTaxId,
+              hint: '1234567-8',
+              info:
+                  'Your tax identification number. Required on invoices for goods/services.',
+            ),
+            _field(
+              'Company Reg. No.',
+              _senderRegNumber,
+              hint: 'Optional',
+              info:
+                  'Your business registration number, if it belongs on the invoice.',
+            ),
+          ),
+        const SizedBox(height: 12),
+        _sectionLabel('Client Details'),
+        _field(
+          'Client Name',
+          _clientName,
+          hint: 'John Smith',
+          required: true,
+          info: 'The primary contact at the client\'s end.',
+        ),
+        _field(
+          'Company',
+          _clientCompany,
+          hint: 'Acme Corporation',
+          info: 'The client\'s company or organization name.',
+        ),
+        _pair(
+          _field(
+            'Email',
+            _clientEmail,
+            hint: 'john@acme.com',
+            info: 'Where the proposal will be sent.',
+          ),
+          _field(
+            'Phone',
+            _clientPhone,
+            hint: '+1 234 567 890',
+            info: 'Optional client phone.',
+          ),
+        ),
+        if (_cfg.showTaxFields)
+          _field(
+            'Client Tax ID (NTN/VAT)',
+            _clientTaxId,
+            hint: 'Optional',
+            info: 'Client\'s tax ID, if their invoice needs it.',
+          ),
+        _field(
+          'Website',
+          _clientWebsite,
+          hint: 'www.acme.com',
+          info: 'Helps the AI research the client\'s context.',
+        ),
         _field(
           'Industry',
           _industry,
           hint: 'Manufacturing, Technology, Healthcare...',
+          info: 'AI uses this to write industry-appropriate language.',
         ),
       ],
     );
@@ -580,16 +639,16 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
   Widget _buildProfileDropdown() {
     final profilesAsync = ref.watch(aiProfilesProvider);
     return profilesAsync.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        child: SizedBox(
-          height: 16,
-          width: 16,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: AppColors.darkRaspberry,
+      loading: () => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          InfoLabel(
+            'Use AI Profile',
+            info: 'Pre-fills your details from a saved AI profile.',
           ),
-        ),
+          _SkeletonBox(height: 48),
+          SizedBox(height: 14),
+        ],
       ),
       error: (_, __) => const SizedBox.shrink(),
       data: (profiles) {
@@ -600,16 +659,12 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _label('Use AI Profile (autofills your details)'),
-            Container(
-              width: double.infinity,
-              height: 52,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: AppColors.lavenderBlush,
-              ),
-              alignment: Alignment.center,
+            const InfoLabel(
+              'Use AI Profile',
+              info:
+                  'Pre-fills your name, company, and email from a saved AI profile.',
+            ),
+            _dropdownContainer(
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   value:
@@ -618,9 +673,9 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
                       ? _selectedProfileId
                       : null,
                   isExpanded: true,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                   hint: const Text(
-                    'None — I\'ll fill it myself',
+                    'None — fill it myself',
                     style: TextStyle(
                       fontSize: 13,
                       fontFamily: AppFonts.openSans,
@@ -637,7 +692,7 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
                     const DropdownMenuItem<String>(
                       value: null,
                       child: Text(
-                        'None — I\'ll fill it myself',
+                        'None — fill it myself',
                         style: TextStyle(fontSize: 13),
                       ),
                     ),
@@ -664,53 +719,89 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Collapsible header
         GestureDetector(
           onTap: () {
             if (!isPro) {
-              showDialog(context: context, builder: (_) => const UpgradeModal());
+              showDialog(
+                context: context,
+                builder: (_) => const UpgradeModal(),
+              );
               return;
             }
             setState(() => _briefOpen = !_briefOpen);
           },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.darkRaspberry, AppColors.magentaBloom],
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                const Icon(LucideIcons.sparkles, size: 16, color: AppColors.white),
-                const SizedBox(width: 10),
-                const Expanded(
-                  child: Text('Auto-fill with AI',
-                      style: TextStyle(fontSize: 13, fontFamily: AppFonts.poppins,
-                          fontWeight: FontWeight.w600, color: AppColors.white)),
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [AppColors.darkRaspberry, AppColors.magentaBloom],
                 ),
-                if (!isPro)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.darkRaspberry.withValues(alpha: 0.25),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    LucideIcons.sparkles,
+                    size: 16,
+                    color: AppColors.white,
+                  ),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      'Build this with AI',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontFamily: AppFonts.poppins,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.white,
+                      ),
                     ),
-                    child: const Text('PRO',
-                        style: TextStyle(fontSize: 9, fontFamily: AppFonts.poppins,
-                            fontWeight: FontWeight.w700, letterSpacing: 0.8, color: AppColors.white)),
-                  )
-                else
-                  Icon(_briefOpen ? LucideIcons.chevronUp : LucideIcons.chevronDown,
-                      size: 16, color: AppColors.white),
-              ],
+                  ),
+                  if (!isPro)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.white.withValues(alpha: 0.22),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        'PRO',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontFamily: AppFonts.poppins,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                          color: AppColors.white,
+                        ),
+                      ),
+                    )
+                  else
+                    Icon(
+                      _briefOpen
+                          ? LucideIcons.chevronUp
+                          : LucideIcons.chevronDown,
+                      size: 16,
+                      color: AppColors.white,
+                    ),
+                ],
+              ),
             ),
           ),
         ),
         if (_briefOpen && isPro) ...[
           const SizedBox(height: 10),
-          // Privacy notice
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
@@ -719,13 +810,20 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
             ),
             child: const Row(
               children: [
-                Icon(LucideIcons.shieldCheck, size: 13, color: AppColors.darkRaspberry),
+                Icon(
+                  LucideIcons.shieldCheck,
+                  size: 13,
+                  color: AppColors.darkRaspberry,
+                ),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'This text isn\'t saved for your privacy. Closing or reloading clears it.',
-                    style: TextStyle(fontSize: 11, fontFamily: AppFonts.openSans,
-                        color: AppColors.prussianBlue),
+                    'Your brief isn\'t saved. Closing or reloading clears it.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontFamily: AppFonts.openSans,
+                      color: AppColors.prussianBlue,
+                    ),
                   ),
                 ),
               ],
@@ -737,8 +835,8 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
             maxLines: 4,
             style: _inputStyle(),
             decoration: _inputDeco(
-                'Paste your project brief — e.g. "Mobile app for a gym, 4 weeks, '
-                    'auth + dashboard + payments modules, fixed price \$8k for Acme Corp."'),
+              'Describe your client and project — paste a brief, email, or notes. AI will ask follow-ups if needed and fill the form.',
+            ),
           ),
           const SizedBox(height: 8),
           GestureDetector(
@@ -747,23 +845,41 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
               cursor: SystemMouseCursors.click,
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 11),
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: _aiBusy ? AppColors.slateGrey : AppColors.darkRaspberry,
+                  color: _aiBusy
+                      ? AppColors.slateGrey
+                      : AppColors.darkRaspberry,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     if (_aiBusy)
-                      const SizedBox(width: 15, height: 15,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white))
+                      const SizedBox(
+                        width: 15,
+                        height: 15,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.white,
+                        ),
+                      )
                     else
-                      Icon(LucideIcons.sparkles, size: 15, color: AppColors.white),
+                      Icon(
+                        LucideIcons.sparkles,
+                        size: 15,
+                        color: AppColors.white,
+                      ),
                     const SizedBox(width: 8),
-                    Text(_aiBusy ? 'Reading your brief...' : 'Fill the form',
-                        style: const TextStyle(fontSize: 13, fontFamily: AppFonts.poppins,
-                            fontWeight: FontWeight.w600, color: AppColors.white)),
+                    Text(
+                      _aiBusy ? 'Working...' : 'Start with AI',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontFamily: AppFonts.poppins,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.white,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -780,23 +896,17 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
     if (brief.isEmpty) return;
     setState(() => _aiBusy = true);
     try {
-      final json = await ClaudeService.extractClient(brief);
-      if (json == null) throw 'No data returned';
-      // Build a model from the AI JSON and populate every field.
-      final model = ClientProfileModel.fromJson('', Map<String, dynamic>.from(json));
+      final model = await ClientAiChatModal.show(context, initialBrief: brief);
+      if (model == null) return;
       _clearControllerMaps();
       _loadExisting(model);
       if (mounted) {
         setState(() {});
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Form filled — review and edit before saving'),
-              backgroundColor: AppColors.success),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$e'), backgroundColor: AppColors.error),
+          const SnackBar(
+            content: Text('Form filled — review and edit before saving'),
+            backgroundColor: AppColors.success,
+          ),
         );
       }
     } finally {
@@ -804,11 +914,12 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
     }
   }
 
-  /// Clear list-editor controller maps so reloaded data rebuilds fresh.
   void _clearControllerMaps() {
     for (final m in [
-      ..._milestoneCtrls.values, ..._deliverableCtrls.values,
-      ..._lineItemCtrls.values, ..._productCtrls.values,
+      ..._milestoneCtrls.values,
+      ..._deliverableCtrls.values,
+      ..._lineItemCtrls.values,
+      ..._productCtrls.values,
     ]) {
       for (final c in m.values) {
         c.dispose();
@@ -820,18 +931,24 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
     _productCtrls.clear();
   }
 
-  // ── STEP 2: Project Overview (adaptive) ─────────────────────────
+  // ── STEP 2 ─────────────────────────────────────────────────────
   Widget _buildStep2() {
     final cfg = _cfg;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _field(cfg.titleLabel, _projectTitle, hint: cfg.titleHint),
+        _field(
+          cfg.titleLabel,
+          _projectTitle,
+          hint: cfg.titleHint,
+          info: 'A short, memorable name that\'ll head the proposal.',
+        ),
         _dropdownField(
           'Project Type',
           _projectType,
           ClientProfileModel.projectTypeLabels,
           (v) => setState(() => _projectType = v),
+          info: 'Changes which fields appear in later steps.',
         ),
         if (cfg.showDescription)
           _textArea(
@@ -839,6 +956,7 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
             _projectDescription,
             hint: 'Describe the scope and objectives...',
             maxLines: 4,
+            info: 'A 2-3 sentence overview of what you\'re proposing.',
           ),
         if (cfg.showProblem)
           _textArea(
@@ -846,6 +964,7 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
             _problemStatement,
             hint: 'What problem does the client need solved?',
             maxLines: 3,
+            info: 'The pain point this work addresses. Frames the proposal.',
           ),
         if (cfg.showGoals)
           _chipListEditor(
@@ -853,15 +972,16 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
             items: _projectGoals,
             controller: _goalInput,
             hint: 'Add a goal and press Enter',
+            info: 'The outcomes the client wants. Add each one as a tag.',
             onAdd: (v) => setState(() => _projectGoals.add(v)),
             onRemove: (i) => setState(() => _projectGoals.removeAt(i)),
           ),
-        // Development
         if (cfg.showTechStack)
           _chipListEditor(
             label: 'Tech Stack',
             items: _techStack,
             hint: 'Flutter, Firebase, Node.js...',
+            info: 'Technologies you\'ll use. Shapes the technical sections.',
             onAdd: (v) => setState(() => _techStack.add(v)),
             onRemove: (i) => setState(() => _techStack.removeAt(i)),
           ),
@@ -870,39 +990,43 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
             'Platform Targets',
             _platformTargets,
             hint: 'Web, iOS, Android...',
+            info: 'Which platforms the deliverable runs on.',
           ),
         if (cfg.showIntegrationNeeds)
           _field(
             'Integration Needs',
             _integrationNeeds,
             hint: 'Stripe, Google Maps, CRM...',
+            info: 'Third-party services or systems to connect with.',
           ),
-        // Design
         if (cfg.showCreativeBrief)
           _textArea(
             'Creative Brief',
             _creativeBrief,
             hint: 'Brand direction, style preferences...',
             maxLines: 3,
+            info: 'The look-and-feel direction for the design work.',
           ),
         if (cfg.showBrandGuidelines)
           _toggleField(
             'Brand Guidelines Provided?',
             _brandGuidelines,
             (v) => setState(() => _brandGuidelines = v),
+            info: 'Yes if the client has a brand guide you must follow.',
           ),
         if (cfg.showRevisions)
           _numberField(
             'Design Revisions Included',
             _designRevisions,
             hint: 'e.g. 3',
+            info: 'How many revision rounds are in the price.',
           ),
-        // Marketing
         if (cfg.showChannels)
           _chipListEditor(
             label: 'Channels',
             items: _channels,
             hint: 'Social media, Email, SEO...',
+            info: 'Marketing channels in scope.',
             onAdd: (v) => setState(() => _channels.add(v)),
             onRemove: (i) => setState(() => _channels.removeAt(i)),
           ),
@@ -911,6 +1035,7 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
             'Target Audience',
             _targetAudience,
             hint: 'B2B enterprise, Gen Z...',
+            info: 'Who the campaign is aimed at.',
           ),
         if (cfg.showCampaignGoals)
           _textArea(
@@ -918,12 +1043,14 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
             _campaignGoals,
             hint: 'Awareness, lead-gen, conversions...',
             maxLines: 2,
+            info: 'What success looks like for the campaign.',
           ),
         if (cfg.showKpiMetrics)
           _chipListEditor(
             label: 'KPI Metrics',
             items: _kpiMetrics,
             hint: 'CTR, CAC, ROAS...',
+            info: 'Metrics you\'ll report against.',
             onAdd: (v) => setState(() => _kpiMetrics.add(v)),
             onRemove: (i) => setState(() => _kpiMetrics.removeAt(i)),
           ),
@@ -931,15 +1058,17 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
     );
   }
 
-  // ── STEP 3: Scope (adaptive) ────────────────────────────────────
+  // ── STEP 3 ─────────────────────────────────────────────────────
   Widget _buildStep3() {
     final cfg = _cfg;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Product line-item table
         if (cfg.showProductTable) ...[
-          _sectionLabel('Products'),
+          _sectionLabel(
+            'Products',
+            info: 'Items being sold. Line total is qty × unit price.',
+          ),
           ..._productItems.asMap().entries.map(
             (e) => _productItemCard(e.key, e.value),
           ),
@@ -959,17 +1088,21 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
             _warrantyTerms,
             hint: '1 year manufacturer warranty...',
             maxLines: 2,
+            info: 'What the warranty covers and for how long.',
           ),
           _textArea(
             'Shipping Terms',
             _shippingTerms,
             hint: 'Delivery within city, freight charges...',
             maxLines: 2,
+            info: 'How and where you deliver, plus any freight terms.',
           ),
         ],
-        // Standard deliverables
         if (cfg.showDeliverables) ...[
-          _sectionLabel('Deliverables'),
+          _sectionLabel(
+            'Deliverables',
+            info: 'Concrete outputs the client will receive.',
+          ),
           ..._deliverables.asMap().entries.map(
             (e) => _deliverableCard(e.key, e.value),
           ),
@@ -980,46 +1113,61 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
         ],
         if (cfg.showSprintCount) ...[
           const SizedBox(height: 16),
-          _numberField('Number of Sprints', _sprintCount, hint: 'e.g. 6'),
+          _numberField(
+            'Number of Sprints',
+            _sprintCount,
+            hint: 'e.g. 6',
+            info: 'Total dev sprints planned. Shapes the timeline section.',
+          ),
         ],
         if (cfg.showScopeNotes) ...[
           const SizedBox(height: 16),
           _textArea(
             'Scope Notes',
             _scopeNotes,
-            hint: 'What is / isn\'t included...',
+            hint: 'What\'s in scope, what\'s explicitly out...',
             maxLines: 3,
+            info: 'Anything that needs calling out about scope boundaries.',
           ),
         ],
       ],
     );
   }
 
-  // ── STEP 4: Timeline (adaptive) ─────────────────────────────────
+  // ── STEP 4 ─────────────────────────────────────────────────────
   Widget _buildStep4() {
     final cfg = _cfg;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (cfg.showStartEnd)
-          Row(
-            children: [
-              Expanded(
-                child: _field('Start Date', _startDate, hint: 'Jan 2026'),
-              ),
-              const SizedBox(width: 12),
-              Expanded(child: _field('End Date', _endDate, hint: 'Mar 2026')),
-            ],
+          _pair(
+            _field(
+              'Start Date',
+              _startDate,
+              hint: 'Jan 2026',
+              info: 'When the work begins.',
+            ),
+            _field(
+              'End Date',
+              _endDate,
+              hint: 'Mar 2026',
+              info: 'Expected completion date.',
+            ),
           ),
         if (cfg.showDeliveryLeadTime)
           _field(
             'Delivery / Lead Time',
             _endDate,
             hint: 'e.g. 2–3 weeks from order',
+            info: 'How long after the order until the goods are delivered.',
           ),
         if (cfg.showMilestones) ...[
           const SizedBox(height: 16),
-          _sectionLabel('Milestones'),
+          _sectionLabel(
+            'Milestones',
+            info: 'Key checkpoints. Each one should have a deliverable.',
+          ),
           ..._milestones.asMap().entries.map(
             (e) => _milestoneCard(e.key, e.value),
           ),
@@ -1032,53 +1180,58 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
     );
   }
 
-  // ── STEP 5: Budget (adaptive) ───────────────────────────────────
+  // ── STEP 5 ─────────────────────────────────────────────────────
   Widget _buildStep5() {
     final cfg = _cfg;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Product budget: tax %, shipping, auto grand total
         if (cfg.showProductBudget) ...[
-          _sectionLabel('Order Totals'),
-          Row(
-            children: [
-              Expanded(
-                child: _numberField(
-                  'Tax %',
-                  _taxPercent,
-                  hint: 'e.g. 17',
-                  onChanged: (_) => setState(() {}),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _numberField(
-                  'Shipping Cost',
-                  _shippingCost,
-                  hint: 'e.g. 500',
-                  onChanged: (_) => setState(() {}),
-                ),
-              ),
-            ],
+          _sectionLabel(
+            'Order Totals',
+            info: 'Grand total = subtotal + shipping + tax %.',
+          ),
+          _pair(
+            _numberField(
+              'Tax %',
+              _taxPercent,
+              hint: 'e.g. 17',
+              info: 'Applied to subtotal + shipping.',
+              onChanged: (_) => setState(() {}),
+            ),
+            _numberField(
+              'Shipping Cost',
+              _shippingCost,
+              hint: 'e.g. 500',
+              info: 'Flat shipping fee. Leave blank for free shipping.',
+              onChanged: (_) => setState(() {}),
+            ),
           ),
           const SizedBox(height: 8),
           _grandTotalBox(),
         ],
         if (cfg.showBudgetRange)
-          _dropdownField('Budget Range', _budgetRange ?? '', {
-            for (final b in ClientProfileModel.budgetRanges) b: b,
-          }, (v) => setState(() => _budgetRange = v)),
+          _dropdownField(
+            'Budget Range',
+            _budgetRange ?? '',
+            {for (final b in ClientProfileModel.budgetRanges) b: b},
+            (v) => setState(() => _budgetRange = v),
+            info: 'Rough ballpark. The AI uses this to anchor pricing.',
+          ),
         if (cfg.showPricingModel)
           _dropdownField(
             'Pricing Model',
             _pricingModel ?? '',
             ClientProfileModel.pricingModelLabels,
             (v) => setState(() => _pricingModel = v),
+            info: 'How you\'re charging — fixed, hourly, retainer, etc.',
           ),
         if (cfg.showLineItems) ...[
           const SizedBox(height: 16),
-          _sectionLabel('Line Items'),
+          _sectionLabel(
+            'Line Items',
+            info: 'Itemized pricing rows that\'ll appear in the proposal.',
+          ),
           ..._lineItems.asMap().entries.map(
             (e) => _lineItemCard(e.key, e.value),
           ),
@@ -1094,13 +1247,14 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
             _paymentTerms,
             hint: '50% advance, balance on delivery...',
             maxLines: 2,
+            info: 'When and how the client pays.',
           ),
         ],
       ],
     );
   }
 
-  // ── STEP 6: Additional Context ──────────────────────────────────
+  // ── STEP 6 ─────────────────────────────────────────────────────
   Widget _buildStep6() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1110,24 +1264,27 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
           _competitorInfo,
           hint: 'Who are the client\'s competitors?',
           maxLines: 3,
+          info: 'AI can position your proposal against these competitors.',
         ),
         _textArea(
           'Special Requirements',
           _specialRequirements,
           hint: 'Compliance, accessibility, constraints...',
           maxLines: 3,
+          info: 'Must-haves or constraints the proposal must respect.',
         ),
         _textArea(
           'Custom Notes',
           _customNotes,
           hint: 'Anything else the AI should know...',
           maxLines: 3,
+          info: 'Catch-all for context not covered by other fields.',
         ),
       ],
     );
   }
 
-  // ─── PRODUCT TABLE ──────────────────────────────────────────────
+  // ─── PRODUCT TABLE ─────────────────────────────────────────────
   Widget _productItemCard(int index, ProductLineItem item) {
     final ctrls = _productCtrls.putIfAbsent(
       index,
@@ -1154,23 +1311,23 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
             children: [
               Expanded(
                 flex: 3,
-                child: TextField(
-                  controller: ctrls['name'],
-                  onChanged: (v) => _productItems[index] = _productItems[index]
-                      .copyWith(name: v),
-                  style: _inputStyle(),
-                  decoration: _inputDeco('Product / model name'),
+                child: _bareTextField(
+                  ctrls['name']!,
+                  'Product / model name',
+                  (v) => _productItems[index] = _productItems[index].copyWith(
+                    name: v,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 flex: 2,
-                child: TextField(
-                  controller: ctrls['sku'],
-                  onChanged: (v) => _productItems[index] = _productItems[index]
-                      .copyWith(sku: v),
-                  style: _inputStyle(),
-                  decoration: _inputDeco('SKU'),
+                child: _bareTextField(
+                  ctrls['sku']!,
+                  'SKU',
+                  (v) => _productItems[index] = _productItems[index].copyWith(
+                    sku: v,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -1181,34 +1338,31 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
           Row(
             children: [
               Expanded(
-                child: TextField(
-                  controller: ctrls['qty'],
-                  keyboardType: TextInputType.number,
-                  onChanged: (v) => setState(
+                child: _bareTextField(
+                  ctrls['qty']!,
+                  'Qty',
+                  (v) => setState(
                     () => _productItems[index] = _productItems[index].copyWith(
                       quantity: int.tryParse(v) ?? 1,
                     ),
                   ),
-                  style: _inputStyle(),
-                  decoration: _inputDeco('Qty'),
+                  isNumber: true,
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: TextField(
-                  controller: ctrls['price'],
-                  keyboardType: TextInputType.number,
-                  onChanged: (v) => setState(
+                child: _bareTextField(
+                  ctrls['price']!,
+                  'Unit price',
+                  (v) => setState(
                     () => _productItems[index] = _productItems[index].copyWith(
                       unitPrice: double.tryParse(v) ?? 0,
                     ),
                   ),
-                  style: _inputStyle(),
-                  decoration: _inputDeco('Unit price'),
+                  isNumber: true,
                 ),
               ),
               const SizedBox(width: 8),
-              // Line total (computed)
               Expanded(
                 child: Container(
                   height: 48,
@@ -1216,7 +1370,7 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
                     color: AppColors.lavenderBlush,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     _money(_productItems[index].lineTotal),
@@ -1332,7 +1486,7 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
 
   String _money(double v) => '\$${v.toStringAsFixed(2)}';
 
-  // ─── DELIVERABLE / MILESTONE / LINE ITEM CARDS ──────────────────
+  // ─── DELIVERABLE / MILESTONE / LINE ITEM CARDS ────────────────
   Widget _deliverableCard(int index, DeliverableEntry entry) {
     final ctrls = _deliverableCtrls.putIfAbsent(
       index,
@@ -1354,12 +1508,12 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
           Row(
             children: [
               Expanded(
-                child: TextField(
-                  controller: ctrls['name'],
-                  onChanged: (v) => _deliverables[index] = _deliverables[index]
-                      .copyWith(name: v),
-                  style: _inputStyle(),
-                  decoration: _inputDeco('Deliverable name'),
+                child: _bareTextField(
+                  ctrls['name']!,
+                  'Deliverable name',
+                  (v) => _deliverables[index] = _deliverables[index].copyWith(
+                    name: v,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -1367,12 +1521,12 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
             ],
           ),
           const SizedBox(height: 8),
-          TextField(
-            controller: ctrls['desc'],
-            onChanged: (v) => _deliverables[index] = _deliverables[index]
-                .copyWith(description: v),
-            style: _inputStyle(),
-            decoration: _inputDeco('Description (optional)'),
+          _bareTextField(
+            ctrls['desc']!,
+            'Description (optional)',
+            (v) => _deliverables[index] = _deliverables[index].copyWith(
+              description: v,
+            ),
           ),
         ],
       ),
@@ -1405,41 +1559,33 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
       ),
       child: Column(
         children: [
+          _pair(
+            _bareTextField(
+              ctrls['title']!,
+              'Milestone title',
+              (v) => _milestones[index] = _milestones[index].copyWith(title: v),
+            ),
+            _bareTextField(
+              ctrls['date']!,
+              'Date',
+              (v) => _milestones[index] = _milestones[index].copyWith(date: v),
+            ),
+          ),
+          const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
-                flex: 3,
-                child: TextField(
-                  controller: ctrls['title'],
-                  onChanged: (v) => _milestones[index] = _milestones[index]
-                      .copyWith(title: v),
-                  style: _inputStyle(),
-                  decoration: _inputDeco('Milestone title'),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 2,
-                child: TextField(
-                  controller: ctrls['date'],
-                  onChanged: (v) =>
-                      _milestones[index] = _milestones[index].copyWith(date: v),
-                  style: _inputStyle(),
-                  decoration: _inputDeco('Date'),
+                child: _bareTextField(
+                  ctrls['desc']!,
+                  'Description (optional)',
+                  (v) => _milestones[index] = _milestones[index].copyWith(
+                    description: v,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
               _removeIconButton(() => _removeMilestone(index)),
             ],
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: ctrls['desc'],
-            onChanged: (v) => _milestones[index] = _milestones[index].copyWith(
-              description: v,
-            ),
-            style: _inputStyle(),
-            decoration: _inputDeco('Description (optional)'),
           ),
         ],
       ),
@@ -1472,45 +1618,39 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.petalFrost),
       ),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            flex: 3,
-            child: TextField(
-              controller: ctrls['item'],
-              onChanged: (v) =>
-                  _lineItems[index] = _lineItems[index].copyWith(item: v),
-              style: _inputStyle(),
-              decoration: _inputDeco('Item name'),
+          _pair(
+            _bareTextField(
+              ctrls['item']!,
+              'Item name',
+              (v) => _lineItems[index] = _lineItems[index].copyWith(item: v),
             ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            flex: 3,
-            child: TextField(
-              controller: ctrls['desc'],
-              onChanged: (v) => _lineItems[index] = _lineItems[index].copyWith(
-                description: v,
-              ),
-              style: _inputStyle(),
-              decoration: _inputDeco('Description'),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            flex: 2,
-            child: TextField(
-              controller: ctrls['amount'],
-              onChanged: (v) => _lineItems[index] = _lineItems[index].copyWith(
+            _bareTextField(
+              ctrls['amount']!,
+              'Amount',
+              (v) => _lineItems[index] = _lineItems[index].copyWith(
                 amount: double.tryParse(v),
               ),
-              style: _inputStyle(),
-              keyboardType: TextInputType.number,
-              decoration: _inputDeco('Amount'),
+              isNumber: true,
             ),
           ),
-          const SizedBox(width: 8),
-          _removeIconButton(() => _removeLineItem(index)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _bareTextField(
+                  ctrls['desc']!,
+                  'Description',
+                  (v) => _lineItems[index] = _lineItems[index].copyWith(
+                    description: v,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              _removeIconButton(() => _removeLineItem(index)),
+            ],
+          ),
         ],
       ),
     );
@@ -1523,115 +1663,167 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
     });
   }
 
-  // ─── FOOTER ─────────────────────────────────────────────────────
+  // ─── FOOTER ────────────────────────────────────────────────────
   Widget _buildFooter() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
+      padding: EdgeInsets.fromLTRB(
+        _isPhone ? 16 : 22,
+        12,
+        _isPhone ? 16 : 22,
+        16,
+      ),
       decoration: const BoxDecoration(
         border: Border(top: BorderSide(color: Color(0xFFF0EBE6))),
       ),
       child: Row(
         children: [
           if (_step > 0)
-            GestureDetector(
+            _ghostButton(
+              'Back',
+              LucideIcons.arrowLeft,
               onTap: () => setState(() => _step--),
-              child: MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.almondSilk),
-                  ),
-                  child: const Text(
-                    'Back',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontFamily: AppFonts.poppins,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.slateGrey,
-                    ),
-                  ),
-                ),
-              ),
             ),
           const Spacer(),
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontFamily: AppFonts.poppins,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.slateGrey,
+          if (!_isPhone) ...[
+            GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontFamily: AppFonts.poppins,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.slateGrey,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
+            const SizedBox(width: 4),
+          ],
+          _primaryButton(
+            _step < _totalSteps - 1 ? 'Next' : 'Save Client',
+            _step < _totalSteps - 1
+                ? LucideIcons.arrowRight
+                : LucideIcons.check,
+            iconLeft: false,
             onTap: _step < _totalSteps - 1
                 ? () => setState(() => _step++)
                 : _save,
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.darkRaspberry,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  _step < _totalSteps - 1 ? 'Next' : 'Save Client',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontFamily: AppFonts.poppins,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.white,
-                  ),
-                ),
-              ),
-            ),
           ),
         ],
       ),
     );
   }
 
-  // ─── SHARED WIDGETS ─────────────────────────────────────────────
+  Widget _ghostButton(
+    String label,
+    IconData icon, {
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.almondSilk),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 13, color: AppColors.slateGrey),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontFamily: AppFonts.poppins,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.slateGrey,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _primaryButton(
+    String label,
+    IconData icon, {
+    required VoidCallback onTap,
+    bool iconLeft = true,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+          decoration: BoxDecoration(
+            color: AppColors.darkRaspberry,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.darkRaspberry.withValues(alpha: 0.25),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (iconLeft) ...[
+                Icon(icon, size: 13, color: AppColors.white),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontFamily: AppFonts.poppins,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.white,
+                ),
+              ),
+              if (!iconLeft) ...[
+                const SizedBox(width: 6),
+                Icon(icon, size: 13, color: AppColors.white),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─── SHARED INPUTS (uniform 48px) ──────────────────────────────
   Widget _field(
     String label,
     TextEditingController controller, {
     String? hint,
+    String? info,
+    bool required = false,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontFamily: AppFonts.poppins,
-              fontWeight: FontWeight.w600,
-              color: AppColors.prussianBlue,
+          InfoLabel(label, info: info, required: required),
+          SizedBox(
+            height: 48,
+            child: TextField(
+              controller: controller,
+              style: _inputStyle(),
+              decoration: _inputDeco(hint ?? ''),
             ),
-          ),
-          const SizedBox(height: 6),
-          TextField(
-            controller: controller,
-            style: _inputStyle(),
-            decoration: _inputDeco(hint ?? ''),
           ),
         ],
       ),
@@ -1642,6 +1834,7 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
     String label,
     TextEditingController controller, {
     String? hint,
+    String? info,
     ValueChanged<String>? onChanged,
   }) {
     return Padding(
@@ -1649,44 +1842,33 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontFamily: AppFonts.poppins,
-              fontWeight: FontWeight.w600,
-              color: AppColors.prussianBlue,
+          InfoLabel(label, info: info),
+          SizedBox(
+            height: 48,
+            child: TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              onChanged: onChanged,
+              style: _inputStyle(),
+              decoration: _inputDeco(hint ?? ''),
             ),
-          ),
-          const SizedBox(height: 6),
-          TextField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            onChanged: onChanged,
-            style: _inputStyle(),
-            decoration: _inputDeco(hint ?? ''),
           ),
         ],
       ),
     );
   }
 
-  Widget _toggleField(String label, bool? value, ValueChanged<bool> onChanged) {
+  Widget _toggleField(
+    String label,
+    bool? value,
+    ValueChanged<bool> onChanged, {
+    String? info,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Row(
         children: [
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 12,
-                fontFamily: AppFonts.poppins,
-                fontWeight: FontWeight.w600,
-                color: AppColors.prussianBlue,
-              ),
-            ),
-          ),
+          Expanded(child: InfoLabel(label, info: info)),
           _toggleChip('Yes', value == true, () => onChanged(true)),
           const SizedBox(width: 8),
           _toggleChip('No', value == false, () => onChanged(false)),
@@ -1698,19 +1880,22 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
   Widget _toggleChip(String label, bool selected, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.darkRaspberry : AppColors.lavenderBlush,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontFamily: AppFonts.poppins,
-            fontWeight: FontWeight.w600,
-            color: selected ? AppColors.white : AppColors.slateGrey,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.darkRaspberry : AppColors.lavenderBlush,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontFamily: AppFonts.poppins,
+              fontWeight: FontWeight.w600,
+              color: selected ? AppColors.white : AppColors.slateGrey,
+            ),
           ),
         ),
       ),
@@ -1721,6 +1906,7 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
     String label,
     TextEditingController controller, {
     String? hint,
+    String? info,
     int maxLines = 3,
   }) {
     return Padding(
@@ -1728,16 +1914,7 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              fontFamily: AppFonts.poppins,
-              fontWeight: FontWeight.w600,
-              color: AppColors.prussianBlue,
-            ),
-          ),
-          const SizedBox(height: 6),
+          InfoLabel(label, info: info),
           TextField(
             controller: controller,
             style: _inputStyle(),
@@ -1753,28 +1930,21 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
     String label,
     String value,
     Map<String, String> options,
-    ValueChanged<String> onChanged,
-  ) {
+    ValueChanged<String> onChanged, {
+    String? info,
+  }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.only(bottom: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _label(label),
-          Container(
-            width: double.infinity,
-            height: 52,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: AppColors.lavenderBlush,
-            ),
-            alignment: Alignment.center,
+          InfoLabel(label, info: info),
+          _dropdownContainer(
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: options.containsKey(value) ? value : null,
                 isExpanded: true,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 hint: const Text(
                   'Select...',
                   style: TextStyle(
@@ -1811,6 +1981,7 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
   Widget _chipListEditor({
     required String label,
     required List<String> items,
+    String? info,
     TextEditingController? controller,
     String hint = 'Type and press Enter',
     required ValueChanged<String> onAdd,
@@ -1822,26 +1993,20 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              fontFamily: AppFonts.poppins,
-              fontWeight: FontWeight.w600,
-              color: AppColors.prussianBlue,
+          InfoLabel(label, info: info),
+          SizedBox(
+            height: 48,
+            child: TextField(
+              controller: ctrl,
+              style: _inputStyle(),
+              decoration: _inputDeco(hint),
+              onSubmitted: (v) {
+                if (v.trim().isNotEmpty) {
+                  onAdd(v.trim());
+                  ctrl.clear();
+                }
+              },
             ),
-          ),
-          const SizedBox(height: 6),
-          TextField(
-            controller: ctrl,
-            style: _inputStyle(),
-            decoration: _inputDeco(hint),
-            onSubmitted: (v) {
-              if (v.trim().isNotEmpty) {
-                onAdd(v.trim());
-                ctrl.clear();
-              }
-            },
           ),
           if (items.isNotEmpty) ...[
             const SizedBox(height: 8),
@@ -1889,17 +2054,35 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
     );
   }
 
-  Widget _sectionLabel(String text) {
+  Widget _sectionLabel(String text, {String? info}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontSize: 12,
-          fontFamily: AppFonts.poppins,
-          fontWeight: FontWeight.w600,
-          color: AppColors.prussianBlue,
-        ),
+      padding: const EdgeInsets.only(top: 4, bottom: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 3,
+            height: 14,
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: AppColors.darkRaspberry,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Text(
+            text,
+            style: const TextStyle(
+              fontSize: 13,
+              fontFamily: AppFonts.poppins,
+              fontWeight: FontWeight.w700,
+              color: AppColors.prussianBlue,
+              letterSpacing: 0.2,
+            ),
+          ),
+          if (info != null) ...[
+            const SizedBox(width: 6),
+            _SectionInfoIcon(text: info),
+          ],
+        ],
       ),
     );
   }
@@ -1910,10 +2093,13 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: AppColors.petalFrost,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: AppColors.darkRaspberry.withValues(alpha: 0.15),
+            ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -1943,49 +2129,54 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
   Widget _removeIconButton(VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          color: const Color(0xFFFEE2E2),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: const Icon(
-          LucideIcons.trash2,
-          size: 12,
-          color: Color(0xFFDC2626),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: const Color(0xFFFEE2E2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(
+            LucideIcons.trash2,
+            size: 13,
+            color: Color(0xFFDC2626),
+          ),
         ),
       ),
     );
   }
 
-  Widget _label(String text) {
-    final required = text.trimRight().endsWith('*');
-    final base = required ? text.replaceAll('*', '').trim() : text;
-    return Padding(
-      padding: const EdgeInsets.only(left: 2, bottom: 6),
-      child: RichText(
-        text: TextSpan(
-          text: base,
-          style: const TextStyle(
-            fontSize: 11,
-            fontFamily: AppFonts.poppins,
-            fontWeight: FontWeight.w500,
-            color: AppColors.slateGrey,
-            letterSpacing: 0.2,
-          ),
-          children: required
-              ? const [
-                  TextSpan(
-                    text: ' *',
-                    style: TextStyle(
-                      color: AppColors.darkRaspberry,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ]
-              : null,
-        ),
+  Widget _dropdownContainer({required Widget child}) {
+    return Container(
+      width: double.infinity,
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: AppColors.lavenderBlush,
+      ),
+      alignment: Alignment.center,
+      child: child,
+    );
+  }
+
+  /// Card-internal text field (no label, no info icon, uniform 48px).
+  Widget _bareTextField(
+    TextEditingController c,
+    String hint,
+    ValueChanged<String> onChanged, {
+    bool isNumber = false,
+  }) {
+    return SizedBox(
+      height: 48,
+      child: TextField(
+        controller: c,
+        keyboardType: isNumber ? TextInputType.number : null,
+        onChanged: onChanged,
+        style: _inputStyle(),
+        decoration: _inputDeco(hint),
       ),
     );
   }
@@ -1998,7 +2189,7 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
 
   InputDecoration _inputDeco(String hint) => InputDecoration(
     isDense: true,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     hintText: hint,
     hintStyle: const TextStyle(
       fontSize: 13,
@@ -2008,16 +2199,80 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
     filled: true,
     fillColor: AppColors.lavenderBlush,
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(10),
       borderSide: BorderSide.none,
     ),
     enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(10),
       borderSide: BorderSide.none,
     ),
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(10),
       borderSide: const BorderSide(color: AppColors.darkRaspberry, width: 1.5),
     ),
   );
+}
+
+// ─── Tiny info icon used inline next to section labels ───────────────
+class _SectionInfoIcon extends StatelessWidget {
+  final String text;
+  const _SectionInfoIcon({required this.text});
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: text,
+      textStyle: const TextStyle(
+        fontSize: 11.5,
+        fontFamily: AppFonts.openSans,
+        color: AppColors.white,
+        height: 1.4,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.prussianBlue,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      child: const Icon(LucideIcons.info, size: 13, color: AppColors.slateGrey),
+    );
+  }
+}
+
+// ─── Skeleton box with a soft shimmer (no extra package) ─────────────
+class _SkeletonBox extends StatefulWidget {
+  final double height;
+  const _SkeletonBox({required this.height});
+  @override
+  State<_SkeletonBox> createState() => _SkeletonBoxState();
+}
+
+class _SkeletonBoxState extends State<_SkeletonBox>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1200),
+  )..repeat(reverse: true);
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (_, __) {
+        final t = _ctrl.value;
+        return Container(
+          width: double.infinity,
+          height: widget.height,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            color: Color.lerp(AppColors.lavenderBlush, AppColors.petalFrost, t),
+          ),
+        );
+      },
+    );
+  }
 }

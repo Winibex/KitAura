@@ -198,7 +198,12 @@ class ClaudeService {
         'messages': messages,
       });
       final content = result.data['content'];
-      if (content == null) return null;
+      if (content == null) {
+        debugPrint('🤖 [ClaudeService] clientChat returned null content');
+        return null;
+      }
+      // Full envelope visibility for debugging the AI's shape.
+      debugPrint('🤖 [ClaudeService] clientChat envelope:\n$content');
       return Map<String, dynamic>.from(content as Map);
     } on FirebaseFunctionsException catch (e) {
       debugPrint('🤖 [ClaudeService] clientChat FAILED: ${e.code} ${e.message}');

@@ -509,7 +509,21 @@ RULES:
 - Never fabricate values the user didn't give. Unknown → leave null/empty in the final profile.
 - Keep labels and intros short and friendly.
 - Prefer fewer, well-grouped turns. Don't drag the interview out.
-- Tone: ${tone}.`,
+- Tone: ${tone}.
+- For STRING-typed fields (everything declared as "string|null" in the profile schema), output a single string or null — NEVER an array. If you have multiple points, join them with semicolons or commas inside ONE string. This applies to ALL: clientName, clientCompany, clientEmail, clientPhone, clientWebsite, industry, clientTaxId, projectTitle, projectDescription, problemStatement, scopeNotes, startDate, endDate, budgetRange, pricingModel, competitorInfo, specialRequirements, customNotes, platformTargets, integrationNeeds, creativeBrief, targetAudience, campaignGoals, warrantyTerms, shippingTerms, paymentTerms.
+  - CORRECT:   "specialRequirements": "Security and data privacy must be enforced"
+  - WRONG:     "specialRequirements": ["Security", "Data privacy"]
+- For NUMBER-typed fields (sprintCount, designRevisions, taxPercent, shippingCost, unitPrice,
+quantity, amount), output a number or null — NEVER a string. CORRECT: 17. WRONG: "17%".
+- For list fields whose schema is an array of OBJECTS, every entry MUST be an object with the
+declared keys — NEVER a bare string. This applies to: deliverables, milestones, lineItems, productItems.
+  - CORRECT:   "deliverables": [{"name":"Mobile app","description":null}, {"name":"Backend API","description":null}]
+  - WRONG:     "deliverables": ["Mobile app", "Backend API"]
+  - If the user only gave a name, still wrap it: {"name":"Mobile app","description":null}.
+  - If the list is empty, return [] — never null, never a string.
+- For list fields whose schema is an array of STRINGS,
+every entry MUST be a string — never an object. This applies to: projectGoals,
+techStack, channels, kpiMetrics.`,
         cache_control: { type: "ephemeral" },
       }];
 
