@@ -169,7 +169,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       ),
       child: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
           child: _buildFormCard(),
         ),
       ),

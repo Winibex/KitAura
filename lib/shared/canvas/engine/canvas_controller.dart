@@ -1091,7 +1091,9 @@ class CanvasController extends ChangeNotifier {
         content = pw.Container(
           decoration: pw.BoxDecoration(
             color: toPdfColor(item.color),
-            border: pw.Border.all(color: toPdfColor(item.borderColor), width: item.borderWidth),
+            border: item.borderWidth > 0
+                ? pw.Border.all(color: toPdfColor(item.borderColor), width: item.borderWidth)
+                : null,
           ),
         );
         break;
@@ -1401,6 +1403,63 @@ class CanvasController extends ChangeNotifier {
           debugPrint('display build failed: $e');
         }
         item.displayController = c;
+      }
+    }
+
+    // Clone pinned items onto every body page so sidebars/stripes/decorations
+    // repeat as content flows. Skip page 0 if hero owns it.
+    final pinnedSources = items.where((i) => i.role == 'pinned' && !i.isContinuation).toList();
+    if (pinnedSources.isNotEmpty) {
+      // Find total page count from current items.
+      double maxY = 0;
+      for (final i in items) {
+        final b = i.position.dy + i.height;
+        if (b > maxY) maxY = b;
+      }
+      final pageCount = (maxY / canvasH).ceil().clamp(1, 99);
+
+      // Skip page 0 if any hero exists there.
+      final hasHero = items.any((i) => i.role == 'hero');
+      final startPage = hasHero ? 1 : 0;
+
+      for (final src in pinnedSources) {
+        // The pinned item's template Y tells us its INTRA-PAGE offset.
+        // E.g. y:842 means "top of body page", y:892 means "50px down from top".
+        // Find which page the source is templated on and compute offset within that page.
+        final srcPage = (src.position.dy / canvasH).floor();
+        final intraY = src.position.dy - (srcPage * canvasH);
+
+        // Clone onto every body page (skipping the source's own page — it stays).
+        for (int p = startPage; p < pageCount; p++) {
+          if (p == srcPage) continue; // source is the original
+          final clone = CanvasItem(
+            type: src.type,
+            position: Offset(src.position.dx, p * canvasH + intraY),
+            width: src.width,
+            height: src.height,
+            color: src.color,
+            borderColor: src.borderColor,
+            borderWidth: src.borderWidth,
+            rotation: src.rotation,
+            title: '',
+            sectionType: src.sectionType,
+          );
+          clone.isContinuation = true;
+          // If text, copy the delta.
+          if (src.isText && src.controller != null) {
+            try {
+              clone.controller!.document = Document.fromJson(
+                  _sanitizeDelta(src.controller!.document.toDelta().toJson()));
+            } catch (_) {}
+          }
+          if (src.isTable && src.tableData != null) {
+            clone.tableData = src.tableData!.copyWith();
+          }
+          if (src.imageBytes != null) {
+            clone.imageBytes = Uint8List.fromList(src.imageBytes!);
+          }
+          items.add(clone);
+        }
       }
     }
   }

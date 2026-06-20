@@ -7,7 +7,8 @@
       "x": 0, "y": 0, "w": 595, "h": 10,
       "color": "#1E3A5F", "borderColor": "#1E3A5F", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
+      "sectionType": "custom",
+      "role": "top_band"
     },
     {
       "type": "rectangle",
@@ -15,7 +16,8 @@
       "x": 0, "y": 10, "w": 595, "h": 4,
       "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
+      "sectionType": "custom",
+      "role": "top_band"
     },
     {
       "type": "textSection",
@@ -24,6 +26,7 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "top_band",
       "delta": [
         {"insert": "YOUR COMPANY NAME", "attributes": {"bold": true, "size": "12", "color": "#1E3A5F"}},
         {"insert": "\n"}
@@ -36,6 +39,7 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "top_band",
       "delta": [
         {"insert": "Project Proposal", "attributes": {"bold": true, "size": "28", "color": "#1E3A5F"}},
         {"insert": "\n"},
@@ -49,7 +53,8 @@
       "x": 50, "y": 215, "w": 495, "h": 1,
       "color": "#E0E0E0", "borderColor": "#E0E0E0", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
+      "sectionType": "custom",
+      "role": "top_band"
     },
     {
       "type": "textSection",
@@ -58,6 +63,7 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "top_band",
       "delta": [
         {"insert": "Prepared for:", "attributes": {"bold": true, "size": "10", "color": "#76818E"}},
         {"insert": "\n"},
@@ -74,6 +80,7 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "top_band",
       "delta": [
         {"insert": "Date:", "attributes": {"bold": true, "size": "10", "color": "#76818E"}},
         {"insert": "\n"},
@@ -90,6 +97,8 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "overview",
       "delta": [
         {"insert": "1. Project Overview", "attributes": {"bold": true, "size": "16", "color": "#1E3A5F"}},
         {"insert": "\n"}
@@ -103,10 +112,9 @@
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
       "delta": [
-        {"insert": "This proposal details the technical approach, timeline, and investment required to deliver [project name]. The project aims to [primary objective] by implementing [key technology/approach].", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "This proposal details the technical approach, timeline, and investment required to deliver your project. The project aims to modernize your core workflow by implementing a scalable, well-tested solution.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "\n"},
-        {"insert": "The solution will be built using [tech stack overview] and is designed to scale with your growing business needs.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "The solution will be built using a modern, maintainable technology stack and is designed to scale with your growing business needs.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"}
       ]
     },
@@ -117,6 +125,8 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "objectives",
       "delta": [
         {"insert": "2. Objectives", "attributes": {"bold": true, "size": "16", "color": "#1E3A5F"}},
         {"insert": "\n"}
@@ -132,14 +142,13 @@
       "delta": [
         {"insert": "The key objectives for this project are:", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
+        {"insert": "1.  Improve performance and reliability across the core workflow.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "1.  [Primary objective — what will be built or achieved]", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "2.  Hit a clear performance target for speed and scalability.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "2.  [Performance target — speed, reliability, scalability metric]", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "3.  Integrate cleanly with the systems you already use.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "3.  [Integration goal — systems to connect with]", "attributes": {"size": "11", "color": "#333333"}},
-        {"insert": "\n"},
-        {"insert": "4.  [User experience goal — adoption, satisfaction target]", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "4.  Deliver a smooth, well-adopted experience for end users.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"}
       ]
     },
@@ -150,6 +159,8 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "scope",
       "delta": [
         {"insert": "3. Scope of Work", "attributes": {"bold": true, "size": "16", "color": "#1E3A5F"}},
         {"insert": "\n"}
@@ -165,7 +176,6 @@
       "delta": [
         {"insert": "The following work is included in this engagement:", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "\n"},
         {"insert": "•  Requirements gathering and technical specification", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
         {"insert": "•  Architecture design and system planning", "attributes": {"size": "11", "color": "#333333"}},
@@ -176,7 +186,6 @@
         {"insert": "\n"}
       ]
     },
-
     {
       "type": "textSection",
       "title": "Timeline Heading",
@@ -184,6 +193,8 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "timeline",
       "delta": [
         {"insert": "4. Timeline & Milestones", "attributes": {"bold": true, "size": "16", "color": "#1E3A5F"}},
         {"insert": "\n"}
@@ -220,6 +231,8 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "deliverables",
       "delta": [
         {"insert": "5. Deliverables", "attributes": {"bold": true, "size": "16", "color": "#1E3A5F"}},
         {"insert": "\n"}
@@ -256,6 +269,8 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "budget",
       "delta": [
         {"insert": "6. Budget", "attributes": {"bold": true, "size": "16", "color": "#1E3A5F"}},
         {"insert": "\n"}
@@ -285,7 +300,6 @@
         "showHeader": true
       }
     },
-
     {
       "type": "textSection",
       "title": "About Us Heading",
@@ -293,6 +307,8 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "about",
       "delta": [
         {"insert": "7. About Us", "attributes": {"bold": true, "size": "16", "color": "#1E3A5F"}},
         {"insert": "\n"}
@@ -306,10 +322,9 @@
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
       "delta": [
-        {"insert": "[Your Company] is a [description] with [X years] of experience delivering [type of projects]. Our team of [X] professionals has successfully completed [X+] projects for clients across [industries].", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "We are a specialist team with years of experience delivering projects like this one. Our people have completed many engagements for clients across a range of industries.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "\n"},
-        {"insert": "We specialize in [key specialties] and are committed to delivering solutions that are scalable, maintainable, and aligned with our clients' business objectives.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "We focus on building solutions that are scalable, maintainable, and aligned with our clients' business objectives.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"}
       ]
     },
@@ -328,22 +343,6 @@
         {"insert": "Your Company  |  www.yourcompany.com", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"}
       ]
-    },
-    {
-      "type": "rectangle",
-      "title": "",
-      "x": 0, "y": 2510, "w": 595, "h": 10,
-      "color": "#1E3A5F", "borderColor": "#1E3A5F", "borderWidth": 0,
-      "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
-    },
-    {
-      "type": "rectangle",
-      "title": "",
-      "x": 0, "y": 2520, "w": 595, "h": 4,
-      "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
-      "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
     }
   ]
 }

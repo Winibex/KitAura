@@ -6,6 +6,7 @@
 
 import 'dart:convert';
 import 'dart:js_interop';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,6 +61,8 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
   final ScrollController _verticalScrollCtrl = ScrollController();
   final TransformationController _zoomCtrl = TransformationController();
   double _currentZoom = 1.0;
+  Offset? _zoomPanelPos; // null = default bottom-right
+  bool _fitted = false;  // hide canvas until first fit completes
   final _titleCtrl = TextEditingController();
   final Map<String, VoidCallback> _focusListeners = {};
   final Map<String, VoidCallback> _docListeners = {};
@@ -94,11 +97,15 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
         if (_isMobile) {
           _leftPanelOpen = false;
           _rightPanelOpen = false;
-          // Auto-fit canvas to screen width
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) _fitToPage();
-          });
         }
+        // Auto-fit canvas to page 1 on load (all screen sizes)
+        _canvas.goToPage(0);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _fitToPage(0);
+            setState(() => _fitted = true);
+          }
+        });
         setState(() {});
       }
     });
@@ -261,6 +268,44 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
 
   // ─── Zoom Functions ─────────────────────
 
+  /// Keeps the canvas within a sensible margin so panning can't run off
+  /// into infinite empty space. Axes where the content is smaller than the
+  /// viewport are left untouched (so a centered, fitted canvas stays put).
+  void _clampPan() {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null) return;
+    final viewport = box.size;
+    final zoom = _zoomCtrl.value.getMaxScaleOnAxis();
+    final contentW = CanvasController.canvasW * zoom;
+    final contentH = (_canvas.totalCanvasHeight +
+        ((_canvas.totalPages - 1) * 24)) *
+        zoom;
+    const margin = 200.0;
+
+    final m = _zoomCtrl.value.clone();
+    final tx = m.getTranslation().x;
+    final ty = m.getTranslation().y;
+    double clampedX = tx;
+    double clampedY = ty;
+
+    // Only clamp an axis if the content actually overflows the viewport on it.
+    if (contentW > viewport.width) {
+      final minX = viewport.width - contentW - margin;
+      final maxX = margin;
+      clampedX = tx.clamp(minX, maxX);
+    }
+    if (contentH > viewport.height) {
+      final minY = viewport.height - contentH - margin;
+      final maxY = margin;
+      clampedY = ty.clamp(minY, maxY);
+    }
+
+    if (clampedX != tx || clampedY != ty) {
+      m.setTranslationRaw(clampedX, clampedY, 0);
+      _zoomCtrl.value = m;
+    }
+  }
+
   void _fitToPage([int? page]) {
     final box = context.findRenderObject() as RenderBox?;
     if (box == null) return;
@@ -362,6 +407,14 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
                       ),
                     ),
                   ),
+                // Pinned page selector — fixed at top, doesn't scroll/zoom
+                if (!s.isTemplateLoading)
+                  Positioned(
+                    top: 8,
+                    left: 0,
+                    right: 0,
+                    child: Center(child: _buildPageControls()),
+                  ),
                 if (_leftPanelOpen)
                   Positioned(
                     left: 0,
@@ -418,43 +471,7 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
                     ),
                   ),
                 // Zoom controls
-                Positioned(
-                  bottom: 16,
-                  right: 16,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: const [
-                        BoxShadow(color: Color(0x1A000000), blurRadius: 8, offset: Offset(0, 2)),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _zoomBtn(LucideIcons.minus, _zoomOut),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: GestureDetector(
-                            onTap: () => _fitToPage(),
-                            child: Text(
-                              '${(_currentZoom * 100).round()}%',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontFamily: AppFonts.poppins,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.prussianBlue,
-                              ),
-                            ),
-                          ),
-                        ),
-                        _zoomBtn(LucideIcons.maximize, () => _fitToPage()),
-                        _zoomBtn(LucideIcons.plus, _zoomIn),
-                      ],
-                    ),
-                  ),
-                ),
+                _buildZoomPanel(),
               ],
             ),
           ),
@@ -493,6 +510,17 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
       showSavedBadge: s.isSaved && !s.isSaving,
       isSaving: s.isSaving,
       actions: [
+        EditorAppBarAction(
+          icon: LucideIcons.alignVerticalSpaceAround,
+          label: 'Auto-arrange',
+          color: AppColors.white,
+          bgColor: AppColors.dustyMauve,
+          onTap: () {
+            _canvas.autoArrange();
+            _editor.markDirty();
+            _wireFocusListeners();
+          },
+        ),
         EditorAppBarAction(
           icon: s.isSaving
               ? LucideIcons.loader
@@ -571,8 +599,8 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
 
   // ─── CANVAS ───────────────────────────────────────────────────────────
 
-  Widget _zoomBtn(IconData icon, VoidCallback onTap) {
-    return GestureDetector(
+  Widget _zoomBtn(IconData icon, VoidCallback onTap, {String? tooltip}) {
+    final btn = GestureDetector(
       onTap: onTap,
       child: Container(
         width: 32, height: 32,
@@ -583,42 +611,127 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
         child: Icon(icon, size: 14, color: AppColors.darkRaspberry),
       ),
     );
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: tooltip != null ? Tooltip(message: tooltip, child: btn) : btn,
+    );
+  }
+
+  Widget _buildZoomPanel() {
+    final dragHandle = GestureDetector(
+      onPanUpdate: (d) {
+        final box = context.findRenderObject() as RenderBox?;
+        if (box == null) return;
+        final cur = _zoomPanelPos ??
+            Offset(box.size.width - 180, box.size.height - 80);
+        setState(() {
+          _zoomPanelPos = Offset(
+            (cur.dx + d.delta.dx).clamp(0, box.size.width - 170),
+            (cur.dy + d.delta.dy).clamp(0, box.size.height - 50),
+          );
+        });
+      },
+      child: MouseRegion(
+        cursor: SystemMouseCursors.move,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Icon(LucideIcons.gripVertical, size: 16,
+              color: AppColors.slateGrey.withValues(alpha: 0.6)),
+        ),
+      ),
+    );
+
+    final panel = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: const [
+          BoxShadow(color: Color(0x1A000000), blurRadius: 8, offset: Offset(0, 2)),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          dragHandle,
+          _zoomBtn(LucideIcons.minus, _zoomOut, tooltip: 'Zoom out'),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Tooltip(
+              message: 'Fit to page',
+              child: GestureDetector(
+                onTap: () => _fitToPage(),
+                child: Text('${(_currentZoom * 100).round()}%',
+                    style: const TextStyle(
+                      fontSize: 11, fontFamily: AppFonts.poppins,
+                      fontWeight: FontWeight.w600, color: AppColors.prussianBlue,
+                    )),
+              ),
+            ),
+          ),
+          _zoomBtn(LucideIcons.scan, () => _fitToPage(), tooltip: 'Fit to screen'),
+          _zoomBtn(LucideIcons.plus, _zoomIn, tooltip: 'Zoom in'),
+        ],
+      ),
+    );
+
+    if (_zoomPanelPos == null) {
+      return Positioned(bottom: 16, right: 16, child: panel);
+    }
+    return Positioned(left: _zoomPanelPos!.dx, top: _zoomPanelPos!.dy, child: panel);
   }
 
   Widget _buildCanvas() {
     return Container(
       color: const Color(0xFFE8E0D8),
-      child: InteractiveViewer(
-        transformationController: _zoomCtrl,
-        minScale: 0.3,
-        maxScale: 2.0,
-        constrained: false,
-        panEnabled: true,
-        scaleEnabled: true,
-        boundaryMargin: const EdgeInsets.all(double.infinity),
-        onInteractionUpdate: (details) {
-          setState(() => _currentZoom = _zoomCtrl.value.getMaxScaleOnAxis());
+      child: Listener(
+        onPointerSignal: (event) {
+          if (event is PointerScrollEvent) {
+            // Two-finger scroll → PAN only (both axes). Never zoom.
+            final m = _zoomCtrl.value.clone()
+              ..translate(-event.scrollDelta.dx, -event.scrollDelta.dy);
+            _zoomCtrl.value = m;
+            _clampPan();
+          } else if (event is PointerScaleEvent) {
+            // Trackpad pinch → zoom.
+            final newZoom = (_currentZoom * event.scale).clamp(0.3, 2.0);
+            final m = _zoomCtrl.value.clone()..scale(newZoom / _currentZoom);
+            _zoomCtrl.value = m;
+            setState(() => _currentZoom = newZoom);
+          }
         },
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
+        child: AnimatedOpacity(
+          opacity: _fitted ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 150),
+          child: InteractiveViewer(
+            transformationController: _zoomCtrl,
+            minScale: 0.3,
+            maxScale: 2.0,
+            constrained: false,
+            panEnabled: true,
+            scaleEnabled: false,   // ← OFF: stops vertical scroll from zooming
+            boundaryMargin: const EdgeInsets.all(double.infinity),
+            onInteractionUpdate: (details) {
+              setState(() => _currentZoom = _zoomCtrl.value.getMaxScaleOnAxis());
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
                 children: [
-                  _buildPageControls(),
-                  const SizedBox(height: 16),
                   SizedBox(
                     width: CanvasController.canvasW,
                     height:
-                        _canvas.totalCanvasHeight +
+                    _canvas.totalCanvasHeight +
                         ((_canvas.totalPages - 1) * 24),
                     child: Stack(
                       clipBehavior: Clip.none,
                       children: [
                         ...List.generate(
                           _canvas.totalPages,
-                          (pageIdx) => _buildPageBackground(pageIdx),
+                              (pageIdx) => _buildPageBackground(pageIdx),
                         ),
                         ..._canvas.items.map(
-                          (item) => CanvasItemWidget(
+                              (item) => CanvasItemWidget(
                             key: ValueKey(item.id),
                             item: item,
                             isSelected: item.id == _canvas.selectedId,
@@ -627,7 +740,7 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
                             ),
                             canvasW: CanvasController.canvasW,
                             canvasH:
-                                _canvas.totalCanvasHeight +
+                            _canvas.totalCanvasHeight +
                                 ((_canvas.totalPages - 1) * 24),
                             onSelect: () {
                               _canvas.select(item.id);
@@ -636,14 +749,14 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
                               }
                             },
                             onMultiMoveUpdate:
-                                _canvas.multiSelected.contains(item.id)
+                            _canvas.multiSelected.contains(item.id)
                                 ? (delta) {
-                                    _canvas.multiMoveUpdate(delta);
-                                    setState(() {});
-                                  }
+                              _canvas.multiMoveUpdate(delta);
+                              setState(() {});
+                            }
                                 : null,
                             onMultiMoveEnd:
-                                _canvas.multiSelected.contains(item.id)
+                            _canvas.multiSelected.contains(item.id)
                                 ? () => _canvas.multiMoveEnd()
                                 : null,
                             onSaveSnapshot: _canvas.saveSnapshot,
@@ -673,6 +786,7 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
                               ),
                             ),
                           ),
+        
                       ],
                     ),
                   ),
@@ -680,7 +794,9 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
               ),
             ),
           ),
-        );
+        ),
+      ),
+    );
   }
 
   Widget _buildPageBackground(int pageIdx) {
@@ -795,11 +911,6 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
                   onTap: () {
                     _canvas.goToPage(i);
                     _fitToPage(i);
-                    _verticalScrollCtrl.animateTo(
-                      i * (CanvasController.canvasH + 24) + 32,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeOut,
-                    );
                   },
                   child: Container(
                     width: 32,

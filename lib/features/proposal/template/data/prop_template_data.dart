@@ -171,12 +171,36 @@ class PropTemplateData {
       'Proposed Solution': 'phases',
       'Terms':             'clauses',
     },
+    'prop_project': {
+      'Project Overview': 'prose',
+      'Objectives':       'numbered',
+      'Scope':            'bullets',
+      'About Us':         'prose',
+      'Contact':          'oneLiner',
+    },
+    'prop_service': {
+      'Scope':                     'bullets',
+      'Provider Responsibilities': 'bullets',
+      'Client Responsibilities':   'bullets',
+      'Terms':                     'bullets',
+    },
+    'prop_product': {
+      'Specs':    'bullets',
+      'Delivery': 'bullets',
+      'Terms':    'bullets',
+    },
     'prop_freelance': {
       'Project Title':  'titleLine',
       'Understanding':  'prose',
       'Approach':       'phases',
       'Payment Note':   'oneLiner',
       'Next Steps':     'numbered',
+    },
+    'prop_creative': {
+      'Challenge':  'prose',
+      'Vision':     'phases',       // intro + "Core concept" label/body
+      'Strategy':   'phases',       // 01 Discover, 02 Create, 03 Launch
+      'Why Us':     'prose',
     },
     'prop_executive': {
       'Executive Summary':  'prose',
@@ -186,6 +210,12 @@ class PropTemplateData {
       'Risk':               'clauses',
       'Credentials':        'prose',
       'Terms':              'bullets',
+    },
+    'prop_sales': {
+      'Overview':   'prose',      // intro + "What sets us apart" + 3 differentiators
+      'Social Proof': 'prose',
+      'Guarantee':  'bullets',
+      'Next Steps': 'numbered',
     },
   };
 

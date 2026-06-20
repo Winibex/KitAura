@@ -228,14 +228,6 @@
       ]
     },
     {
-      "type": "rectangle",
-      "title": "",
-      "x": 0, "y": 1684, "w": 595, "h": 4,
-      "color": "#C9A84C", "borderColor": "#C9A84C", "borderWidth": 0,
-      "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
-    },
-    {
       "type": "textSection",
       "title": "Implementation Heading",
       "x": 50, "y": 1738, "w": 495, "h": 35,
@@ -344,14 +336,6 @@
         {"insert": "30% upon signing, 40% at Phase 2 completion, 30% upon final delivery. Net 30 terms apply.", "attributes": {"size": "10", "color": "#76818E"}},
         {"insert": "\n"}
       ]
-    },
-    {
-      "type": "rectangle",
-      "title": "",
-      "x": 0, "y": 2526, "w": 595, "h": 4,
-      "color": "#C9A84C", "borderColor": "#C9A84C", "borderWidth": 0,
-      "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
     },
     {
       "type": "textSection",
@@ -472,14 +456,6 @@
         {"insert": "•  A mutual NDA will be executed prior to engagement commencement", "attributes": {"size": "10", "color": "#333333"}},
         {"insert": "\n"}
       ]
-    },
-    {
-      "type": "rectangle",
-      "title": "",
-      "x": 50, "y": 3090, "w": 495, "h": 1,
-      "color": "#C9A84C", "borderColor": "#C9A84C", "borderWidth": 0,
-      "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
     },
     {
       "type": "textSection",

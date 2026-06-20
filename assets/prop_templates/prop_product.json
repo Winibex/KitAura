@@ -7,7 +7,8 @@
       "x": 0, "y": 0, "w": 595, "h": 120,
       "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
+      "sectionType": "custom",
+      "role": "top_band"
     },
     {
       "type": "rectangle",
@@ -15,7 +16,8 @@
       "x": 0, "y": 120, "w": 595, "h": 4,
       "color": "#CF4D6F", "borderColor": "#CF4D6F", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
+      "sectionType": "custom",
+      "role": "top_band"
     },
     {
       "type": "textSection",
@@ -24,6 +26,7 @@
       "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "top_band",
       "delta": [
         {"insert": "YOUR COMPANY NAME", "attributes": {"bold": true, "size": "16", "color": "#FFFFFF"}},
         {"insert": "\n"},
@@ -38,6 +41,7 @@
       "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "top_band",
       "delta": [
         {"insert": "QUOTATION", "attributes": {"bold": true, "size": "11", "color": "#CF4D6F"}},
         {"insert": "\n"},
@@ -52,10 +56,11 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "top_band",
       "delta": [
         {"insert": "Product Quotation & Catalog", "attributes": {"bold": true, "size": "22", "color": "#0F172A"}},
         {"insert": "\n"},
-        {"insert": "[Product Category] — Supply Proposal for [Client Company]", "attributes": {"size": "12", "color": "#76818E"}},
+        {"insert": "Supply Proposal", "attributes": {"size": "12", "color": "#76818E"}},
         {"insert": "\n"}
       ]
     },
@@ -66,6 +71,7 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "top_band",
       "delta": [
         {"insert": "BILL TO", "attributes": {"bold": true, "size": "9", "color": "#CF4D6F"}},
         {"insert": "\n"},
@@ -86,6 +92,7 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "top_band",
       "delta": [
         {"insert": "QUOTE DETAILS", "attributes": {"bold": true, "size": "9", "color": "#CF4D6F"}},
         {"insert": "\n"},
@@ -105,7 +112,8 @@
       "x": 50, "y": 320, "w": 495, "h": 1,
       "color": "#E0E0E0", "borderColor": "#E0E0E0", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
+      "sectionType": "custom",
+      "role": "top_band"
     },
     {
       "type": "textSection",
@@ -114,6 +122,8 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "products",
       "delta": [
         {"insert": "PRODUCT LIST", "attributes": {"bold": true, "size": "14", "color": "#0F172A"}},
         {"insert": "\n"}
@@ -144,32 +154,37 @@
       }
     },
     {
-      "type": "textSection",
+      "type": "tableSection",
       "title": "Pricing Summary",
-      "x": 330, "y": 575, "w": 215, "h": 139,
+      "x": 330, "y": 575, "w": 215, "h": 110,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
-      "delta": [
-        {"insert": "Subtotal:                      $9,760.00", "attributes": {"size": "10", "color": "#333333"}},
-        {"insert": "\n"},
-        {"insert": "Tax (8%):                      $780.80", "attributes": {"size": "10", "color": "#333333"}},
-        {"insert": "\n"},
-        {"insert": "Shipping:                      $350.00", "attributes": {"size": "10", "color": "#333333"}},
-        {"insert": "\n"},
-        {"insert": "────────────────────────", "attributes": {"size": "10", "color": "#E0E0E0"}},
-        {"insert": "\n"},
-        {"insert": "TOTAL:                         $10,890.80", "attributes": {"bold": true, "size": "12", "color": "#0F172A"}},
-        {"insert": "\n"}
-      ]
+      "tableData": {
+        "headers": ["Label", "Amount"],
+        "rows": [
+          ["Subtotal", "$9,760.00"],
+          ["Tax (8%)", "$780.80"],
+          ["Shipping", "$350.00"],
+          ["TOTAL", "$10,890.80"]
+        ],
+        "headerBgColor": "#FFFFFF",
+        "headerTextColor": "#FFFFFF",
+        "cellTextColor": "#333333",
+        "borderColor": "#FFFFFF",
+        "fontSize": 10,
+        "showHeader": false
+      }
     },
     {
       "type": "textSection",
       "title": "Specs Heading",
-      "x": 50, "y": 690, "w": 495, "h": 28,
+      "x": 50, "y": 720, "w": 495, "h": 28,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "specs",
       "delta": [
         {"insert": "TECHNICAL SPECIFICATIONS", "attributes": {"bold": true, "size": "14", "color": "#0F172A"}},
         {"insert": "\n"}
@@ -178,12 +193,12 @@
     {
       "type": "textSection",
       "title": "Specs",
-      "x": 50, "y": 720, "w": 495, "h": 103,
+      "x": 50, "y": 755, "w": 495, "h": 103,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
       "delta": [
-        {"insert": "•  All products conform to [ISO/ANSI/API] standards", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "•  All products conform to recognized ISO and ANSI standards", "attributes": {"size": "10", "color": "#333333"}},
         {"insert": "\n"},
         {"insert": "•  Materials: Stainless Steel 304/316, Cast Iron, Carbon Steel available", "attributes": {"size": "10", "color": "#333333"}},
         {"insert": "\n"},
@@ -195,7 +210,6 @@
         {"insert": "\n"}
       ]
     },
-
     {
       "type": "textSection",
       "title": "Warranty Heading",
@@ -203,6 +217,8 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "warranty",
       "delta": [
         {"insert": "WARRANTY & SUPPORT", "attributes": {"bold": true, "size": "14", "color": "#0F172A"}},
         {"insert": "\n"}
@@ -238,6 +254,8 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "delivery",
       "delta": [
         {"insert": "DELIVERY & LOGISTICS", "attributes": {"bold": true, "size": "14", "color": "#0F172A"}},
         {"insert": "\n"}
@@ -255,7 +273,7 @@
         {"insert": "\n"},
         {"insert": "•  Express delivery available at additional cost", "attributes": {"size": "10", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "•  Shipping terms: FOB [Origin/Destination] — Incoterms 2020", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "•  Shipping terms: FOB Destination — Incoterms 2020", "attributes": {"size": "10", "color": "#333333"}},
         {"insert": "\n"},
         {"insert": "•  Packaging: Industrial crate packaging with corrosion protection", "attributes": {"size": "10", "color": "#333333"}},
         {"insert": "\n"}
@@ -268,6 +286,8 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "terms",
       "delta": [
         {"insert": "TERMS & CONDITIONS", "attributes": {"bold": true, "size": "14", "color": "#0F172A"}},
         {"insert": "\n"}
@@ -292,20 +312,13 @@
       ]
     },
     {
-      "type": "rectangle",
-      "title": "",
-      "x": 50, "y": 1340, "w": 495, "h": 1,
-      "color": "#E0E0E0", "borderColor": "#E0E0E0", "borderWidth": 0,
-      "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
-    },
-    {
       "type": "textSection",
       "title": "Acceptance",
       "x": 50, "y": 1365, "w": 220, "h": 81,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "signature",
       "delta": [
         {"insert": "ORDER CONFIRMED BY:", "attributes": {"bold": true, "size": "9", "color": "#CF4D6F"}},
         {"insert": "\n"},

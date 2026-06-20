@@ -7,7 +7,8 @@
       "x": 0, "y": 0, "w": 200, "h": 842,
       "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
+      "sectionType": "custom",
+      "role": "pinned"
     },
     {
       "type": "rectangle",
@@ -15,7 +16,8 @@
       "x": 200, "y": 0, "w": 4, "h": 842,
       "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
+      "sectionType": "custom",
+      "role": "pinned"
     },
     {
       "type": "textSection",
@@ -24,6 +26,7 @@
       "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "pinned",
       "delta": [
         {"insert": "YOUR", "attributes": {"bold": true, "size": "18", "color": "#FFFFFF"}},
         {"insert": "\n"},
@@ -38,9 +41,9 @@
       "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "pinned",
       "delta": [
         {"insert": "CONTACT", "attributes": {"bold": true, "size": "9", "color": "#831843"}},
-        {"insert": "\n"},
         {"insert": "\n"},
         {"insert": "Your Name", "attributes": {"bold": true, "size": "10", "color": "#FFFFFF"}},
         {"insert": "\n"},
@@ -59,10 +62,11 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "top_band",
       "delta": [
         {"insert": "Sales Proposal", "attributes": {"bold": true, "size": "28", "color": "#0F172A"}},
         {"insert": "\n"},
-        {"insert": "Prepared for [Client Company]", "attributes": {"size": "13", "color": "#76818E"}},
+        {"insert": "Prepared for Client Company", "attributes": {"size": "13", "color": "#76818E"}},
         {"insert": "\n"},
         {"insert": "January 15, 2026", "attributes": {"size": "11", "color": "#76818E"}},
         {"insert": "\n"}
@@ -75,8 +79,10 @@
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "overview",
       "delta": [
-        {"insert": "WHY [YOUR COMPANY]", "attributes": {"bold": true, "size": "14", "color": "#831843"}},
+        {"insert": "WHY WORK WITH US", "attributes": {"bold": true, "size": "14", "color": "#831843"}},
         {"insert": "\n"}
       ]
     },
@@ -88,26 +94,27 @@
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
       "delta": [
-        {"insert": "We understand that [Client Company] is looking to [key objective]. Our solution delivers [primary benefit] with a proven track record of [result metric].", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "We understand the client is looking to achieve a clear objective. Our solution delivers measurable benefit backed by a proven track record.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
+        {"insert": "What sets us apart", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
         {"insert": "\n"},
-        {"insert": "What sets us apart:", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
+        {"insert": "A unique capability or approach that competitors cannot match.", "attributes": {"size": "10", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "•  [Differentiator 1 — unique capability or approach]", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "A strong track record and relevant certifications.", "attributes": {"size": "10", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "•  [Differentiator 2 — track record or certification]", "attributes": {"size": "10", "color": "#333333"}},
-        {"insert": "\n"},
-        {"insert": "•  [Differentiator 3 — support or guarantee]", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "Responsive support and a clear satisfaction guarantee.", "attributes": {"size": "10", "color": "#333333"}},
         {"insert": "\n"}
       ]
     },
     {
       "type": "textSection",
       "title": "Solution Heading",
-      "x": 230, "y": 330, "w": 330, "h": 25,
+      "x": 230, "y": 400, "w": 330, "h": 25,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "solution",
       "delta": [
         {"insert": "RECOMMENDED SOLUTION", "attributes": {"bold": true, "size": "14", "color": "#831843"}},
         {"insert": "\n"}
@@ -116,7 +123,7 @@
     {
       "type": "tableSection",
       "title": "Solution Table",
-      "x": 230, "y": 360, "w": 330, "h": 140,
+      "x": 230, "y": 430, "w": 330, "h": 140,
       "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -124,7 +131,7 @@
         "headers": ["Solution", "What You Get", "Value"],
         "rows": [
           ["Core Package", "Full implementation and setup", "$XX,XXX"],
-          ["Training", "Team onboarding (X sessions)", "$X,XXX"],
+          ["Training", "Team onboarding sessions", "$X,XXX"],
           ["Support Plan", "12-month premium support", "$X,XXX"],
           ["Total Investment", "", "$XX,XXX"]
         ],
@@ -139,10 +146,12 @@
     {
       "type": "textSection",
       "title": "ROI Heading",
-      "x": 230, "y": 520, "w": 330, "h": 25,
+      "x": 230, "y": 600, "w": 330, "h": 25,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "roi",
       "delta": [
         {"insert": "RETURN ON INVESTMENT", "attributes": {"bold": true, "size": "14", "color": "#831843"}},
         {"insert": "\n"}
@@ -151,15 +160,15 @@
     {
       "type": "tableSection",
       "title": "ROI Table",
-      "x": 230, "y": 550, "w": 330, "h": 140,
+      "x": 230, "y": 630, "w": 330, "h": 140,
       "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
       "tableData": {
         "headers": ["Metric", "Current", "With Our Solution"],
         "rows": [
-          ["[Key Metric 1]", "[Current value]", "[Projected improvement]"],
-          ["[Key Metric 2]", "[Current value]", "[Projected improvement]"],
+          ["Efficiency", "Baseline", "Significant improvement"],
+          ["Operating Cost", "Current spend", "Reduced spend"],
           ["Annual Cost Savings", "$0", "$XX,XXX estimated"],
           ["Payback Period", "—", "X months"]
         ],
@@ -174,43 +183,26 @@
     {
       "type": "textSection",
       "title": "Social Proof",
-      "x": 230, "y": 710, "w": 330, "h": 93,
+      "x": 230, "y": 800, "w": 330, "h": 93,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
       "delta": [
-        {"insert": "TRUSTED BY", "attributes": {"bold": true, "size": "9", "color": "#831843"}},
+        {"insert": "Trusted by leading organizations", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
         {"insert": "\n"},
-        {"insert": "[Client A]  •  [Client B]  •  [Client C]  •  [Client D]", "attributes": {"size": "11", "color": "#76818E"}},
-        {"insert": "\n"},
-        {"insert": "[X]+ companies served  |  [X]% client satisfaction  |  [X] years in business", "attributes": {"size": "10", "color": "#76818E"}},
+        {"insert": "Many companies served with a high client satisfaction rate and years of proven industry experience.", "attributes": {"size": "10", "color": "#76818E"}},
         {"insert": "\n"}
       ]
-    },
-
-    {
-      "type": "rectangle",
-      "title": "",
-      "x": 0, "y": 842, "w": 200, "h": 842,
-      "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
-      "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
-    },
-    {
-      "type": "rectangle",
-      "title": "",
-      "x": 200, "y": 842, "w": 4, "h": 842,
-      "color": "#831843", "borderColor": "#831843", "borderWidth": 0,
-      "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
     },
     {
       "type": "textSection",
       "title": "Implementation Heading",
-      "x": 230, "y": 895, "w": 330, "h": 25,
+      "x": 230, "y": 920, "w": 330, "h": 25,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "implementation",
       "delta": [
         {"insert": "IMPLEMENTATION TIMELINE", "attributes": {"bold": true, "size": "14", "color": "#831843"}},
         {"insert": "\n"}
@@ -219,7 +211,7 @@
     {
       "type": "tableSection",
       "title": "Timeline Table",
-      "x": 230, "y": 925, "w": 330, "h": 167,
+      "x": 230, "y": 950, "w": 330, "h": 167,
       "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
@@ -242,31 +234,13 @@
     },
     {
       "type": "textSection",
-      "title": "Testimonial",
-      "x": 20, "y": 920, "w": 165, "h": 150,
-      "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
-      "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom",
-      "delta": [
-        {"insert": "CLIENT SAYS", "attributes": {"bold": true, "size": "9", "color": "#831843"}},
-        {"insert": "\n"},
-        {"insert": "\n"},
-        {"insert": "\"Working with [Your Company] transformed our [area]. We saw [X]% improvement within [timeframe].\"", "attributes": {"size": "9", "color": "#A0AEC0"}},
-        {"insert": "\n"},
-        {"insert": "\n"},
-        {"insert": "— Client Name", "attributes": {"bold": true, "size": "9", "color": "#FFFFFF"}},
-        {"insert": "\n"},
-        {"insert": "Title, Company", "attributes": {"size": "8", "color": "#718096"}},
-        {"insert": "\n"}
-      ]
-    },
-    {
-      "type": "textSection",
       "title": "Guarantee Heading",
-      "x": 230, "y": 1100, "w": 330, "h": 25,
+      "x": 230, "y": 1140, "w": 330, "h": 25,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "guarantee",
       "delta": [
         {"insert": "OUR GUARANTEE", "attributes": {"bold": true, "size": "14", "color": "#831843"}},
         {"insert": "\n"}
@@ -275,31 +249,32 @@
     {
       "type": "textSection",
       "title": "Guarantee",
-      "x": 230, "y": 1130, "w": 330, "h": 127,
+      "x": 230, "y": 1170, "w": 330, "h": 127,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
       "delta": [
-        {"insert": "We stand behind our solution with:", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "We stand behind our solution.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
+        {"insert": "A satisfaction guarantee within the first month of service.", "attributes": {"size": "10", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "•  [X]-day satisfaction guarantee", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "A dedicated account manager for the early months of engagement.", "attributes": {"size": "10", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "•  Dedicated account manager for the first [X] months", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "A strong uptime commitment with penalties for non-compliance.", "attributes": {"size": "10", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "•  [X]% uptime SLA with financial penalty for non-compliance", "attributes": {"size": "10", "color": "#333333"}},
-        {"insert": "\n"},
-        {"insert": "•  Free upgrades during the contract period", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "Free upgrades during the contract period.", "attributes": {"size": "10", "color": "#333333"}},
         {"insert": "\n"}
       ]
     },
     {
       "type": "textSection",
       "title": "Next Steps Heading",
-      "x": 230, "y": 1240, "w": 330, "h": 25,
+      "x": 230, "y": 1310, "w": 330, "h": 25,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "heading",
+      "group": "nextsteps",
       "delta": [
         {"insert": "NEXT STEPS", "attributes": {"bold": true, "size": "14", "color": "#831843"}},
         {"insert": "\n"}
@@ -308,40 +283,29 @@
     {
       "type": "textSection",
       "title": "Next Steps",
-      "x": 230, "y": 1270, "w": 330, "h": 109,
+      "x": 230, "y": 1340, "w": 330, "h": 109,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
       "delta": [
-        {"insert": "1.  ", "attributes": {"bold": true, "size": "11", "color": "#831843"}},
-        {"insert": "Review this proposal and share with your team", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "Review this proposal and share with your team.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "2.  ", "attributes": {"bold": true, "size": "11", "color": "#831843"}},
-        {"insert": "Schedule a demo or Q&A session with us", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "Schedule a demo or Q&A session with us.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "3.  ", "attributes": {"bold": true, "size": "11", "color": "#831843"}},
-        {"insert": "Sign and return to start implementation", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "Sign and return to start implementation.", "attributes": {"size": "11", "color": "#333333"}},
         {"insert": "\n"},
-        {"insert": "\n"},
-        {"insert": "This proposal is valid until February 15, 2026.", "attributes": {"size": "10", "color": "#76818E"}},
+        {"insert": "This proposal is valid for 30 days from the date of issue.", "attributes": {"size": "10", "color": "#76818E"}},
         {"insert": "\n"}
       ]
     },
     {
-      "type": "rectangle",
-      "title": "",
-      "x": 230, "y": 1400, "w": 330, "h": 1,
-      "color": "#FFE4EC", "borderColor": "#FFE4EC", "borderWidth": 0,
-      "rotation": 0, "flipX": false, "flipY": false,
-      "sectionType": "custom"
-    },
-    {
       "type": "textSection",
       "title": "Signature",
-      "x": 230, "y": 1420, "w": 150, "h": 79,
+      "x": 230, "y": 1480, "w": 150, "h": 79,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "signature",
       "delta": [
         {"insert": "ACCEPTED BY", "attributes": {"bold": true, "size": "9", "color": "#831843"}},
         {"insert": "\n"},
@@ -355,10 +319,11 @@
     {
       "type": "textSection",
       "title": "Submitted",
-      "x": 410, "y": 1420, "w": 150, "h": 79,
+      "x": 410, "y": 1480, "w": 150, "h": 79,
       "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom",
+      "role": "signature",
       "delta": [
         {"insert": "SUBMITTED BY", "attributes": {"bold": true, "size": "9", "color": "#831843"}},
         {"insert": "\n"},

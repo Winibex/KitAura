@@ -91,6 +91,46 @@ class LineItemEntry {
       );
 }
 
+/// Dedicated line item for physical-product quotes: model/name, quantity,
+/// and unit price. Line total is computed (qty × unitPrice), never stored.
+class ProductLineItem {
+  final String name;        // product / model name
+  final String? sku;        // optional model number / SKU
+  final int quantity;
+  final double unitPrice;
+  const ProductLineItem({
+    this.name = '',
+    this.sku,
+    this.quantity = 1,
+    this.unitPrice = 0,
+  });
+
+  /// Computed — qty × unit price. Not serialized (derived).
+  double get lineTotal => quantity * unitPrice;
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'sku': sku,
+    'quantity': quantity,
+    'unitPrice': unitPrice,
+  };
+
+  factory ProductLineItem.fromJson(Map<String, dynamic> json) => ProductLineItem(
+    name: json['name'] ?? '',
+    sku: json['sku'],
+    quantity: (json['quantity'] as num?)?.toInt() ?? 1,
+    unitPrice: (json['unitPrice'] as num?)?.toDouble() ?? 0,
+  );
+
+  ProductLineItem copyWith({String? name, String? sku, int? quantity, double? unitPrice}) =>
+      ProductLineItem(
+        name: name ?? this.name,
+        sku: sku ?? this.sku,
+        quantity: quantity ?? this.quantity,
+        unitPrice: unitPrice ?? this.unitPrice,
+      );
+}
+
 class TypeSpecificFields {
   // Development
   final List<String> techStack;
@@ -113,6 +153,9 @@ class TypeSpecificFields {
   final String? warrantyTerms;
   final String? shippingTerms;
   final String? paymentTerms;
+  final List<ProductLineItem> productItems;
+  final double? taxPercent;
+  final double? shippingCost;
 
   const TypeSpecificFields({
     this.techStack = const [],
@@ -129,6 +172,9 @@ class TypeSpecificFields {
     this.warrantyTerms,
     this.shippingTerms,
     this.paymentTerms,
+    this.productItems = const [],
+    this.taxPercent,
+    this.shippingCost,
   });
 
   Map<String, dynamic> toJson() => {
@@ -146,6 +192,9 @@ class TypeSpecificFields {
     'warrantyTerms': warrantyTerms,
     'shippingTerms': shippingTerms,
     'paymentTerms': paymentTerms,
+    'productItems': productItems.map((e) => e.toJson()).toList(),
+    'taxPercent': taxPercent,
+    'shippingCost': shippingCost,
   };
 
   factory TypeSpecificFields.fromJson(Map<String, dynamic> json) =>
@@ -164,6 +213,12 @@ class TypeSpecificFields {
         warrantyTerms: json['warrantyTerms'],
         shippingTerms: json['shippingTerms'],
         paymentTerms: json['paymentTerms'],
+        productItems: (json['productItems'] as List<dynamic>?)
+            ?.map((e) => ProductLineItem.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList() ??
+            [],
+        taxPercent: (json['taxPercent'] as num?)?.toDouble(),
+        shippingCost: (json['shippingCost'] as num?)?.toDouble(),
       );
 
   TypeSpecificFields copyWith({
@@ -181,6 +236,9 @@ class TypeSpecificFields {
     String? warrantyTerms,
     String? shippingTerms,
     String? paymentTerms,
+    List<ProductLineItem>? productItems,
+    double? taxPercent,
+    double? shippingCost,
   }) =>
       TypeSpecificFields(
         techStack: techStack ?? this.techStack,
@@ -197,6 +255,9 @@ class TypeSpecificFields {
         warrantyTerms: warrantyTerms ?? this.warrantyTerms,
         shippingTerms: shippingTerms ?? this.shippingTerms,
         paymentTerms: paymentTerms ?? this.paymentTerms,
+        productItems: productItems ?? this.productItems,
+        taxPercent: taxPercent ?? this.taxPercent,
+        shippingCost: shippingCost ?? this.shippingCost,
       );
 
   bool get isEmpty =>
@@ -213,7 +274,10 @@ class TypeSpecificFields {
           kpiMetrics.isEmpty &&
           warrantyTerms == null &&
           shippingTerms == null &&
-          paymentTerms == null;
+          paymentTerms == null &&
+          productItems.isEmpty &&
+          taxPercent == null &&
+          shippingCost == null;
 }
 
 // ─── MAIN CLIENT PROFILE MODEL ──────────────────────────────────────────
@@ -228,6 +292,12 @@ class ClientProfileModel {
   final String? clientPhone;
   final String? clientWebsite;
   final String? industry;
+
+  // Sender (your) info — pre-filled from chosen AI profile (snapshot)
+  final String? senderCompany;
+  final String? senderName;
+  final String? senderEmail;
+  final String? senderPhone;
 
   // Step 2: Project Overview
   final String projectTitle;
@@ -261,6 +331,11 @@ class ClientProfileModel {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
+  // Tax / registration (shown for product & service sales)
+  final String? senderTaxId;      // your NTN / tax number
+  final String? senderRegNumber;  // your company registration number
+  final String? clientTaxId;      // client NTN / tax number
+
   const ClientProfileModel({
     this.id,
     this.clientName = '',
@@ -269,6 +344,10 @@ class ClientProfileModel {
     this.clientPhone,
     this.clientWebsite,
     this.industry,
+    this.senderCompany,
+    this.senderName,
+    this.senderEmail,
+    this.senderPhone,
     this.projectTitle = '',
     this.projectType = 'general',
     this.projectDescription,
@@ -288,6 +367,9 @@ class ClientProfileModel {
     this.typeSpecific = const TypeSpecificFields(),
     this.createdAt,
     this.updatedAt,
+    this.senderTaxId,
+    this.senderRegNumber,
+    this.clientTaxId,
   });
 
   /// Display name for dropdown lists
@@ -304,6 +386,15 @@ class ClientProfileModel {
     if (projectTitle.isNotEmpty) parts.add(projectTitle);
     if (industry != null && industry!.isNotEmpty) parts.add(industry!);
     return parts.isNotEmpty ? parts.join(' • ') : projectType;
+  }
+
+  /// Grand total for product quotes: sum of line totals + shipping + tax.
+  double get productGrandTotal {
+    final sub = typeSpecific.productItems.fold<double>(0, (s, e) => s + e.lineTotal);
+    final ship = typeSpecific.shippingCost ?? 0;
+    final taxable = sub + ship;
+    final tax = (typeSpecific.taxPercent ?? 0) / 100 * taxable;
+    return taxable + tax;
   }
 
   // ─── PROPOSAL TYPE HELPERS ───────────────────────────────────────
@@ -362,6 +453,10 @@ class ClientProfileModel {
     'clientPhone': clientPhone,
     'clientWebsite': clientWebsite,
     'industry': industry,
+    'senderCompany': senderCompany,
+    'senderName': senderName,
+    'senderEmail': senderEmail,
+    'senderPhone': senderPhone,
     'projectTitle': projectTitle,
     'projectType': projectType,
     'projectDescription': projectDescription,
@@ -383,6 +478,9 @@ class ClientProfileModel {
         ? Timestamp.fromDate(createdAt!)
         : FieldValue.serverTimestamp(),
     'updatedAt': Timestamp.fromDate(updatedAt ?? DateTime.now()),
+    'senderTaxId': senderTaxId,
+    'senderRegNumber': senderRegNumber,
+    'clientTaxId': clientTaxId,
   };
 
   factory ClientProfileModel.fromJson(String id, Map<String, dynamic> json) {
@@ -394,6 +492,10 @@ class ClientProfileModel {
       clientPhone: json['clientPhone'],
       clientWebsite: json['clientWebsite'],
       industry: json['industry'],
+      senderCompany: json['senderCompany'],
+      senderName: json['senderName'],
+      senderEmail: json['senderEmail'],
+      senderPhone: json['senderPhone'],
       projectTitle: json['projectTitle'] ?? '',
       projectType: json['projectType'] ?? 'general',
       projectDescription: json['projectDescription'],
@@ -428,6 +530,9 @@ class ClientProfileModel {
           : const TypeSpecificFields(),
       createdAt: (json['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (json['updatedAt'] as Timestamp?)?.toDate(),
+      senderTaxId: json['senderTaxId'],
+      senderRegNumber: json['senderRegNumber'],
+      clientTaxId: json['clientTaxId'],
     );
   }
 
@@ -439,6 +544,10 @@ class ClientProfileModel {
     String? clientPhone,
     String? clientWebsite,
     String? industry,
+    String? senderCompany,
+    String? senderName,
+    String? senderEmail,
+    String? senderPhone,
     String? projectTitle,
     String? projectType,
     String? projectDescription,
@@ -456,6 +565,9 @@ class ClientProfileModel {
     String? specialRequirements,
     String? customNotes,
     TypeSpecificFields? typeSpecific,
+    String? senderTaxId,
+    String? senderRegNumber,
+    String? clientTaxId,
   }) {
     return ClientProfileModel(
       id: id ?? this.id,
@@ -465,6 +577,10 @@ class ClientProfileModel {
       clientPhone: clientPhone ?? this.clientPhone,
       clientWebsite: clientWebsite ?? this.clientWebsite,
       industry: industry ?? this.industry,
+      senderCompany: senderCompany ?? this.senderCompany,
+      senderName: senderName ?? this.senderName,
+      senderEmail: senderEmail ?? this.senderEmail,
+      senderPhone: senderPhone ?? this.senderPhone,
       projectTitle: projectTitle ?? this.projectTitle,
       projectType: projectType ?? this.projectType,
       projectDescription: projectDescription ?? this.projectDescription,
@@ -484,6 +600,9 @@ class ClientProfileModel {
       typeSpecific: typeSpecific ?? this.typeSpecific,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
+      senderTaxId: senderTaxId ?? this.senderTaxId,
+      senderRegNumber: senderRegNumber ?? this.senderRegNumber,
+      clientTaxId: clientTaxId ?? this.clientTaxId,
     );
   }
 }

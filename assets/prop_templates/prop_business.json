@@ -334,6 +334,7 @@
       "rotation": 0, "flipX": false, "flipY": false,
       "sectionType": "custom"
     },
+
     {
       "type": "textSection",
       "title": "Terms",

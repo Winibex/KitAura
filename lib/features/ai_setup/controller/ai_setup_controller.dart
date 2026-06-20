@@ -177,6 +177,7 @@ class AiSetupController extends StateNotifier<AiSetupState> {
 
   void updatePersonalInfo({
     String? fullName,
+    String? companyName,
     String? email,
     String? phone,
     String? location,
@@ -191,6 +192,7 @@ class AiSetupController extends StateNotifier<AiSetupState> {
     state = state.copyWith(
       profile: state.profile.copyWith(
         fullName: fullName,
+        companyName: companyName,
         email: email,
         phone: phone,
         location: location,

@@ -528,6 +528,7 @@ class AiProfileModel {
   final String name;
   final bool isDefault;
   final String fullName;
+  final String companyName;
   final String email;
   final String phone;
   final String location;
@@ -587,6 +588,7 @@ class AiProfileModel {
     this.name = 'Default Profile',
     this.isDefault = false,
     this.fullName = '',
+    this.companyName = '',
     this.email = '',
     this.phone = '',
     this.location = '',
@@ -620,6 +622,7 @@ class AiProfileModel {
     'name': name,
     'isDefault': isDefault,
     'fullName': fullName,
+    'companyName': companyName,
     'email': email,
     'phone': phone,
     'location': location,
@@ -663,6 +666,7 @@ class AiProfileModel {
       name: json['name'] ?? 'Default Profile',
       isDefault: json['isDefault'] ?? true,
       fullName: json['fullName'] ?? '',
+      companyName: json['companyName'] ?? '',
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
       location: json['location'] ?? '',
@@ -715,6 +719,7 @@ class AiProfileModel {
     String? name,
     bool? isDefault,
     String? fullName,
+    String? companyName,
     String? email,
     String? phone,
     String? location,
@@ -746,6 +751,7 @@ class AiProfileModel {
       name: name ?? this.name,
       isDefault: isDefault ?? this.isDefault,
       fullName: fullName ?? this.fullName,
+      companyName: companyName ?? this.companyName,
       email: email ?? this.email,
       phone: phone ?? this.phone,
       location: location ?? this.location,

@@ -22,6 +22,8 @@ class ReflowEngine {
   static const double rowGap = 22; // between side-by-side rows
   static const double minSplitText = 30; // ~2 lines; fill pages tighter
 
+  static const double beforeHeadingGap = 18; // extra space ABOVE a heading row
+
   static void arrange(List<CanvasItem> items, double pageH) {
     if (items.isEmpty) return;
 
@@ -48,6 +50,11 @@ class ReflowEngine {
     // which own page 1 entirely.
     final topBand = items.where((i) => i.role == 'top_band').toSet();
 
+    // Pinned items: anchor on every body page (sidebars, stripes, watermarks).
+    // The engine excludes them from flow; canvas_controller clones them
+    // per-page after reflow finishes.
+    final pinned = items.where((i) => i.role == 'pinned').toSet();
+
     // Underlines are positioned relative to their heading, not flowed alone.
     final underlines = <String, CanvasItem>{}; // group -> underline
     for (final i in items) {
@@ -61,6 +68,7 @@ class ReflowEngine {
           (i) =>
       !heroes.contains(i) &&
           !topBand.contains(i) &&
+          !pinned.contains(i) &&
           i.role != 'underline' &&
           (i.isText || i.isTable),
     )
@@ -137,6 +145,17 @@ class ReflowEngine {
         final pageBottomLimit = pageOfTop * pageH + usableBottom;
         if (blockBottom > pageBottomLimit) {
           cursor = (pageOfTop + 1) * pageH + topMargin;
+        }
+      }
+
+      // Section headings get extra breathing room above (visual hierarchy).
+      // Only adds the gap if we're not already at the top of a page.
+      if (heading != null) {
+        final pageOfCursor = (cursor / pageH).floor();
+        final pageTop = pageOfCursor * pageH + topMargin;
+        final atPageTop = (cursor - pageTop).abs() < 1;
+        if (!atPageTop) {
+          cursor += beforeHeadingGap;
         }
       }
 
@@ -268,7 +287,7 @@ class ReflowEngine {
           if (count >= remaining) {
             final h = acc + AutoHeight.textVPad;
             place(start, paras.length, h, isFirst: first);
-            cursor += h + sectionGap;
+            cursor += h + sectionGap;   // ← adds sectionGap after the body
             start = paras.length;
             first = false;
           } else if (count >= 1 && (!first || acc >= minSplitText)) {

@@ -46,6 +46,7 @@ class AiSetupPanel extends ConsumerStatefulWidget {
 class _AiSetupPanelState extends ConsumerState<AiSetupPanel> {
   // Step 1 controllers
   final _nameCtrl = TextEditingController();
+  final _companyCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _locationCtrl = TextEditingController();
@@ -97,6 +98,7 @@ class _AiSetupPanelState extends ConsumerState<AiSetupPanel> {
   void _syncControllersFromProfile() {
     final p = ref.read(aiSetupControllerProvider).profile;
     _nameCtrl.text = p.fullName;
+    _companyCtrl.text = p.companyName;
     _emailCtrl.text = p.email;
     _phoneCtrl.text = p.phone;
     _locationCtrl.text = p.location;
@@ -121,6 +123,7 @@ class _AiSetupPanelState extends ConsumerState<AiSetupPanel> {
     final ctrl = ref.read(aiSetupControllerProvider.notifier);
     ctrl.updatePersonalInfo(
       fullName: _nameCtrl.text.trim(),
+      companyName: _companyCtrl.text.trim(),
       email: _emailCtrl.text.trim(),
       phone: _phoneCtrl.text.trim(),
       location: _locationCtrl.text.trim(),
@@ -301,6 +304,7 @@ class _AiSetupPanelState extends ConsumerState<AiSetupPanel> {
   void dispose() {
     for (final c in [
       _nameCtrl,
+      _companyCtrl,
       _emailCtrl,
       _phoneCtrl,
       _locationCtrl,
@@ -510,6 +514,7 @@ class _AiSetupPanelState extends ConsumerState<AiSetupPanel> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildField('Full Name', _nameCtrl, 'John Doe', true),
+        _buildField('Company Name', _companyCtrl, 'Acme Corporation', false),
         _buildField('Email', _emailCtrl, 'john@example.com', true),
         _buildField('Phone', _phoneCtrl, '+1 234 567 8900', false),
         _buildField('Location', _locationCtrl, 'New York, USA', false),

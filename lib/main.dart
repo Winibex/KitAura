@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kitaura/shared/services/connectivity_service.dart';
 import 'app.dart';
@@ -13,6 +14,7 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   ConnectivityService.initialize();
+  debugPaintSizeEnabled = false;
   runApp(
     const ProviderScope(
       child: KitAuraApp(),

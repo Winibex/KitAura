@@ -762,9 +762,21 @@ class ClaudeController extends StateNotifier<ClaudeState> {
       List<CanvasItem> items, {
         required ClientProfileModel client,
         required AiProfileModel profile,
-      }) {
+      })
+  {
+    // Sender company: client snapshot first, then profile, then generic.
+    final senderCompany = (client.senderCompany ?? '').isNotEmpty
+        ? client.senderCompany!
+        : (profile.companyName.isNotEmpty ? profile.companyName : 'Your Company');
+    final senderName = (client.senderName ?? '').isNotEmpty
+        ? client.senderName! : (profile.fullName.isNotEmpty ? profile.fullName : 'Your Name');
+    final senderEmail = (client.senderEmail ?? '').isNotEmpty
+        ? client.senderEmail! : profile.email;
+    final senderPhone = (client.senderPhone ?? '').isNotEmpty
+        ? client.senderPhone! : profile.phone;
+
     for (final item in items) {
-      final isCover = item.role == 'hero' || item.role == 'top_band';
+      final isCover = item.role == 'hero' || item.role == 'top_band' || item.role == 'pinned';
       if (!isCover || !item.isText || item.controller == null) {
         continue;
       }
@@ -835,17 +847,29 @@ class ClaudeController extends StateNotifier<ClaudeState> {
           values = ['Proposal for $clientName  |  ${_todayLong()}'];
           break;
         case 'title':
-        // Executive template: lines 0-2 stay as template ("EXECUTIVE" / "PROPOSAL" / blank).
-        // Line 3 is the tagline — fill with project title.
-          final projectName = client.projectTitle.isNotEmpty
-              ? client.projectTitle
-              : 'Project Name';
-          values = [
-            _keepLine0,
-            _keepLine0,
-            _keepLine0,
-            'Strategic Partnership for $projectName',
-          ];
+        // Executive variant: 4 lines (EXECUTIVE / PROPOSAL / blank / tagline).
+        //   Keep first 3, fill last with project tagline.
+        // Creative variant: 2 lines (CREATIVE / PROPOSAL), both decorative.
+        //   Leave the whole item alone.
+          final lineCountCheck = item.controller!.document
+              .toDelta()
+              .toList()
+              .map((op) => (op.data is String ? op.data as String : '').split('\n').length - 1)
+              .fold<int>(0, (a, b) => a + b);
+          if (lineCountCheck >= 4) {
+            // Executive
+            final projectName = client.projectTitle.isNotEmpty
+                ? client.projectTitle
+                : 'Project Name';
+            values = [
+              _keepLine0,
+              _keepLine0,
+              _keepLine0,
+              'Strategic Partnership for $projectName',
+            ];
+          } else {
+            continue; // Creative title — leave fully static
+          }
           break;
 
         case 'client':
@@ -861,10 +885,156 @@ class ClaudeController extends StateNotifier<ClaudeState> {
           ];
           break;
       // 'company' and 'confidential' intentionally NOT matched — they stay static.
+
+        case 'agency name':
+        // Creative template: small "YOUR AGENCY" label on the cover.
+        // Use the freelance Header fallback: profile.industry as a generic agency-style label.
+          values = [
+            (profile.industry).isNotEmpty
+                ? profile.industry.toUpperCase()
+                : 'YOUR AGENCY',
+          ];
+          break;
+
+        case 'subtitle':
+        // Creative: line 0 = "A bold approach to {projectName}", line 1 = "Prepared for {client}  |  {date}"
+          final projectName = client.projectTitle.isNotEmpty
+              ? client.projectTitle
+              : 'Project Name';
+          final clientName = client.clientName.isNotEmpty
+              ? client.clientName
+              : 'Client Name';
+          values = [
+            'A bold approach to $projectName',
+            'Prepared for $clientName  |  ${_todayLong()}',
+          ];
+          break;
+
+        case 'contact cover':
+        // Creative cover bottom: line 0 = name (bold), line 1 = "Title  |  email  |  phone"
+          values = [
+            profile.fullName.isNotEmpty ? profile.fullName : 'Your Name',
+            _joinPipe([
+              (profile.jobTitle ?? '').isNotEmpty
+                  ? profile.jobTitle!
+                  : profile.industry,
+              profile.email,
+              profile.phone,
+            ]),
+          ];
+          break;
+
+      // 'title' here is the cover "CREATIVE / PROPOSAL" — stays static.
+      // The executive 'title' case I added before is more specific; for creative,
+      // we DON'T want to fill anything (no tagline to swap). Falls through to default.
+
+        case 'main title':
+        // Sales top_band: line 0 = "Sales Proposal" (keep), line 1 = "Prepared for {company}", line 2 = date
+          values = [
+            _keepLine0,
+            'Prepared for ${(client.clientCompany ?? '').isNotEmpty ? client.clientCompany! : 'Client Company'}',
+            _todayLong(),
+          ];
+          break;
+
+        case 'sidebar company':
+        // Two-line logo: line 0 = first word, line 1 = rest. Use profile.industry or company-ish label.
+        // Keep it simple: keep both lines static unless you store a company name on the profile.
+          continue; // leave static (YOUR / COMPANY)
+
+        case 'sidebar contact':
+        // CONTACT label (keep) + name + title + email + phone
+          values = [
+            _keepLine0,
+            profile.fullName.isNotEmpty ? profile.fullName : 'Your Name',
+            (profile.jobTitle ?? '').isNotEmpty ? profile.jobTitle! : 'Sales Director',
+            profile.email.isNotEmpty ? profile.email : 'your@email.com',
+            profile.phone.isNotEmpty ? profile.phone : '+1 234 567 890',
+          ];
+          break;
+      // ── prop_project header (top_band) ──────────────────────────
+        case 'company name':       // prop_project top
+        case 'provider company':   // prop_service top
+          values = [senderCompany];
+          break;
+
+        case 'project title':
+        // line 0 = "Project Proposal" label (keep), line 1 = project name
+          values = [
+            _keepLine0,
+            client.projectTitle.isNotEmpty
+                ? client.projectTitle
+                : 'Project Name',
+          ];
+          break;
+        case 'meta info':
+        // line 0 = "Prepared for:" (keep), line 1 = client name,
+        // line 2 = client company
+          values = [
+            _keepLine0,
+            client.clientName.isNotEmpty ? client.clientName : 'Client Name',
+            (client.clientCompany ?? '').isNotEmpty
+                ? client.clientCompany!
+                : 'Client Company',
+          ];
+          break;
+        case 'meta date':
+        // line 0 = "Date:" (keep), line 1 = today, line 2 = version (keep)
+          values = [
+            _keepLine0,
+            _todayLong(),
+            _keepLine0,
+          ];
+          break;
+        case 'parties':            // prop_service: SERVICE PROVIDER block
+          values = [
+            _keepLine0,
+            senderCompany,
+            (profile.location.isNotEmpty ? profile.location : 'Address Line 1'),
+            senderEmail.isNotEmpty ? senderEmail : 'contact@company.com',
+          ];
+          break;
+        case 'service client':     // prop_service: CLIENT block
+          values = [
+            _keepLine0,
+            (client.clientCompany ?? '').isNotEmpty ? client.clientCompany! : 'Client Company',
+            client.clientName.isNotEmpty ? client.clientName : 'Client Name',
+            (client.clientEmail ?? '').isNotEmpty ? client.clientEmail! : 'client@company.com',
+          ];
+          break;
+        case 'agreement date':     // prop_service: effective date line
+          values = ['Effective Date: ${_todayLong()}  |  Contract Period: 12 months  |  Auto-renewal: Yes'];
+          break;
+        case 'company header':     // prop_product top — your company + tagline
+          values = [
+            senderCompany,
+            _joinPipe([
+              'Product Supplier',
+              (profile.website ?? '').isNotEmpty ? profile.website! : 'www.yourcompany.com',
+            ]),
+          ];
+          break;
+        case 'client details':     // prop_product: BILL TO block
+          values = [
+            _keepLine0,
+            client.clientName.isNotEmpty ? client.clientName : 'Client Name',
+            (client.clientCompany ?? '').isNotEmpty ? client.clientCompany! : 'Client Company',
+            _keepLine0,  // address line — no client address stored, keep placeholder
+            (client.clientEmail ?? '').isNotEmpty ? client.clientEmail! : 'client@company.com',
+          ];
+          break;
+        case 'quote details':      // prop_product: QUOTE DETAILS block
+          values = [
+            _keepLine0,                          // "QUOTE DETAILS" label
+            'Date: ${_todayLong()}',
+            _keepLine0,                          // Valid Until — user edits
+            _keepLine0,                          // Payment — user edits
+            _keepLine0,                          // Delivery — user edits
+          ];
+          break;
         default:
           continue; // unknown hero slot — leave as-is
       }
-
       _applyCoverValues(item.controller!, values);
     }
   }
@@ -953,6 +1123,34 @@ class ClaudeController extends StateNotifier<ClaudeState> {
         name = client.clientName.isNotEmpty ? client.clientName : 'Client Name';
       } else if (plain.contains('submitted')) {
         name = profile.fullName.isNotEmpty ? profile.fullName : 'Your Name';
+      } else if (plain.contains('@') || plain.contains('.com')) {
+        // Creative "Lets Talk" footer — single contact line, no name swap, just rewrite from profile.
+        final contact = _joinPipe([
+          profile.email,
+          profile.phone,
+          (profile.website ?? '').isNotEmpty ? profile.website : null,
+        ]);
+        if (contact.isNotEmpty) {
+          // Rewrite line 0 (the contact line) directly, preserving its style.
+          final oldOps = item.controller!.document.toDelta().toJson();
+          Map<String, dynamic> firstAttrs = {};
+          for (final op in oldOps) {
+            final attrs = (op['attributes'] as Map?);
+            if (attrs != null && attrs.isNotEmpty) {
+              firstAttrs = Map<String, dynamic>.from(attrs);
+              break;
+            }
+          }
+          final newOps = <Map<String, dynamic>>[];
+          newOps.add(firstAttrs.isEmpty
+              ? {'insert': contact}
+              : {'insert': contact, 'attributes': firstAttrs});
+          newOps.add({'insert': '\n'});
+          item.controller!.updateSelection(
+              const TextSelection.collapsed(offset: 0), ChangeSource.local);
+          item.controller!.document = Document.fromJson(newOps);
+        }
+        continue; // skip the rest of the signature loop (no name/date line here)
       } else {
         continue;
       }
@@ -983,14 +1181,30 @@ class ClaudeController extends StateNotifier<ClaudeState> {
       }
       if (curText.isNotEmpty) { lineTexts.add(curText); lineAttrs.add(curAttrs); }
 
-      // Find the "... | Date" line and replace the name part.
+      // Rebuild the "Name | Title | Date" line piece by piece.
+      //  • piece 0        → the real name (computed above)
+      //  • "Title" piece  → job title (sender only; dropped if we have none)
+      //  • "Date"  piece  → today's date
+      //  • anything else  → kept as-is
+      final isAccepted = plain.contains('accepted');
+      final titleVal = isAccepted ? '' : (profile.jobTitle ?? '');
+      final dateVal = _todayLong();
       for (int i = 0; i < lineTexts.length; i++) {
-        if (lineTexts[i].contains('|')) {
-          final pipeIdx = lineTexts[i].indexOf('|');
-          final after = lineTexts[i].substring(pipeIdx); // "|  Date"
-          lineTexts[i] = '$name  $after';
-          break;
+        if (!lineTexts[i].contains('|')) continue;
+        final segs = lineTexts[i].split('|').map((s) => s.trim()).toList();
+        final out = <String>[name];
+        for (int j = 1; j < segs.length; j++) {
+          final low = segs[j].toLowerCase();
+          if (low == 'title') {
+            if (titleVal.trim().isNotEmpty) out.add(titleVal.trim());
+          } else if (low == 'date') {
+            if (dateVal.trim().isNotEmpty) out.add(dateVal.trim());
+          } else {
+            out.add(segs[j]);
+          }
         }
+        lineTexts[i] = out.join('  |  ');
+        break;
       }
 
       final ops = <Map<String, dynamic>>[];

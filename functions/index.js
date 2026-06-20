@@ -43,10 +43,11 @@ const MODEL_HAIKU = "claude-haiku-4-5-20251001";
 // HELPERS
 // ════════════════════════════════════════════════════════════════════════
 
-async function callClaude({ model, system, userContent, maxTokens, apiKey }) {
+async function callClaude({ model, system, userContent, messages, maxTokens, apiKey }) {
+  const msgs = messages || [{ role: "user", content: userContent }];
   const res = await axios.post(
     ANTHROPIC_URL,
-    { model, max_tokens: maxTokens, system, messages: [{ role: "user", content: userContent }] },
+    { model, max_tokens: maxTokens, system, messages: msgs },
     {
       headers: {
         "content-type": "application/json",
@@ -359,14 +360,14 @@ RULES:
         - Each entry "lines" render as normal body text under that label (one line each).
       So:
         - PROSE section (executive summary, problem, overview, about) = ONE entry, title "", lines = 1-2 short paragraphs.
-        - LABELLED section (terms, phased solution) = MANY entries, each title = the bold label, lines = the short body. This is how you make bold labels. Do NOT write "**label:**" markdown inside a line; put the label in "title".
+        - LABELLED section (a phased solution, or clauses when SHAPE=clauses) = MANY entries, each title = the bold label, lines = the short body. This is how you make bold labels. Only do this when the section's SHAPE is phases or clauses. Do NOT write "**label:**" markdown inside a line; put the label in "title".
         - Pure BULLET list = ONE entry, title "", each bullet its own line starting with "• ".
 
       SHAPE GUIDE — produce exactly the structure for each section's SHAPE:
         - SHAPE=prose      → ONE entry, title "", lines = 1-2 short paragraphs.
         - SHAPE=phases     → MANY entries, each title = phase label (e.g. "Phase 1: Discovery & Planning"), lines = ONE short sentence. 3-5 phases max.
         - SHAPE=clauses    → MANY entries, each title = clause label (e.g. "Payment Schedule", "Scope Changes"), lines = ONE concise sentence. 4-7 clauses max.
-        - SHAPE=bullets    → ONE entry, title "", each line starts with "• ".
+        - SHAPE=bullets    → EXACTLY ONE entry with title "" (empty). Every line is one flat bullet starting with "• ". Do NOT split into multiple entries. Do NOT put bold labels in "title". Do NOT create sub-headings or a label+body (clause) structure even if the section is called "Terms" or "Conditions" — keep it a single flat bulleted list.
         - SHAPE=numbered   → ONE entry, title "", each line starts with "1. " then "2. " etc.
         - SHAPE=oneLiner   → ONE entry, title "", lines = ONE short sentence. Do NOT add multiple entries or clauses.
         - SHAPE=titleLine  → ONE entry, title = the project title (bold), lines = ONE short subtitle/tagline (one sentence).
@@ -398,7 +399,121 @@ RULES: No markdown/code fences. Never invent facts. Tone: ${tone}. Level: ${expe
       cache_control: { type: "ephemeral" },
     }];
 
-  } else {
+  } else if (tool === "clientExtract") {
+      // ── CLIENT PROFILE EXTRACTION (free-text brief → structured model) ──
+      sys = [{
+        type: "text",
+        text: `You read a free-text project/sales brief and extract a structured client profile for a proposal builder. Output ONLY a JSON object (no markdown, no code fences) with EXACTLY these keys:
+  {
+    "clientName": "string",
+    "clientCompany": "string|null",
+    "clientEmail": "string|null",
+    "clientPhone": "string|null",
+    "clientWebsite": "string|null",
+    "industry": "string|null",
+    "projectTitle": "string",
+    "projectType": "development|design|marketing|consulting|product|service|general",
+    "projectDescription": "string|null",
+    "problemStatement": "string|null",
+    "projectGoals": ["string"],
+    "deliverables": [{"name":"string","description":"string|null"}],
+    "scopeNotes": "string|null",
+    "startDate": "string|null",
+    "endDate": "string|null",
+    "milestones": [{"title":"string","date":"string|null","description":"string|null"}],
+    "budgetRange": "string|null",
+    "pricingModel": "fixed|hourly|retainer|milestone|per-unit|null",
+    "lineItems": [{"item":"string","description":"string|null","amount":number|null}],
+    "competitorInfo": "string|null",
+    "specialRequirements": "string|null",
+    "customNotes": "string|null",
+    "typeSpecific": {
+      "techStack": ["string"],
+      "platformTargets": "string|null",
+      "integrationNeeds": "string|null",
+      "sprintCount": number|null,
+      "brandGuidelines": boolean|null,
+      "designRevisions": number|null,
+      "creativeBrief": "string|null",
+      "channels": ["string"],
+      "targetAudience": "string|null",
+      "campaignGoals": "string|null",
+      "kpiMetrics": ["string"],
+      "warrantyTerms": "string|null",
+      "shippingTerms": "string|null",
+      "paymentTerms": "string|null",
+      "productItems": [{"name":"string","sku":"string|null","quantity":number,"unitPrice":number}],
+      "taxPercent": number|null,
+      "shippingCost": number|null
+    }
+  }
+  RULES:
+  - Infer "projectType" from the brief. If it's selling physical goods (e.g. shoes, equipment), use "product" and fill typeSpecific.productItems (name/quantity/unitPrice) — do NOT use deliverables/milestones for products.
+  - If software/app/web build → "development" (fill techStack/platformTargets). Branding/graphics → "design". Campaigns/SEO/ads → "marketing". Advisory → "consulting". Ongoing service → "service". Otherwise "general".
+  - Only fill what the brief actually states or strongly implies. Leave everything else null or empty arrays. NEVER invent client names, emails, phone numbers, or amounts that aren't given.
+  - projectGoals/deliverables/milestones: extract only if the brief mentions them.
+  - Keep strings concise.
+  - Output ONLY the JSON object.`,
+        cache_control: { type: "ephemeral" },
+      }];
+
+    } else if (tool === "clientChat") {
+      // ── CLIENT INTERVIEW (multi-turn → asks questions, returns envelope) ──
+      sys = [{
+        type: "text",
+        text: `You interview a freelancer/agency to build a client profile for a proposal, asking ONLY for information that maps to the allowed fields below. You are strict: never ask for anything outside these fields, never invent field keys.
+
+ALLOWED FIELD KEYS (use these exact keys):
+clientName, clientCompany, clientEmail, clientPhone, clientWebsite, industry,
+clientTaxId, projectTitle, projectType, projectDescription, problemStatement,
+projectGoals, deliverables, scopeNotes, startDate, endDate, milestones,
+budgetRange, pricingModel, lineItems, competitorInfo, specialRequirements,
+customNotes, techStack, platformTargets, integrationNeeds, sprintCount,
+brandGuidelines, designRevisions, creativeBrief, channels, targetAudience,
+campaignGoals, kpiMetrics, warrantyTerms, shippingTerms, paymentTerms,
+productItems, taxPercent, shippingCost
+
+projectType is one of: development, design, marketing, consulting, product, service, general.
+
+FLOW:
+1. Read everything the user has said so far. Infer projectType early.
+2. Ask ONLY for fields that the detected type needs and that are still missing or unclear:
+   - product (selling physical goods): productItems (name/qty/unitPrice), taxPercent, shippingCost, warrantyTerms, shippingTerms, endDate (delivery/lead time), client + tax fields. DO NOT ask for problemStatement, projectGoals, milestones, deliverables.
+   - development: techStack, platformTargets, integrationNeeds, deliverables, milestones, budget/pricing, problem/goals.
+   - design: creativeBrief, brandGuidelines, designRevisions, deliverables, milestones, pricing.
+   - marketing: channels, targetAudience, campaignGoals, kpiMetrics, deliverables, pricing.
+   - consulting: problemStatement, projectGoals, deliverables, milestones, pricing.
+   - service: deliverables, paymentTerms, pricing, milestones.
+3. Group related fields into ONE question (e.g. email + phone together). Ask at most ~4 fields per turn.
+4. When you have enough to write a solid proposal, output mode "complete".
+
+OUTPUT — return ONLY a JSON object (no markdown, no code fences), one of:
+
+A) Ask for info:
+{ "mode":"question",
+  "intro":"short sentence introducing what you need",
+  "fields":[
+    {"key":"<allowed key>","label":"Human label","type":"text","hint":"optional hint"},
+    {"key":"pricingModel","label":"Pricing Model","type":"choice","options":["Fixed","Hourly","Retainer","Milestone"],"allowCustom":true}
+  ]
+}
+- "type" is "text" or "choice". For "choice", include "options" and "allowCustom" (true/false).
+- For list fields (productItems, deliverables, milestones, lineItems, projectGoals, techStack, channels, kpiMetrics) use type "text" and tell the user in the label/hint to separate entries with commas or new lines.
+
+B) Finished:
+{ "mode":"complete",
+  "profile": { ...a full ClientProfileModel JSON using the same keys/shape as the extract format, including a "typeSpecific" object... } }
+
+RULES:
+- Never ask for a field not in the allowed list.
+- Never fabricate values the user didn't give. Unknown → leave null/empty in the final profile.
+- Keep labels and intros short and friendly.
+- Prefer fewer, well-grouped turns. Don't drag the interview out.
+- Tone: ${tone}.`,
+        cache_control: { type: "ephemeral" },
+      }];
+
+    } else {
     // ── CV: ORIGINAL PROMPT (unchanged) ──────────────────────────
     sys = [{
       type: "text",
@@ -426,15 +541,38 @@ RULES: No markdown/code fences. Never invent facts. Tone: ${tone}. Level: ${expe
       if (jobDetails) userContent += `\n\nClient Brief:\n${JSON.stringify(jobDetails, null, 2)}`;
       if (cvContent) userContent += `\n\nSender's CV Content:\n${cvContent}`;
     }
+    if (tool === "clientExtract") {
+      userContent = `Brief:\n${req.data.briefText || ""}\n\nExtract the client profile now. JSON only.`;
+    }
 
-  userContent += "\n\nWrite now. JSON only.";
+  // ── Multi-turn transcript for clientChat ──────────────────────────
+  // The frontend holds the conversation in memory and resends it each turn
+  // (Claude is stateless — this is how "memory" works). We cap length and
+  // pass it as the messages array; userContent is ignored for this tool.
+  let chatMessages = null;
+  if (tool === "clientChat") {
+    const turns = Array.isArray(req.data.messages) ? req.data.messages : [];
+    chatMessages = turns
+      .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
+      .slice(-20) // safety cap on transcript length
+      .map((m) => ({ role: m.role, content: m.content }));
+    if (chatMessages.length === 0) {
+      chatMessages = [{ role: "user", content: req.data.briefText || "Let's start." }];
+    }
+  }
 
-  const maxTok = (tool === "proposal" && sectionType === "all") ? 8192 : 2048;
+  if (tool !== "clientExtract" && tool !== "clientChat") {
+      userContent += "\n\nWrite now. JSON only.";
+    }
+
+  const maxTok = (tool === "proposal" && sectionType === "all") ? 8192
+      : (tool === "clientExtract" || tool === "clientChat") ? 4096 : 2048;
 
   let text, usage;
   try {
       const r = await callClaude({ model: MODEL_SONNET, system: sys,
-        userContent, maxTokens: maxTok, apiKey: ANTHROPIC_KEY.value() });
+        userContent, messages: chatMessages, maxTokens: maxTok,
+        apiKey: ANTHROPIC_KEY.value() });
       text = r.text; usage = r.usage;
     } catch (err) {
     console.error("aiFill API error:", err?.response?.data || err.message);
@@ -461,9 +599,10 @@ RULES: No markdown/code fences. Never invent facts. Tone: ${tone}. Level: ${expe
 
   // For CL "all" mode, validate we got section keys
   if (((tool === "coverLetter" || tool === "linkedin") && sectionType === "all") ||
-        (tool === "proposal" && sectionType === "all")) {
-      if (typeof content !== "object") throw new HttpsError("internal", "Unexpected AI output.");
-    } else {
+          (tool === "proposal" && sectionType === "all") ||
+          (tool === "clientExtract") || (tool === "clientChat")) {
+        if (typeof content !== "object") throw new HttpsError("internal", "Unexpected AI output.");
+      } else {
       if (typeof content !== "object" || !Array.isArray(content.entries)) {
         throw new HttpsError("internal", "Unexpected AI output.");
       }
@@ -908,8 +1047,6 @@ exports.updateSpellcheckResult = onCall({ region: "us-central1", timeoutSeconds:
 // ════════════════════════════════════════════════════════════════════════
 // 9. ACTIVATE TRIAL — 7-day free trial, no credit card
 // ════════════════════════════════════════════════════════════════════════
-//
-// APPEND THIS TO functions/index.js
 //
 // Checks: user hasn't already used trial (trialUsed flag on subscription
 // AND hasUsedTrial on user profile — double check prevents abuse).

@@ -149,6 +149,66 @@ class ClaudeService {
     }
   }
 
+  /// Client extraction — turns a free-text brief into a structured
+  /// ClientProfileModel JSON via the aiFill Cloud Function (tool: clientExtract).
+  /// Tracked + paywalled server-side like any other aiFill call.
+  static Future<Map<String, dynamic>?> extractClient(String briefText) async {
+    debugPrint('🤖 [ClaudeService] extractClient(${briefText.length} chars)');
+    try {
+      final result = await _fn.httpsCallable('aiFill',
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 120)),
+      ).call<Map<String, dynamic>>({
+        'tool': 'clientExtract',
+        'sectionType': 'all',
+        'tone': 'professional',
+        'experienceLevel': 'mid',
+        'profile': <String, dynamic>{},
+        'briefText': briefText,
+      });
+      final content = result.data['content'];
+      if (content == null) return null;
+      debugPrint('🤖 [ClaudeService] extractClient OK');
+      return Map<String, dynamic>.from(content as Map);
+    } on FirebaseFunctionsException catch (e) {
+      debugPrint('🤖 [ClaudeService] extractClient FAILED: ${e.code} ${e.message}');
+      throw _mapError(e);
+    } catch (e) {
+      debugPrint('🤖 [ClaudeService] extractClient unexpected: $e');
+      throw 'AI fill failed. Please try again.';
+    }
+  }
+
+  /// Multi-turn client interview. Sends the full transcript, returns the AI's
+  /// envelope ({mode:question,...} or {mode:complete, profile:{...}}).
+  /// Transcript is held in memory by the caller — never stored server-side
+  /// beyond token tracking.
+  static Future<Map<String, dynamic>?> clientChat(
+      List<Map<String, String>> messages) async
+  {
+    debugPrint('🤖 [ClaudeService] clientChat(${messages.length} turns)');
+    try {
+      final result = await _fn.httpsCallable('aiFill',
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 120)),
+      ).call<Map<String, dynamic>>({
+        'tool': 'clientChat',
+        'sectionType': 'all',
+        'tone': 'professional',
+        'experienceLevel': 'mid',
+        'profile': <String, dynamic>{},
+        'messages': messages,
+      });
+      final content = result.data['content'];
+      if (content == null) return null;
+      return Map<String, dynamic>.from(content as Map);
+    } on FirebaseFunctionsException catch (e) {
+      debugPrint('🤖 [ClaudeService] clientChat FAILED: ${e.code} ${e.message}');
+      throw _mapError(e);
+    } catch (e) {
+      debugPrint('🤖 [ClaudeService] clientChat unexpected: $e');
+      throw 'AI chat failed. Please try again.';
+    }
+  }
+
   /// Spellcheck — returns corrections + activityId for updating accepted/dismissed.
   static Future<SpellcheckResult> spellcheckCV(
       Map<String, String> sections, {

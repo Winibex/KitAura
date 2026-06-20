@@ -10,7 +10,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-
+import '../../../shared/providers/ai_profiles_provider.dart';
 import '../../../core/constants/app_assets.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_fonts.dart';
@@ -1389,6 +1389,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         onContinue: () {
           Navigator.pop(dialogContext);
           _loadAiProfiles();
+          ref.invalidate(aiProfilesProvider);
         },
         onSkip: () => Navigator.pop(dialogContext),
         onClose: () => Navigator.pop(dialogContext),
@@ -1408,6 +1409,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       case 'default':
         await FirebaseService.setDefaultAiProfile(uid, profile.id!);
         await _loadAiProfiles();
+        ref.invalidate(aiProfilesProvider);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('${profile.name} set as default'),
@@ -1420,9 +1422,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         final data = profile.toJson();
         data.remove('id');
         data['name'] = '${profile.name} (Copy)';
-        data['isDefault'] = false;
-        await FirebaseService.createAiProfile(uid, data);
+        data['isDefault'] = false;await FirebaseService.createAiProfile(uid, data);
         await _loadAiProfiles();
+        ref.invalidate(aiProfilesProvider);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Profile duplicated'),
@@ -1491,6 +1493,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       }
                       await _loadAiProfiles();
                     }
+                    ref.invalidate(aiProfilesProvider);
                   },
                   style: ElevatedButton.styleFrom(backgroundColor: AppColors.error,
                       foregroundColor: AppColors.white, elevation: 0,

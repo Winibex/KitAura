@@ -15,6 +15,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:printing/printing.dart';
 import 'package:toastification/toastification.dart';
 import 'package:web/web.dart' as web;
+import 'package:flutter/gestures.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_fonts.dart';
 import '../../../../core/constants/app_routes.dart';
@@ -61,9 +62,10 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
   bool _isEditingTitle = false;
   List<GuideLine> _snapGuides = [];
 
-  final ScrollController _verticalScrollCtrl = ScrollController();
   final TransformationController _zoomCtrl = TransformationController();
   double _currentZoom = 1.0;
+  Offset? _zoomPanelPos; // null = default bottom-right
+  bool _fitted = false;  // hide canvas until first fit completes
   final _titleCtrl = TextEditingController();
   final Map<String, VoidCallback> _focusListeners = {};
   final Map<String, VoidCallback> _docListeners = {};
@@ -89,14 +91,19 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
         _titleCtrl.text = _editor.state.title;
         _wireFocusListeners();
         // Auto-close panels on mobile
+        // Auto-close panels on mobile
         if (_isMobile) {
           _leftPanelOpen = false;
           _rightPanelOpen = false;
-          // Auto-fit canvas to screen width
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) _fitToPage();
-          });
         }
+        // Auto-fit canvas to page 1 on load (all screen sizes)
+        _canvas.goToPage(0);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _fitToPage(0);
+            setState(() => _fitted = true);
+          }
+        });
         setState(() {});
       }
     });
@@ -174,7 +181,6 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
     _canvas.disposeAll();
     _canvas.dispose();
     _editor.dispose();
-    _verticalScrollCtrl.dispose();
     _zoomCtrl.dispose();
     _titleCtrl.dispose();
     super.dispose();
@@ -337,6 +343,14 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
                   )
                       : _buildCanvas(),
                 ),
+                // Pinned page selector — fixed at top, doesn't scroll/zoom
+                if (!s.isTemplateLoading)
+                  Positioned(
+                    top: 8,
+                    left: 0,
+                    right: 0,
+                    child: Center(child: _buildPageControls()),
+                  ),
                 if (_isMobile && (_leftPanelOpen || _rightPanelOpen))
                   Positioned.fill(
                     child: GestureDetector(
@@ -405,43 +419,7 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
                     ),
                   ),
                 // Zoom controls
-                Positioned(
-                  bottom: 16,
-                  right: 16,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: const [
-                        BoxShadow(color: Color(0x1A000000), blurRadius: 8, offset: Offset(0, 2)),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _zoomBtn(LucideIcons.minus, _zoomOut),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: GestureDetector(
-                            onTap: _fitToPage,
-                            child: Text(
-                              '${(_currentZoom * 100).round()}%',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontFamily: AppFonts.poppins,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.prussianBlue,
-                              ),
-                            ),
-                          ),
-                        ),
-                        _zoomBtn(LucideIcons.maximize, () => _fitToPage()),
-                        _zoomBtn(LucideIcons.plus, _zoomIn),
-                      ],
-                    ),
-                  ),
-                ),
+                _buildZoomPanel(),
               ],
             ),
           ),
@@ -480,6 +458,17 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
       showSavedBadge: s.isSaved && !s.isSaving,
       isSaving: s.isSaving,
       actions: [
+        EditorAppBarAction(
+          icon: LucideIcons.alignVerticalSpaceAround,
+          label: 'Auto-arrange',
+          color: AppColors.white,
+          bgColor: AppColors.dustyMauve,
+          onTap: () {
+            _canvas.autoArrange();
+            _editor.markDirty();
+            _wireFocusListeners();
+          },
+        ),
         EditorAppBarAction(
           icon: s.isSaving
               ? LucideIcons.loader
@@ -643,8 +632,8 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
 
   // ─── CANVAS ───────────────────────────────────────────────────────────
 
-  Widget _zoomBtn(IconData icon, VoidCallback onTap) {
-    return GestureDetector(
+  Widget _zoomBtn(IconData icon, VoidCallback onTap, {String? tooltip}) {
+    final btn = GestureDetector(
       onTap: onTap,
       child: Container(
         width: 32, height: 32,
@@ -655,28 +644,139 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
         child: Icon(icon, size: 14, color: AppColors.darkRaspberry),
       ),
     );
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: tooltip != null ? Tooltip(message: tooltip, child: btn) : btn,
+    );
+  }
+
+  Widget _buildZoomPanel() {
+    final dragHandle = GestureDetector(
+      onPanUpdate: (d) {
+        final box = context.findRenderObject() as RenderBox?;
+        if (box == null) return;
+        final cur = _zoomPanelPos ??
+            Offset(box.size.width - 180, box.size.height - 80);
+        setState(() {
+          _zoomPanelPos = Offset(
+            (cur.dx + d.delta.dx).clamp(0, box.size.width - 170),
+            (cur.dy + d.delta.dy).clamp(0, box.size.height - 50),
+          );
+        });
+      },
+      child: MouseRegion(
+        cursor: SystemMouseCursors.move,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Icon(LucideIcons.gripVertical, size: 16,
+              color: AppColors.slateGrey.withValues(alpha: 0.6)),
+        ),
+      ),
+    );
+
+    final panel = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: const [
+          BoxShadow(color: Color(0x1A000000), blurRadius: 8, offset: Offset(0, 2)),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          dragHandle,
+          _zoomBtn(LucideIcons.minus, _zoomOut, tooltip: 'Zoom out'),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Tooltip(
+              message: 'Fit to page',
+              child: GestureDetector(
+                onTap: () => _fitToPage(),
+                child: Text('${(_currentZoom * 100).round()}%',
+                    style: const TextStyle(
+                      fontSize: 11, fontFamily: AppFonts.poppins,
+                      fontWeight: FontWeight.w600, color: AppColors.prussianBlue,
+                    )),
+              ),
+            ),
+          ),
+          _zoomBtn(LucideIcons.scan, () => _fitToPage(), tooltip: 'Fit to screen'),
+          _zoomBtn(LucideIcons.plus, _zoomIn, tooltip: 'Zoom in'),
+        ],
+      ),
+    );
+
+    if (_zoomPanelPos == null) {
+      return Positioned(bottom: 16, right: 16, child: panel);
+    }
+    return Positioned(left: _zoomPanelPos!.dx, top: _zoomPanelPos!.dy, child: panel);
+  }
+
+  /// Keeps the canvas within a margin so panning can't run off into empty space.
+  void _clampPan() {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null) return;
+    final viewport = box.size;
+    final zoom = _zoomCtrl.value.getMaxScaleOnAxis();
+    final contentW = CanvasController.canvasW * zoom;
+    final contentH = (_canvas.totalCanvasHeight +
+        ((_canvas.totalPages - 1) * 24)) *
+        zoom;
+    const margin = 200.0;
+    final m = _zoomCtrl.value.clone();
+    final tx = m.getTranslation().x;
+    final ty = m.getTranslation().y;
+    double clampedX = tx;
+    double clampedY = ty;
+    if (contentW > viewport.width) {
+      clampedX = tx.clamp(viewport.width - contentW - margin, margin);
+    }
+    if (contentH > viewport.height) {
+      clampedY = ty.clamp(viewport.height - contentH - margin, margin);
+    }
+    if (clampedX != tx || clampedY != ty) {
+      m.setTranslationRaw(clampedX, clampedY, 0);
+      _zoomCtrl.value = m;
+    }
   }
 
   Widget _buildCanvas() {
     return Container(
       color: const Color(0xFFE8E0D8),
-      child: InteractiveViewer(
-        transformationController: _zoomCtrl,
-        minScale: 0.3,
-        maxScale: 2.0,
-        constrained: false,
-        panEnabled: true,
-        scaleEnabled: true,
-        boundaryMargin: const EdgeInsets.all(double.infinity),
-        onInteractionUpdate: (details) {
-          setState(() => _currentZoom = _zoomCtrl.value.getMaxScaleOnAxis());
+      child: Listener(
+        onPointerSignal: (event) {
+          if (event is PointerScrollEvent) {
+            final m = _zoomCtrl.value.clone()
+              ..translate(-event.scrollDelta.dx, -event.scrollDelta.dy);
+            _zoomCtrl.value = m;
+            _clampPan();
+          } else if (event is PointerScaleEvent) {
+            final newZoom = (_currentZoom * event.scale).clamp(0.3, 2.0);
+            final m = _zoomCtrl.value.clone()..scale(newZoom / _currentZoom);
+            _zoomCtrl.value = m;
+            setState(() => _currentZoom = newZoom);
+          }
         },
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
+        child: AnimatedOpacity(
+          opacity: _fitted ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 150),
+          child: InteractiveViewer(
+            transformationController: _zoomCtrl,
+            minScale: 0.3,
+            maxScale: 2.0,
+            constrained: false,
+            panEnabled: true,
+            scaleEnabled: false,
+            boundaryMargin: const EdgeInsets.all(double.infinity),
+            onInteractionUpdate: (details) {
+              setState(() => _currentZoom = _zoomCtrl.value.getMaxScaleOnAxis());
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
                 children: [
-                  _buildPageControls(),
-                  const SizedBox(height: 16),
                   SizedBox(
                     width: CanvasController.canvasW,
                     height:
@@ -752,7 +852,9 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
               ),
             ),
           ),
-        );
+        ),
+      ),
+    );
   }
 
   Widget _buildPageBackground(int pageIdx) {
@@ -867,11 +969,6 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
                   onTap: () {
                     _canvas.goToPage(i);
                     _fitToPage(i);
-                    _verticalScrollCtrl.animateTo(
-                      i * (CanvasController.canvasH + 24) + 32,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeOut,
-                    );
                   },
                   child: Container(
                     width: 32,
