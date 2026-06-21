@@ -7,7 +7,7 @@
 //   senderAddress, dateLine, salutation, closing, signature
 //
 // recipientAddress and coverLetterBody are LEFT as template placeholders
-// (user fills recipient manually, AI Fill generates body).
+// (user fills recipient manually, AI Compose generates body).
 //
 // CRITICAL: Newlines (\n) must NEVER carry inline attributes.
 
@@ -45,7 +45,7 @@ class ClSectionAutofill {
       SectionType.closing,
       SectionType.signature,
       // recipientAddress → user fills manually
-      // coverLetterBody → AI Fill generates
+      // coverLetterBody → AI Compose generates
     }.contains(type);
   }
 
@@ -131,7 +131,7 @@ class ClSectionAutofill {
         if (p.fullName.isEmpty) return null;
         return _line(p.fullName, styles.boldAttrs, bold: true);
 
-    // These are NOT autofilled — user/AI fills them
+    // These are NOT autofilled — user/AI Composes them
       case SectionType.recipientAddress:
       case SectionType.coverLetterBody:
         return null;

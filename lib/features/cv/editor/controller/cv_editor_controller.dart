@@ -2,13 +2,15 @@
 //
 // MVC controller for the CV editor screen.
 // Handles: template loading, auto-save, Firestore CRUD, profile autofill,
-// export tracking, title management. View only builds UI.
+// export tracking, title management, AND the active Career Profile selection.
 
 import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../../../../shared/ai/claude_service.dart';
 import '../../../../shared/canvas/engine/canvas_controller.dart';
 import '../../../../shared/models/ai_profile_model.dart';
@@ -25,7 +27,15 @@ class CvEditorState {
   final String title;
   final String? firestoreDocId;
   final String? error;
-  final String? paywallMessage; // Non-null when paywall blocks action
+  final String? paywallMessage;
+
+  /// ID of the Career Profile the user picked for AI Compose on this CV.
+  /// Null = use the default profile (legacy behavior).
+  final String? selectedProfileId;
+
+  /// Display name of the selected profile. Cached so the right panel can
+  /// show it without re-fetching.
+  final String? selectedProfileName;
 
   const CvEditorState({
     this.isTemplateLoading = true,
@@ -36,6 +46,8 @@ class CvEditorState {
     this.firestoreDocId,
     this.error,
     this.paywallMessage,
+    this.selectedProfileId,
+    this.selectedProfileName,
   });
 
   CvEditorState copyWith({
@@ -47,6 +59,9 @@ class CvEditorState {
     String? firestoreDocId,
     String? error,
     String? paywallMessage,
+    String? selectedProfileId,
+    String? selectedProfileName,
+    bool clearProfile = false,
   }) {
     return CvEditorState(
       isTemplateLoading: isTemplateLoading ?? this.isTemplateLoading,
@@ -57,6 +72,12 @@ class CvEditorState {
       firestoreDocId: firestoreDocId ?? this.firestoreDocId,
       error: error,
       paywallMessage: paywallMessage,
+      selectedProfileId: clearProfile
+          ? null
+          : (selectedProfileId ?? this.selectedProfileId),
+      selectedProfileName: clearProfile
+          ? null
+          : (selectedProfileName ?? this.selectedProfileName),
     );
   }
 }
@@ -65,7 +86,6 @@ class CvEditorController extends ChangeNotifier {
   final CanvasController canvas;
   Timer? _autoSaveTimer;
   CvEditorState _state = const CvEditorState();
-
   CvEditorState get state => _state;
 
   set state(CvEditorState newState) {
@@ -77,7 +97,6 @@ class CvEditorController extends ChangeNotifier {
   CvEditorController({required this.canvas});
 
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
-
   bool _disposed = false;
 
   @override
@@ -87,17 +106,15 @@ class CvEditorController extends ChangeNotifier {
     super.dispose();
   }
 
-
   // ─── INITIALIZATION ───────────────────────────────────────────────────
 
-  /// Call once from initState. Resolves docId → template or Firestore doc.
   bool _initialized = false;
+
   Future<void> initialize(String docId) async {
-    if (_initialized) return; // Already loaded — skip
+    if (_initialized) return;
     _initialized = true;
     debugPrint('📝 [CvEditor] Initializing with docId: $docId');
 
-    // Resolve title
     final info = CvTemplateData.getInfo(docId);
     if (docId == 'blank') {
       state = state.copyWith(title: 'Untitled CV');
@@ -107,26 +124,21 @@ class CvEditorController extends ChangeNotifier {
       final json = await CvTemplateData.loadTemplateJson(docId);
       canvas.applyTemplateJson(json);
     } else {
-      // Firestore document — already has user's content, skip autofill
+      // Firestore document — already has user's content
       state = state.copyWith(firestoreDocId: docId);
       await _loadFromFirestore(docId);
-
-      // Preload fonts and finish — NO autofill for existing docs
       await canvas.preloadFonts();
       state = state.copyWith(isTemplateLoading: false);
-      debugPrint('📝 [CvEditor] Initialization complete (existing doc, no autofill)');
+      debugPrint('📝 [CvEditor] Initialization complete (existing doc)');
       return;
     }
 
-    // Autofill only runs for NEW templates (blank or from template picker)
-    await _tryAutofillFromProfile();
-
-    // Preload fonts
+    // Auto-fill is NO LONGER triggered on template open.
+    // Users explicitly choose a Career Profile + click "Just Insert My Data"
+    // or "Generate with AI" in the right panel.
     await canvas.preloadFonts();
-
     state = state.copyWith(isTemplateLoading: false);
     debugPrint('📝 [CvEditor] Initialization complete');
-
     // Auto-save initial state
     _autoSave();
   }
@@ -134,15 +146,20 @@ class CvEditorController extends ChangeNotifier {
   // ─── FIRESTORE LOAD ───────────────────────────────────────────────────
 
   Future<void> _loadFromFirestore(String docId) async {
-    if (_uid == null) { canvas.init(); return; }
-
+    if (_uid == null) {
+      canvas.init();
+      return;
+    }
     try {
       debugPrint('📝 [CvEditor] Loading from Firestore: $docId');
       final doc = await FirebaseService.getCV(_uid!, docId);
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
-        state = state.copyWith(title: data['title'] ?? 'Untitled CV');
-
+        state = state.copyWith(
+          title: data['title'] ?? 'Untitled CV',
+          selectedProfileId: data['selectedProfileId'] as String?,
+          selectedProfileName: data['selectedProfileName'] as String?,
+        );
         final canvasData = <String, dynamic>{
           'canvasBackground': data['canvasBackground'] ?? '#FFFFFF',
           'items': data['items'] ?? [],
@@ -162,14 +179,13 @@ class CvEditorController extends ChangeNotifier {
 
   Future<void> _tryAutofillFromProfile() async {
     if (_uid == null) return;
-
     try {
       final doc = await FirebaseService.getAiProfile(_uid!);
       if (!doc.exists) return;
-
-      final profile = AiProfileModel.fromJson(doc.data() as Map<String, dynamic>);
+      final profile = AiProfileModel.fromJson(
+        doc.data() as Map<String, dynamic>,
+      );
       if (profile.fullName.isEmpty && profile.experiences.isEmpty) return;
-
       final filled = SectionAutofill.fillAll(canvas.items, profile);
       if (filled > 0) {
         debugPrint('📝 [CvEditor] Autofilled $filled sections from profile');
@@ -177,6 +193,31 @@ class CvEditorController extends ChangeNotifier {
     } catch (e) {
       debugPrint('📝 [CvEditor] Autofill failed (non-critical): $e');
     }
+  }
+
+  // ─── CAREER PROFILE SELECTION ─────────────────────────────────────────
+
+  /// Called when the user picks a Career Profile from the right panel
+  /// dropdown. Persists the choice to the CV's Firestore document.
+  void selectCareerProfile({
+    required String profileId,
+    required String profileName,
+  }) {
+    state = state.copyWith(
+      selectedProfileId: profileId,
+      selectedProfileName: profileName,
+    );
+    debugPrint(
+      '📝 [CvEditor] Career Profile selected: $profileName ($profileId)',
+    );
+    markDirty(); // triggers auto-save, which persists the new fields
+  }
+
+  /// Clear the explicitly-chosen profile (reverts to using the default).
+  void clearCareerProfile() {
+    state = state.copyWith(clearProfile: true);
+    debugPrint('📝 [CvEditor] Career Profile cleared — will use default');
+    markDirty();
   }
 
   // ─── TITLE ────────────────────────────────────────────────────────────
@@ -201,18 +242,17 @@ class CvEditorController extends ChangeNotifier {
   Future<void> _autoSave() async {
     if (state.isSaving || state.isTemplateLoading) return;
     if (_uid == null) return;
-
     state = state.copyWith(isSaving: true);
     debugPrint('📝 [CvEditor] Auto-saving...');
-
     try {
       final data = canvas.toFirestoreJson(_uid!, state.title);
       data['title'] = state.title;
-
+      // Persist the Career Profile selection alongside the canvas content.
+      data['selectedProfileId'] = state.selectedProfileId;
+      data['selectedProfileName'] = state.selectedProfileName;
       if (state.firestoreDocId != null) {
         await FirebaseService.updateCV(_uid!, state.firestoreDocId!, data);
       } else {
-        // Paywall check before creating
         final check = await PaywallService.canCreateCV();
         if (!check.allowed) {
           state = state.copyWith(
@@ -225,13 +265,14 @@ class CvEditorController extends ChangeNotifier {
         final docRef = await FirebaseService.createCV(_uid!, data);
         state = state.copyWith(firestoreDocId: docRef.id);
         debugPrint('📝 [CvEditor] Created new CV: ${docRef.id}');
-        ClaudeService.trackDocCreated(tool: 'cv', documentId: docRef.id, documentTitle: state.title);
+        ClaudeService.trackDocCreated(
+          tool: 'cv',
+          documentId: docRef.id,
+          documentTitle: state.title,
+        );
       }
-
       state = state.copyWith(isSaved: true, isSaving: false, error: null);
       debugPrint('📝 [CvEditor] Auto-save complete');
-
-      // If user edited during save, schedule another save
       if (!state.isSaved) {
         _autoSaveTimer = Timer(const Duration(seconds: 2), _autoSave);
       }
@@ -241,21 +282,15 @@ class CvEditorController extends ChangeNotifier {
     }
   }
 
-  /// Manual save (same as auto-save but can be called on demand).
   Future<void> saveNow() async => await _autoSave();
 
   // ─── EXPORT PDF ───────────────────────────────────────────────────────
 
-  /// Tracks the export server-side. Returns true if allowed, false if paywalled.
-  /// The actual PDF generation + download stays in the view (needs UI context).
   Future<bool> trackExport() async {
     if (state.firestoreDocId == null) {
-      // Save first so we have a doc ID
       await _autoSave();
     }
-
     state = state.copyWith(isExporting: true);
-
     try {
       await ClaudeService.trackExport(
         tool: 'cv',
@@ -273,18 +308,19 @@ class CvEditorController extends ChangeNotifier {
       state = state.copyWith(error: 'Export failed: ${e.message}');
       return false;
     } catch (e) {
-      state = state.copyWith(isExporting: false,
-          error: 'Something went wrong. Please check your connection and try again.');
+      state = state.copyWith(
+        isExporting: false,
+        error:
+            'Something went wrong. Please check your connection and try again.',
+      );
       return false;
     }
   }
 
-  /// Clears the paywall message after the view has shown the dialog.
   void clearPaywallMessage() {
     state = state.copyWith(paywallMessage: null);
   }
 
-  /// Clears error after the view has shown it.
   void clearError() {
     state = state.copyWith(error: null);
   }

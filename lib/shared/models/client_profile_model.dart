@@ -293,7 +293,7 @@ class ClientProfileModel {
   final String? clientWebsite;
   final String? industry;
 
-  // Sender (your) info — pre-filled from chosen AI profile (snapshot)
+  // Sender (your) info — pre-filled from chosen Career Profile (snapshot)
   final String? senderCompany;
   final String? senderName;
   final String? senderEmail;

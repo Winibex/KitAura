@@ -22,6 +22,7 @@ import '../../../../shared/ai/claude_controller.dart';
 import '../../../../shared/ai/spellcheck_controller.dart';
 import '../../../../shared/canvas/editor_ui/editor_app_bar.dart';
 import '../../../../shared/canvas/editor_ui/editor_left_panel.dart';
+import '../../../../shared/canvas/editor_ui/editor_panel_config.dart';
 import '../../../../shared/canvas/editor_ui/editor_right_panel.dart';
 import '../../../../shared/canvas/editor_ui/editor_widgets.dart';
 import '../../../../shared/canvas/engine/canvas_controller.dart';
@@ -29,7 +30,10 @@ import '../../../../shared/canvas/engine/canvas_item_widget.dart';
 import '../../../../shared/canvas/engine/shape_painter.dart';
 import '../../../../shared/canvas/engine/snap_guide.dart';
 import '../../../../shared/canvas/engine/viewport_fitter.dart';
+import '../../../../shared/models/ai_profile_model.dart';
 import '../../../../shared/models/canvas_item.dart';
+import '../../../../shared/providers/ai_profiles_provider.dart';
+import '../../../../shared/widgets/command_k_bar.dart';
 import '../../../dashboard/controller/dashboard_controller.dart';
 import '../../../settings/view/upgrade_modal.dart';
 import '../../dashboard/controller/cv_dashboard_controller.dart';
@@ -47,6 +51,7 @@ class CvEditorScreen extends ConsumerStatefulWidget {
 class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
   late final CanvasController _canvas;
   late final CvEditorController _editor;
+  final _commandKBarKey = GlobalKey();
 
   // UI-only state
   Offset? _marqueeStart, _marqueeEnd;
@@ -198,6 +203,216 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
   }
 
   // ─── ACTIONS (thin wrappers that call controller) ─────────────────────
+
+  void _openCommandK() {
+    final state = _commandKBarKey.currentState as dynamic;
+    state?.openBar();
+  }
+
+  /// Shows an anchored dropdown listing all the user's Career Profiles.
+  /// Returns the picked profile's display name, or null if the user
+  /// cancelled / had no profiles to pick from.
+  ///
+  /// The selection is persisted to the CV's Firestore doc via the editor
+  /// controller's selectCareerProfile method.
+  Future<String?> _pickCareerProfile() async {
+    final profiles = await ref.read(aiProfilesProvider.future);
+    if (!mounted) return null;
+
+    if (profiles.isEmpty) {
+      // No profiles yet — point the user to create one.
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('No Career Profiles found. Create one in Settings → Career Profiles.'),
+          backgroundColor: AppColors.darkRaspberry,
+          action: SnackBarAction(
+            label: 'Settings',
+            textColor: AppColors.white,
+            onPressed: () => context.go(AppRoutes.settings),
+          ),
+        ),
+      );
+      return null;
+    }
+
+    // Find the source button to anchor the dropdown to. The right panel
+    // calls onPickCareerProfile from a GestureDetector — we use the
+    // tap position as a fallback. Simpler: show a centered modal sheet.
+    final picked = await showModalBottomSheet<AiProfileModel>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(16),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(ctx).size.height * 0.6,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 26,
+                  height: 26,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [AppColors.darkRaspberry, AppColors.magentaBloom],
+                    ),
+                    borderRadius: BorderRadius.circular(7),
+                  ),
+                  child: const Icon(LucideIcons.userCircle, size: 14, color: AppColors.white),
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'Choose Career Profile',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontFamily: AppFonts.poppins,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.prussianBlue,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(LucideIcons.x, size: 18),
+                  color: AppColors.slateGrey,
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'AI will use this profile when composing or refining sections.',
+              style: TextStyle(
+                fontSize: 11,
+                fontFamily: AppFonts.openSans,
+                color: AppColors.slateGrey,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: profiles.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                itemBuilder: (_, i) {
+                  final p = profiles[i];
+                  final isSelected = p.id == _editor.state.selectedProfileId;
+                  return InkWell(
+                    onTap: () => Navigator.pop(ctx, p),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.lavenderBlush
+                            : AppColors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColors.darkRaspberry
+                              : AppColors.almondSilk,
+                          width: isSelected ? 1.5 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: AppColors.petalFrost,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              LucideIcons.user,
+                              size: 14,
+                              color: AppColors.darkRaspberry,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        p.name.isEmpty ? 'Untitled Profile' : p.name,
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          fontFamily: AppFonts.poppins,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.prussianBlue,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (p.isDefault) ...[
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.darkRaspberry,
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: const Text(
+                                          'DEFAULT',
+                                          style: TextStyle(
+                                            fontSize: 8,
+                                            fontFamily: AppFonts.poppins,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                                if (p.jobTitle != null && p.jobTitle!.isNotEmpty)
+                                  Text(
+                                    p.jobTitle!,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontFamily: AppFonts.openSans,
+                                      color: AppColors.slateGrey,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                              ],
+                            ),
+                          ),
+                          if (isSelected)
+                            const Icon(
+                              LucideIcons.check,
+                              size: 16,
+                              color: AppColors.darkRaspberry,
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (picked == null) return null;
+    _editor.selectCareerProfile(
+      profileId: picked.id ?? '',
+      profileName: picked.name.isEmpty ? 'Untitled Profile' : picked.name,
+    );
+    return picked.name;
+  }
 
   Future<void> _exportPdf() async {
     if (!_canvas.fontsLoaded) return;
@@ -365,117 +580,135 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.lavenderBlush,
-      body: Column(
-        children: [
-          _buildAppBar(s),
-          Expanded(
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Positioned.fill(
-                  child: s.isTemplateLoading
-                      ? const Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              CircularProgressIndicator(
-                                color: AppColors.darkRaspberry,
-                              ),
-                              SizedBox(height: 16),
-                              Text(
-                                'Loading template...',
-                                style: TextStyle(
-                                  color: AppColors.slateGrey,
-                                  fontSize: 13,
-                                  fontFamily: AppFonts.poppins,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : _buildCanvas(),
-                ),
-                if (_isMobile && (_leftPanelOpen || _rightPanelOpen))
+      body: CommandKShortcuts(
+        onOpen: _openCommandK,
+        child: Column(
+          children: [
+            _buildAppBar(s),
+            Expanded(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
                   Positioned.fill(
-                    child: GestureDetector(
-                      onTap: () => setState(() {
-                        _leftPanelOpen = false;
-                        _rightPanelOpen = false;
-                      }),
-                      child: Container(
-                        color: Colors.black.withValues(alpha: 0.3),
+                    child: s.isTemplateLoading
+                        ? const Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CircularProgressIndicator(
+                                  color: AppColors.darkRaspberry,
+                                ),
+                                SizedBox(height: 16),
+                                Text(
+                                  'Loading template...',
+                                  style: TextStyle(
+                                    color: AppColors.slateGrey,
+                                    fontSize: 13,
+                                    fontFamily: AppFonts.poppins,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : _buildCanvas(),
+                  ),
+                  if (_isMobile && (_leftPanelOpen || _rightPanelOpen))
+                    Positioned.fill(
+                      child: GestureDetector(
+                        onTap: () => setState(() {
+                          _leftPanelOpen = false;
+                          _rightPanelOpen = false;
+                        }),
+                        child: Container(
+                          color: Colors.black.withValues(alpha: 0.3),
+                        ),
                       ),
                     ),
-                  ),
-                // Pinned page selector — fixed at top, doesn't scroll/zoom
-                if (!s.isTemplateLoading)
-                  Positioned(
-                    top: 8,
-                    left: 0,
-                    right: 0,
-                    child: Center(child: _buildPageControls()),
-                  ),
-                if (_leftPanelOpen)
-                  Positioned(
-                    left: 0,
-                    top: 0,
-                    bottom: 0,
-                    child: EditorLeftPanel(
-                      ctrl: _canvas,
-                      onClose: () => setState(() => _leftPanelOpen = false),
-                      onAddText: _addTextAndWire,
+                  // Pinned page selector — fixed at top, doesn't scroll/zoom
+                  if (!s.isTemplateLoading)
+                    Positioned(
+                      top: 8,
+                      left: 0,
+                      right: 0,
+                      child: Center(child: _buildPageControls()),
                     ),
-                  ),
-                if (_rightPanelOpen)
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    bottom: 0,
-                    child: _buildRightPanel(selected, isMulti),
-                  ),
-                if (!_leftPanelOpen)
-                  Positioned(
-                    left: 8,
-                    top: 8,
-                    child: EditorPanelToggle(
-                      icon: LucideIcons.panelLeft,
-                      onTap: () => setState(() {
-                        _leftPanelOpen = true;
-                        if (_isMobile) _rightPanelOpen = false;
-                      }),
+                  if (_leftPanelOpen)
+                    Positioned(
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      child: EditorLeftPanel(
+                        ctrl: _canvas,
+                        onClose: () => setState(() => _leftPanelOpen = false),
+                        onAddText: _addTextAndWire,
+                      ),
                     ),
-                  ),
-                if (!_rightPanelOpen)
-                  Positioned(
-                    right: 8,
-                    top: 8,
-                    child: EditorPanelToggle(
-                      icon: LucideIcons.panelRight,
-                      onTap: () => setState(() {
-                        _rightPanelOpen = true;
-                        if (_isMobile) _leftPanelOpen = false;
-                      }),
+                  if (_rightPanelOpen)
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                      child: _buildRightPanel(selected, isMulti),
                     ),
-                  ),
-                if (_showSpellcheckPanel)
-                  Positioned(
-                    right: _isMobile ? 8 : (_rightPanelOpen ? 268 : 8),
-                    left: _isMobile ? 8 : null,
-                    top: 8,
-                    child: SpellcheckPanel(
-                      items: _canvas.items,
-                      onClose: () {
-                        ref.read(spellcheckControllerProvider.notifier).reset();
-                        setState(() => _showSpellcheckPanel = false);
-                      },
+                  if (!_leftPanelOpen)
+                    Positioned(
+                      left: 8,
+                      top: 8,
+                      child: EditorPanelToggle(
+                        icon: LucideIcons.panelLeft,
+                        onTap: () => setState(() {
+                          _leftPanelOpen = true;
+                          if (_isMobile) _rightPanelOpen = false;
+                        }),
+                      ),
                     ),
-                  ),
-                // Zoom controls
-                _buildZoomPanel(),
-              ],
+                  if (!_rightPanelOpen)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: EditorPanelToggle(
+                        icon: LucideIcons.panelRight,
+                        onTap: () => setState(() {
+                          _rightPanelOpen = true;
+                          if (_isMobile) _leftPanelOpen = false;
+                        }),
+                      ),
+                    ),
+                  if (_showSpellcheckPanel)
+                    Positioned(
+                      right: _isMobile ? 8 : (_rightPanelOpen ? 268 : 8),
+                      left: _isMobile ? 8 : null,
+                      top: 8,
+                      child: SpellcheckPanel(
+                        items: _canvas.items,
+                        onClose: () {
+                          ref.read(spellcheckControllerProvider.notifier).reset();
+                          setState(() => _showSpellcheckPanel = false);
+                        },
+                      ),
+                    ),
+                  // Zoom controls
+                  _buildZoomPanel(),
+
+                  if (!s.isTemplateLoading)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 16,
+                      child: CommandKBar(
+                        key: _commandKBarKey,
+                        canvasController: _canvas,
+                        tool: 'cv',
+                        documentId: _editor.state.firestoreDocId,
+                        documentTitle: _editor.state.title,
+                        templateId: widget.docId,
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -553,46 +786,65 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
   // ─── RIGHT PANEL ──────────────────────────────────────────────────────
 
   Widget _buildRightPanel(CanvasItem? selected, bool isMulti) {
+    final claudeState = ref.watch(claudeControllerProvider);
+    final isComposing = claudeState.activeOperation == 'fill';
+    final isRefining = claudeState.activeOperation == 'rewrite';
+
     return EditorRightPanel(
       ctrl: _canvas,
       selected: selected,
       isMultiSelected: isMulti,
       toolbarKey: _toolbarKey,
       onClose: () => setState(() => _rightPanelOpen = false),
-      onAiFill: (item) async {
-        _canvas.saveSnapshot();
-        await ref
-            .read(claudeControllerProvider.notifier)
-            .fillSection(
-              itemId: item.id,
-              sectionType: item.sectionType,
-              sectionTitle: item.title,
-              controller: item.controller!,
-              cvId: _editor.state.firestoreDocId,
-              cvTitle: _editor.state.title,
-            );
-      },
-      isAiFilling:
-          ref.watch(claudeControllerProvider).activeOperation == 'fill',
+      config: EditorPanelConfig.cv,
+      selectedProfileName: _editor.state.selectedProfileName,
+      onPickCareerProfile: _pickCareerProfile,
+      isComposing: isComposing,
+      isRefining: isRefining,
       isSpellchecking: ref.watch(spellcheckControllerProvider).isChecking,
       onSpellcheck: () {
         ref.read(spellcheckControllerProvider.notifier).checkAll(_canvas.items);
         setState(() => _showSpellcheckPanel = true);
       },
-      onRewrite: (item, mode, customInstruction) async {
+      onCompose: (item, {required useAi}) async {
+        _canvas.saveSnapshot();
+        if (useAi) {
+          // AI path — uses the selected profile if set, otherwise default.
+          await ref
+              .read(claudeControllerProvider.notifier)
+              .fillSection(
+            itemId: item.id,
+            sectionType: item.sectionType,
+            sectionTitle: item.title,
+            controller: item.controller!,
+            cvId: _editor.state.firestoreDocId,
+            cvTitle: _editor.state.title,
+            profileId: _editor.state.selectedProfileId,
+          );
+        } else {
+          // Raw insert — no API call, no tokens.
+          await ref
+              .read(claudeControllerProvider.notifier)
+              .composeRawFromProfile(
+            item: item,
+            profileId: _editor.state.selectedProfileId,
+          );
+        }
+      },
+      onRefine: (item, mode, customInstruction) async {
         _canvas.saveSnapshot();
         await ref
             .read(claudeControllerProvider.notifier)
             .rewriteSection(
-              itemId: item.id,
-              sectionType: item.sectionType,
-              sectionTitle: item.title,
-              controller: item.controller!,
-              mode: mode,
-              customInstruction: customInstruction,
-              cvId: _editor.state.firestoreDocId,
-              cvTitle: _editor.state.title,
-            );
+          itemId: item.id,
+          sectionType: item.sectionType,
+          sectionTitle: item.title,
+          controller: item.controller!,
+          mode: mode,
+          customInstruction: customInstruction,
+          cvId: _editor.state.firestoreDocId,
+          cvTitle: _editor.state.title,
+        );
       },
     );
   }

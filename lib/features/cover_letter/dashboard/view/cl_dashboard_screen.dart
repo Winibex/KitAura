@@ -104,7 +104,7 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
       ),
       statCard(
         icon: LucideIcons.sparkles,
-        label: 'AI Fills Used',
+        label: 'AI Composes Used',
         value: state.isPro ? '∞' : '${state.aiUsageCount} / ${state.aiFillsPerMonth}',
         subtext: state.isPro
             ? 'Unlimited'

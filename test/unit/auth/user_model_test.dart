@@ -150,7 +150,7 @@ void main() {
 
     test('canCreateCV returns false when at free limit', () {
       const model = SubscriptionModel(cvCount: 3);
-      expect(model.canCreateCV, false);
+      expect(model.canCreateDocument, false);
     });
 
     test('fromJson → toJson round-trip preserves data', () {

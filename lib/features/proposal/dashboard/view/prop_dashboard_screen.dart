@@ -110,7 +110,7 @@ class _PropDashboardScreenState extends ConsumerState<PropDashboardScreen> {
       ),
       statCard(
         icon: LucideIcons.sparkles,
-        label: 'AI Fills Used',
+        label: 'AI Composes Used',
         value: state.isPro
             ? '∞'
             : '${state.aiUsageCount} / ${state.aiFillsPerMonth}',

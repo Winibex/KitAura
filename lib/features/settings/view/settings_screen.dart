@@ -1,7 +1,7 @@
 // lib/features/settings/view/settings_screen.dart
 //
 // SaaS-style settings: left sidebar nav + right content area.
-// Sections: Profile, Account Security, Plan & Billing, Preferences, AI Profile.
+// Sections: Profile, Account Security, Plan & Billing, Preferences, Career Profile.
 
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -97,7 +97,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
       if (mounted) setState(() { _aiProfiles = profiles; _loadingProfiles = false; });
     } catch (e) {
-      debugPrint('Load AI profiles error: $e');
+      debugPrint('Load Career Profiles error: $e');
       if (mounted) setState(() => _loadingProfiles = false);
     }
   }
@@ -432,7 +432,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _navItem(SettingsTab.preferences, LucideIcons.sliders, 'Preferences'),
         const SizedBox(height: 16),
         _navSectionLabel('WORKSPACE'),
-        _navItem(SettingsTab.aiProfile, LucideIcons.sparkles, 'AI Profile'),
+        _navItem(SettingsTab.aiProfile, LucideIcons.sparkles, 'Career Profile'),
         _navItem(SettingsTab.clientProfiles, LucideIcons.users, 'Client Profiles'),
         _navItem(SettingsTab.billing, LucideIcons.creditCard, 'Plan & Billing'),
         const SizedBox(height: 24),
@@ -909,10 +909,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             _usageBar('PDF Exports', LucideIcons.download,
                 sub.exportCount, (isPro || isTrial) ? -1 : 3, AppColors.magentaBloom),
             const SizedBox(height: 12),
-            _usageBar('AI Fills', LucideIcons.sparkles,
+            _usageBar('AI Composes', LucideIcons.sparkles,
                 sub.aiFillCount, (isPro || isTrial) ? -1 : 15, AppColors.dustyMauve),
             const SizedBox(height: 12),
-            _usageBar('AI Rewrites', LucideIcons.pencil,
+            _usageBar('AI Refines', LucideIcons.pencil,
                 sub.aiRewriteCount, (isPro || isTrial) ? -1 : 15, AppColors.dustyRose),
             const SizedBox(height: 12),
             _usageBar('Spellchecks', LucideIcons.spellCheck,
@@ -1084,7 +1084,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  // ─── AI PROFILE TAB ───────────────────────────────────────────────────
+  // ─── Career Profile TAB ───────────────────────────────────────────────────
 
   Widget _aiProfileContent() {
     return Column(
@@ -1094,7 +1094,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         // Header with create button
         Row(
           children: [
-            Expanded(child: _contentHeader('AI Profiles', 'Manage profiles used for AI content generation')),
+            Expanded(child: _contentHeader('Career Profiles', 'Manage profiles used for AI content generation')),
             const SizedBox(width: 16),
             SizedBox(
               height: 40,
@@ -1147,7 +1147,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 16),
           const Text(
-            'No AI profiles yet',
+            'No Career Profiles yet',
             style: TextStyle(fontSize: 16, fontFamily: AppFonts.poppins,
                 fontWeight: FontWeight.w600, color: AppColors.prussianBlue),
           ),
@@ -1914,7 +1914,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       case SettingsTab.security: return 'Security';
       case SettingsTab.billing: return 'Plan & Billing';
       case SettingsTab.preferences: return 'Preferences';
-      case SettingsTab.aiProfile: return 'AI Profile';
+      case SettingsTab.aiProfile: return 'Career Profile';
       case SettingsTab.clientProfiles: return 'Clients';
     }
   }

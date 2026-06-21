@@ -62,7 +62,7 @@ class SpellcheckController extends StateNotifier<SpellcheckState> {
   /// Build a unique key for a correction so we can track it across removals.
   String _keyFor(SpellCorrection c) => '${c.sectionTitle}|${c.wrong}|${c.offset}';
 
-  /// Run AI spellcheck on all text sections.
+  /// Run AI Proofread on all text sections.
   /// [items] should be the canvas items list from CanvasController.
   Future<void> checkAll(List<CanvasItem> items) async {
     // Collect text from all text sections

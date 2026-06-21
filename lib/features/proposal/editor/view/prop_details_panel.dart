@@ -4,7 +4,7 @@
 //   - Client Profile selector + New/Edit client wizard
 //   - Linked CV dropdown
 //   - AI Generate Proposal button
-//   - AI Spellcheck button
+//   - AI Proofread button
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -389,7 +389,7 @@ class _PropDetailsPanelState extends State<PropDetailsPanel> {
 
         const SizedBox(height: 8),
 
-        // AI Spellcheck
+        // AI Proofread
         if (widget.onSpellcheck != null)
           SizedBox(
             width: double.infinity,
@@ -406,7 +406,7 @@ class _PropDetailsPanelState extends State<PropDetailsPanel> {
               )
                   : const Icon(LucideIcons.spellCheck, size: 14),
               label: Text(
-                widget.isSpellchecking ? 'Checking...' : 'AI Spellcheck',
+                widget.isSpellchecking ? 'Checking...' : 'AI Proofread',
                 style: const TextStyle(fontSize: 11),
               ),
               style: ElevatedButton.styleFrom(

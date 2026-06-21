@@ -643,8 +643,8 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: const [
           InfoLabel(
-            'Use AI Profile',
-            info: 'Pre-fills your details from a saved AI profile.',
+            'Use Career Profile',
+            info: 'Pre-fills your details from a saved Career Profile.',
           ),
           _SkeletonBox(height: 48),
           SizedBox(height: 14),
@@ -660,9 +660,9 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const InfoLabel(
-              'Use AI Profile',
+              'Use Career Profile',
               info:
-                  'Pre-fills your name, company, and email from a saved AI profile.',
+                  'Pre-fills your name, company, and email from a saved Career Profile.',
             ),
             _dropdownContainer(
               child: DropdownButtonHideUnderline(

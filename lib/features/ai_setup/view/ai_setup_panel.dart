@@ -1,6 +1,6 @@
 // lib/features/ai_setup/view/ai_setup_panel.dart
 //
-// 8-step AI profile setup wizard.
+// 8-step Career Profile setup wizard.
 // Steps: Personal Info → Experience → Education → Skills/Languages/Certs
 //        → Projects → Awards/Volunteer → References/Hobbies/Custom → AI Preferences
 

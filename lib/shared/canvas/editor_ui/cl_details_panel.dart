@@ -350,7 +350,7 @@ class _ClDetailsPanelState extends State<ClDetailsPanel> {
               )
                   : const Icon(LucideIcons.spellCheck, size: 14),
               label: Text(
-                widget.isSpellchecking ? 'Checking...' : 'AI Spellcheck',
+                widget.isSpellchecking ? 'Checking...' : 'AI Proofread',
                 style: const TextStyle(fontSize: 11),
               ),
               style: ElevatedButton.styleFrom(

@@ -1,6 +1,6 @@
 // lib/features/linkedin/view/linkedin_screen.dart
 //
-// FULL REPLACEMENT — now reads AI profiles from the cached aiProfilesProvider
+// FULL REPLACEMENT — now reads Career Profiles from the cached aiProfilesProvider
 // instead of its own getAiProfiles() fetch. CVs still load locally (CV list
 // is screen-specific and not shared). Profile dropdown + auto-select default
 // are derived from the provider in build().
@@ -152,7 +152,7 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
                   fontWeight: FontWeight.bold,
                   color: AppColors.prussianBlue)),
           const SizedBox(height: 4),
-          Text('Generate optimized LinkedIn content from your CV & AI Profile',
+          Text('Generate optimized LinkedIn content from your CV & Career Profile',
               style: TextStyle(
                   fontSize: AppSizes.caption(context),
                   fontFamily: AppFonts.openSans,
@@ -181,7 +181,7 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
                         fontFamily: AppFonts.poppins,
                         fontWeight: FontWeight.bold,
                         color: AppColors.prussianBlue)),
-                Text('Generate optimized LinkedIn content from your CV & AI Profile',
+                Text('Generate optimized LinkedIn content from your CV & Career Profile',
                     style: TextStyle(
                         fontSize: 13,
                         fontFamily: AppFonts.openSans,
@@ -243,7 +243,7 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
               children: [
                 _buildDropdownBlock(
                   icon: LucideIcons.sparkles,
-                  label: 'AI Profile',
+                  label: 'Career Profile',
                   sublabel: 'Your career data & preferences',
                   child: loadingProfiles
                       ? _dropdownLoading()
@@ -270,7 +270,7 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
                 Expanded(
                     child: _buildDropdownBlock(
                       icon: LucideIcons.sparkles,
-                      label: 'AI Profile',
+                      label: 'Career Profile',
                       sublabel: 'Your career data & preferences',
                       child: loadingProfiles
                           ? _dropdownLoading()
@@ -448,7 +448,7 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
                   SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Create a CV or set up an AI Profile in Settings to get started.',
+                      'Create a CV or set up an Career Profile in Settings to get started.',
                       style: TextStyle(
                         fontSize: 12,
                         fontFamily: AppFonts.openSans,
@@ -630,7 +630,7 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
           items: [
             const DropdownMenuItem<String?>(
               value: null,
-              child: Text('None — use AI Profile only',
+              child: Text('None — use Career Profile only',
                   style: TextStyle(fontSize: 12, color: AppColors.slateGrey)),
             ),
             ..._cvList.map(
@@ -1033,7 +1033,7 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
                 ),
               ),
               subtitle: Text(
-                '${item.linkedCvTitle ?? "AI Profile only"} · ${item.timeAgo}',
+                '${item.linkedCvTitle ?? "Career Profile only"} · ${item.timeAgo}',
                 style: const TextStyle(fontSize: 11, color: AppColors.slateGrey),
               ),
               trailing: MouseRegion(

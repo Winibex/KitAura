@@ -35,6 +35,7 @@ import '../../../../shared/canvas/engine/viewport_fitter.dart';
 import '../../../../shared/models/ai_profile_model.dart';
 import '../../../../shared/models/canvas_item.dart';
 import '../../../../shared/services/firebase_service.dart';
+import '../../../../shared/widgets/command_k_bar.dart';
 import '../../../cv/editor/view/spellcheck_panel.dart';
 import '../../../settings/view/upgrade_modal.dart';
 import '../../dashboard/controller/cl_dashboard_controller.dart';
@@ -51,6 +52,7 @@ class ClEditorScreen extends ConsumerStatefulWidget {
 class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
   late final CanvasController _canvas;
   late final ClEditorController _editor;
+  final _commandKBarKey = GlobalKey();
 
   // UI-only state
   Offset? _marqueeStart, _marqueeEnd;
@@ -188,6 +190,11 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
 
   // ─── ACTIONS ──────────────────────────────────────────────────────────
 
+  void _openCommandK() {
+    final state = _commandKBarKey.currentState as dynamic;
+    state?.openBar();
+  }
+
   Future<void> _exportPdf() async {
     if (!_canvas.fontsLoaded) return;
 
@@ -313,117 +320,135 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.lavenderBlush,
-      body: Column(
-        children: [
-          _buildAppBar(s),
-          Expanded(
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Positioned.fill(
-                  child: s.isTemplateLoading
-                      ? const Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(
-                          color: AppColors.darkRaspberry,
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          'Loading template...',
-                          style: TextStyle(
-                            color: AppColors.slateGrey,
-                            fontSize: 13,
-                            fontFamily: AppFonts.poppins,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                      : _buildCanvas(),
-                ),
-                // Pinned page selector — fixed at top, doesn't scroll/zoom
-                if (!s.isTemplateLoading)
-                  Positioned(
-                    top: 8,
-                    left: 0,
-                    right: 0,
-                    child: Center(child: _buildPageControls()),
-                  ),
-                if (_isMobile && (_leftPanelOpen || _rightPanelOpen))
+      body: CommandKShortcuts(                     // ← WRAP starts here
+        onOpen: _openCommandK,
+        child: Column(
+          children: [
+            _buildAppBar(s),
+            Expanded(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
                   Positioned.fill(
-                    child: GestureDetector(
-                      onTap: () => setState(() {
-                        _leftPanelOpen = false;
-                        _rightPanelOpen = false;
-                      }),
-                      child: Container(
-                        color: Colors.black.withValues(alpha: 0.3),
+                    child: s.isTemplateLoading
+                        ? const Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(
+                            color: AppColors.darkRaspberry,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'Loading template...',
+                            style: TextStyle(
+                              color: AppColors.slateGrey,
+                              fontSize: 13,
+                              fontFamily: AppFonts.poppins,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                        : _buildCanvas(),
+                  ),
+                  // Pinned page selector — fixed at top, doesn't scroll/zoom
+                  if (!s.isTemplateLoading)
+                    Positioned(
+                      top: 8,
+                      left: 0,
+                      right: 0,
+                      child: Center(child: _buildPageControls()),
+                    ),
+                  if (_isMobile && (_leftPanelOpen || _rightPanelOpen))
+                    Positioned.fill(
+                      child: GestureDetector(
+                        onTap: () => setState(() {
+                          _leftPanelOpen = false;
+                          _rightPanelOpen = false;
+                        }),
+                        child: Container(
+                          color: Colors.black.withValues(alpha: 0.3),
+                        ),
                       ),
                     ),
-                  ),
-                if (_leftPanelOpen)
-                  Positioned(
-                    left: 0,
-                    top: 0,
-                    bottom: 0,
-                    child: EditorLeftPanel(
-                      ctrl: _canvas,
-                      onClose: () => setState(() => _leftPanelOpen = false),
-                      onAddText: _addTextAndWire,
-                      config: EditorPanelConfig.coverLetter,
+                  if (_leftPanelOpen)
+                    Positioned(
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      child: EditorLeftPanel(
+                        ctrl: _canvas,
+                        onClose: () => setState(() => _leftPanelOpen = false),
+                        onAddText: _addTextAndWire,
+                        config: EditorPanelConfig.coverLetter,
+                      ),
                     ),
-                  ),
-                if (_rightPanelOpen)
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    bottom: 0,
-                    child: _buildRightPanel(selected, isMulti),
-                  ),
-                if (!_leftPanelOpen)
-                  Positioned(
-                    left: 8,
-                    top: 8,
-                    child: EditorPanelToggle(
-                      icon: LucideIcons.panelLeft,
-                      onTap: () => setState(() {
-                        _leftPanelOpen = true;
-                        if (_isMobile) _rightPanelOpen = false;
-                      }),
+                  if (_rightPanelOpen)
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                      child: _buildRightPanel(selected, isMulti),
                     ),
-                  ),
-                if (!_rightPanelOpen)
-                  Positioned(
-                    right: 8,
-                    top: 8,
-                    child: EditorPanelToggle(
-                      icon: LucideIcons.panelRight,
-                      onTap: () => setState(() {
-                        _rightPanelOpen = true;
-                        if (_isMobile) _leftPanelOpen = false;
-                      }),
+                  if (!_leftPanelOpen)
+                    Positioned(
+                      left: 8,
+                      top: 8,
+                      child: EditorPanelToggle(
+                        icon: LucideIcons.panelLeft,
+                        onTap: () => setState(() {
+                          _leftPanelOpen = true;
+                          if (_isMobile) _rightPanelOpen = false;
+                        }),
+                      ),
                     ),
-                  ),
-                if (_showSpellcheckPanel)
-                  Positioned(
-                    right: _rightPanelOpen ? 268 : 8,
-                    top: 8,
-                    child: SpellcheckPanel(
-                      items: _canvas.items,
-                      onClose: () {
-                        ref.read(spellcheckControllerProvider.notifier).reset();
-                        setState(() => _showSpellcheckPanel = false);
-                      },
+                  if (!_rightPanelOpen)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: EditorPanelToggle(
+                        icon: LucideIcons.panelRight,
+                        onTap: () => setState(() {
+                          _rightPanelOpen = true;
+                          if (_isMobile) _leftPanelOpen = false;
+                        }),
+                      ),
                     ),
-                  ),
-                // Zoom controls
-                _buildZoomPanel(),
-              ],
+                  if (_showSpellcheckPanel)
+                    Positioned(
+                      right: _rightPanelOpen ? 268 : 8,
+                      top: 8,
+                      child: SpellcheckPanel(
+                        items: _canvas.items,
+                        onClose: () {
+                          ref.read(spellcheckControllerProvider.notifier).reset();
+                          setState(() => _showSpellcheckPanel = false);
+                        },
+                      ),
+                    ),
+                  // Zoom controls
+                  _buildZoomPanel(),
+
+                  if (!s.isTemplateLoading)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 16,
+                      child: CommandKBar(
+                        key: _commandKBarKey,
+                        canvasController: _canvas,
+                        tool: 'cv',
+                        documentId: _editor.state.firestoreDocId,
+                        documentTitle: _editor.state.title,
+                        templateId: widget.docId,
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -581,41 +606,16 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
       toolbarKey: _toolbarKey,
       onClose: () => setState(() => _rightPanelOpen = false),
       config: EditorPanelConfig.coverLetter,
-      onAiFill: (item) async {
-        _canvas.saveSnapshot();
-        // For per-section CL AI fill, pass job details too
-        final profile = await _loadProfile();
-        final cvContent = await _editor.getLinkedCvContent();
-        final jobDetails = {
-          'companyName': _editor.state.targetCompany ?? '',
-          'jobRole': _editor.state.targetRole ?? '',
-          'hiringManagerName': _editor.state.hiringManagerName ?? '',
-          'jobDescription': _editor.state.jobDescription ?? '',
-        };
-        await ref
-            .read(claudeControllerProvider.notifier)
-            .fillSection(
-          itemId: item.id,
-          sectionType: item.sectionType,
-          sectionTitle: item.title,
-          controller: item.controller!,
-          cvId: _editor.state.firestoreDocId,
-          cvTitle: _editor.state.title,
-          tool: 'coverLetter',
-        );
-      },
-      isAiFilling:
-      ref.watch(claudeControllerProvider).activeOperation == 'fill',
+      isRefining:
+      ref.watch(claudeControllerProvider).activeOperation == 'rewrite',
       isSpellchecking: ref.watch(spellcheckControllerProvider).isChecking,
       onSpellcheck: () {
         ref.read(spellcheckControllerProvider.notifier).checkAll(_canvas.items);
         setState(() => _showSpellcheckPanel = true);
       },
-      onRewrite: (item, mode, customInstruction) async {
+      onRefine: (item, mode, customInstruction) async {
         _canvas.saveSnapshot();
-        await ref
-            .read(claudeControllerProvider.notifier)
-            .rewriteSection(
+        await ref.read(claudeControllerProvider.notifier).rewriteSection(
           itemId: item.id,
           sectionType: item.sectionType,
           sectionTitle: item.title,

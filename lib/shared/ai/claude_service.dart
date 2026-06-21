@@ -4,11 +4,13 @@
 // API key lives ONLY on the server. Token tracking happens server-side.
 //
 // CHANGES FROM PREVIOUS VERSION:
-//   1. Added aiRewriteSection() method for AI Rewrite feature
+//   1. Added aiRewriteSection() method for AI Refine feature
 //   2. Debug prints on all methods
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
+
+import '../canvas/engine/canvas_op_types.dart';
 
 // ─── MODELS ──────────────────────────────────────────────────────────────
 
@@ -48,7 +50,7 @@ class ClaudeService {
   static final FirebaseFunctions _fn =
   FirebaseFunctions.instanceFor(region: 'us-central1');
 
-  /// AI Fill — returns structured text for a CV/CL/proposal section.
+  /// AI Compose — returns structured text for a CV/CL/proposal section.
   ///
   /// All tracking (tokens, cost, counters) happens server-side.
   /// Frontend only receives the content.
@@ -105,7 +107,7 @@ class ClaudeService {
     }
   }
 
-  /// AI Rewrite — rewrites existing text with a specified mode/tone.
+  /// AI Refine — rewrites existing text with a specified mode/tone.
   ///
   /// [text] — the current plain text content to rewrite
   /// [sectionType] — which CV section (experience, summary, etc.)
@@ -145,7 +147,7 @@ class ClaudeService {
       throw _mapError(e);
     } catch (e) {
       debugPrint('🤖 [ClaudeService] aiRewriteSection unexpected: $e');
-      throw 'AI rewrite failed. Please try again.';
+      throw 'AI Refine failed. Please try again.';
     }
   }
 
@@ -174,7 +176,7 @@ class ClaudeService {
       throw _mapError(e);
     } catch (e) {
       debugPrint('🤖 [ClaudeService] extractClient unexpected: $e');
-      throw 'AI fill failed. Please try again.';
+      throw 'AI Compose failed. Please try again.';
     }
   }
 
@@ -379,4 +381,68 @@ class ClaudeService {
     }
   }
 
+  /// AI Editor (command-K) — translates a natural-language instruction into
+  /// a list of structured canvas ops to apply.
+  ///
+  /// Sends:
+  ///   - [instruction]: what the user typed (e.g. "make the heading bold")
+  ///   - [snapshot]: current canvas state from CanvasController.buildSnapshot()
+  ///   - [tool]: 'cv' | 'coverLetter' | 'proposal' — for tracking + context
+  ///
+  /// Returns a parsed [AiEditEnvelope] containing:
+  ///   - ops: list of CanvasOp to apply (empty if refusal)
+  ///   - summary: human-readable description of the edit
+  ///   - warnings: AI-generated warnings (e.g. "couldn't find section X")
+  ///   - refusal: non-null if the AI declined the request
+  ///
+  /// All tracking (tokens, cost, paywall, refusal counter) happens server-side.
+  /// Throws a friendly string error message on auth / paywall / refusal-block.
+  static Future<AiEditEnvelope> aiEdit({
+    required String instruction,
+    required Map<String, dynamic> snapshot,
+    String tool = 'cv',
+    String? documentId,
+    String? documentTitle,
+    String? templateId,
+  }) async
+  {
+    debugPrint('🤖 [ClaudeService] aiEdit("$instruction") tool=$tool');
+    try {
+      final result = await _fn
+          .httpsCallable(
+        'aiEdit',
+        options: HttpsCallableOptions(
+          timeout: const Duration(seconds: 90),
+        ),
+      )
+          .call<Map<String, dynamic>>({
+        'instruction': instruction,
+        'snapshot': snapshot,
+        'tool': tool,
+        'documentId': documentId,
+        'documentTitle': documentTitle,
+        'templateId': templateId,
+      });
+
+      final envelopeJson = result.data['envelope'];
+      if (envelopeJson == null) {
+        debugPrint('🤖 [ClaudeService] aiEdit returned no envelope');
+        throw 'AI editor returned an empty response. Try rephrasing.';
+      }
+
+      final envelope = AiEditEnvelope.fromJson(
+        Map<String, dynamic>.from(envelopeJson as Map),
+      );
+      debugPrint('🤖 [ClaudeService] aiEdit OK '
+          '(${envelope.ops.length} ops, refusal=${envelope.refusal})');
+      return envelope;
+    } on FirebaseFunctionsException catch (e) {
+      debugPrint('🤖 [ClaudeService] aiEdit FAILED: ${e.code} ${e.message}');
+      throw _mapError(e);
+    } catch (e) {
+      debugPrint('🤖 [ClaudeService] aiEdit unexpected: $e');
+      if (e is String) rethrow;
+      throw 'AI editor failed. Please try again.';
+    }
+  }
 }

@@ -13,6 +13,8 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'canvas_op_executors.dart';
+import 'canvas_op_types.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:kitaura/shared/canvas/engine/auto_height.dart';
@@ -312,7 +314,8 @@ class CanvasController extends ChangeNotifier {
     double height = 160,
     TableData? tableData,
     SectionType sectionType = SectionType.custom,
-  }) {
+  })
+  {
     saveSnapshot();
     final pageOffset = currentPage * canvasH;
     final pos = position ?? Offset(50, pageOffset + 40);
@@ -1266,11 +1269,32 @@ class CanvasController extends ChangeNotifier {
       redo();
       return true;
     }
-    // Delete/Backspace → Delete selected (only if no text focused)
+    // Delete/Backspace → Delete selected item.
+    // CRITICAL: Skip if ANY text input has focus (Quill, TextField, search box,
+    // etc). Backspace inside any text input must edit characters, not delete
+    // the canvas item.
     if (event.logicalKey == LogicalKeyboardKey.delete ||
         event.logicalKey == LogicalKeyboardKey.backspace) {
-      final textFocused = items.any((i) => i.isText && (i.focusNode?.hasFocus ?? false));
-      if (!textFocused && (selectedId != null || multiSelected.isNotEmpty)) {
+      // Check 1: Is any Quill text item focused?
+      final quillFocused = items.any(
+              (i) => i.isText && (i.focusNode?.hasFocus ?? false));
+
+      // Check 2: Is ANY text input (Material TextField, etc.) focused globally?
+      // This catches the Custom Refine textbox, dialog inputs, search fields.
+      final primaryFocus = FocusManager.instance.primaryFocus;
+      final anyTextInputFocused = primaryFocus?.context?.widget is EditableText ||
+          (primaryFocus?.context?.findAncestorWidgetOfExactType<EditableText>() != null);
+
+      // Belt-and-suspenders: backspace should never delete a canvas item.
+      // Only Delete key triggers section deletion, and only when no text
+      // input of any kind has focus.
+      final isDeleteKey = event.logicalKey == LogicalKeyboardKey.delete;
+      final safeToDelete = isDeleteKey &&
+          !quillFocused &&
+          !anyTextInputFocused &&
+          (selectedId != null || multiSelected.isNotEmpty);
+
+      if (safeToDelete) {
         saveSnapshot();
         deleteSelected();
         return true;
@@ -1461,6 +1485,218 @@ class CanvasController extends ChangeNotifier {
           items.add(clone);
         }
       }
+    }
+  }
+
+  Map<String, dynamic> buildSnapshot() {
+    final realItems = items.where((i) => !i.isContinuation).toList();
+
+    return {
+      'pageCount': totalPages,
+      'canvasBackground': colorToHex(canvasBackground),
+      'items': [
+        for (int idx = 0; idx < realItems.length; idx++)
+          _itemToSnapshotJson(realItems[idx], 'i$idx'),
+      ],
+    };
+  }
+
+  Map<String, dynamic> _itemToSnapshotJson(CanvasItem item, String shortId) {
+    final page = (item.position.dy / canvasH).floor() + 1; // 1-based for the AI
+    final map = <String, dynamic>{
+      'id': shortId,
+      'page': page,
+      'type': canvasItemTypeToString(item.type),
+      'x': item.position.dx.round(),
+      'y': item.position.dy.round(),
+      'w': item.width.round(),
+      'h': item.height.round(),
+    };
+    if (item.title.isNotEmpty) map['title'] = item.title;
+    if (item.sectionType != SectionType.custom) {
+      map['sectionType'] = item.sectionType.key;
+    }
+    if (item.role != null) map['role'] = item.role;
+    if (item.group != null) map['group'] = item.group;
+
+    // Shape items: include color so the AI can reference "the navy bar".
+    // Text items: skip color (per-op delta colors aren't a single value).
+    if (!item.isText && !item.isTable) {
+      map['color'] = colorToHex(item.color);
+    }
+
+    // Text items: include a line count so the AI can target a line index
+    // without seeing the full text. Cheaper than sending the delta.
+    if (item.isText && item.controller != null) {
+      final plain = item.controller!.document.toPlainText();
+      // Quill always trails one extra \n; subtract it.
+      final lineCount = plain.split('\n').length - 1;
+      map['lineCount'] = lineCount.clamp(0, 9999);
+    }
+
+    // Table items: include header count + row count so the AI can target
+    // cells without seeing all data.
+    if (item.isTable && item.tableData != null) {
+      map['columnCount'] = item.tableData!.columnCount;
+      map['rowCount'] = item.tableData!.rowCount;
+    }
+
+    return map;
+  }
+
+  /// Applies a parsed AI edit envelope to the canvas.
+  ///
+  /// Behavior:
+  ///   - One undo snapshot taken before the first op. A single Ctrl+Z
+  ///     undoes the whole batch (atomic).
+  ///   - Ops run in order. A failure on op N does not roll back ops 1..N-1
+  ///     and does not stop ops N+1..end from trying.
+  ///   - notifyListeners() is called exactly once at the end, so the UI
+  ///     rebuilds once for the whole batch (no mid-batch flicker).
+  ///   - generateContent ops kick off async (they need a follow-up aiFill
+  ///     call). They return futures that the UI awaits with spinners.
+  ///   - If the envelope is a refusal, we skip everything and return a
+  ///     result carrying the refusal message.
+  ///
+  /// Returns an OpResult the UI uses to render the result strip.
+  Future<OpResult> applyOps(AiEditEnvelope envelope) async {
+    // Refusal: nothing to apply, just return the message.
+    if (envelope.isRefusal) {
+      debugPrint('🤖 [Canvas] AI refused: ${envelope.refusal} — ${envelope.summary}');
+      return OpResult(
+        appliedCount: 0,
+        failures: const [],
+        warnings: envelope.warnings,
+        summary: envelope.summary,
+        isRefusal: true,
+        pendingGenerations: const [],
+      );
+    }
+
+    // No ops to run (shouldn't happen on a non-refusal, but defensive).
+    if (envelope.ops.isEmpty) {
+      return OpResult(
+        appliedCount: 0,
+        failures: const [],
+        warnings: envelope.warnings,
+        summary: envelope.summary,
+        isRefusal: false,
+        pendingGenerations: const [],
+      );
+    }
+
+    // Build the i0..iN -> real CanvasItem lookup the same way buildSnapshot
+    // produced the IDs. This must match exactly or itemId resolution breaks.
+    final realItems = items.where((i) => !i.isContinuation).toList();
+    final idLookup = <String, CanvasItem>{
+      for (int idx = 0; idx < realItems.length; idx++) 'i$idx': realItems[idx],
+    };
+
+    // Single snapshot at the top — atomic undo for the whole batch.
+    saveSnapshot();
+
+    final failures = <OpFailure>[];
+    final pendingGenerations = <Future<void>>[];
+    int appliedCount = 0;
+
+    debugPrint('🤖 [Canvas] applyOps: running ${envelope.ops.length} ops');
+
+    for (int i = 0; i < envelope.ops.length; i++) {
+      final op = envelope.ops[i];
+      try {
+        final ok = await _dispatchOp(op, idLookup, pendingGenerations);
+        if (ok) {
+          appliedCount++;
+        } else {
+          // Handler returned false but didn't throw. Treat as a soft skip
+          // (e.g. itemId not found). The handler is responsible for adding
+          // its own OpFailure via the closure below.
+        }
+      } on OpFailureException catch (e) {
+        debugPrint('🤖 [Canvas] op $i (${op.kind}) failed: ${e.code} ${e.message}');
+        failures.add(OpFailure(
+          code: e.code,
+          message: e.message,
+          opKind: op.kind,
+          opIndex: i,
+        ));
+      } catch (e, st) {
+        debugPrint('🤖 [Canvas] op $i (${op.kind}) threw: $e\n$st');
+        failures.add(OpFailure(
+          code: 'executionError',
+          message: 'Op failed: $e',
+          opKind: op.kind,
+          opIndex: i,
+        ));
+      }
+    }
+
+    // Helper for handlers to report soft failures (e.g. unresolved itemId).
+    // We do this via a closure because passing the failures list through
+    // every handler signature would be noisy. Handlers throw _OpFailure
+    // (private exception, see canvas_op_executors.dart) for soft failures
+    // and the catch block above converts them.
+    //
+    // Re-walk the loop is overkill; instead handlers throw _OpFailure
+    // and we catch it. See canvas_op_executors.dart for that pattern.
+
+    debugPrint('🤖 [Canvas] applyOps done: $appliedCount applied, '
+        '${failures.length} failed, ${pendingGenerations.length} async');
+
+    // One rebuild for the whole batch.
+    notifyListeners();
+
+    return OpResult(
+      appliedCount: appliedCount,
+      failures: failures,
+      warnings: envelope.warnings,
+      summary: envelope.summary,
+      isRefusal: false,
+      pendingGenerations: pendingGenerations,
+    );
+  }
+
+  /// Routes one op to its handler. Returns true on success, false on soft
+  /// skip (e.g. itemId unresolved — the handler logs the failure itself
+  /// via OpFailureException).
+  ///
+  /// The actual handler methods live in canvas_op_executors.dart as an
+  /// extension on CanvasController. This is a thin dispatcher.
+  Future<bool> _dispatchOp(
+      CanvasOp op,
+      Map<String, CanvasItem> idLookup,
+      List<Future<void>> pendingGenerations,
+      ) async
+  {
+    switch (op) {
+      case UpdateTextOp():
+        return applyUpdateText(op, idLookup);
+      case FormatTextOp():
+        return applyFormatText(op, idLookup);
+      case UpdateItemOp():
+        return applyUpdateItem(op, idLookup);
+      case MoveItemOp():
+        return applyMoveItem(op, idLookup);
+      case DeleteItemOp():
+        return applyDeleteItem(op, idLookup);
+      case DuplicateItemOp():
+        return applyDuplicateItem(op, idLookup);
+      case AddItemOp():
+        return applyAddItem(op);
+      case UpdateCanvasOp():
+        return applyUpdateCanvas(op);
+      case GenerateContentOp():
+      // generateContent kicks off async. The handler enqueues a future
+      // and returns true immediately (the structural placeholder, if any,
+      // is already applied; content fills in when the AI returns).
+        return applyGenerateContent(op, idLookup, pendingGenerations);
+      case UpdateTableOp():
+        return applyUpdateTable(op, idLookup);
+      case UpdateReflowOp():
+        return applyUpdateReflow(op, idLookup);
+      case UnknownOp():
+        debugPrint('🤖 [Canvas] unknown op: ${op.kind}');
+        return false;
     }
   }
 }

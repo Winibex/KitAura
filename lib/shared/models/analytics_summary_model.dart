@@ -3,7 +3,7 @@
 // Firestore path: users/{uid}/analytics/summary
 //
 // Lifetime aggregate metrics for a single user. Updated incrementally on
-// each significant event (login, export, AI fill, CV creation).
+// each significant event (login, export, AI Compose, CV creation).
 // =============================================================================
 
 import 'package:cloud_firestore/cloud_firestore.dart';

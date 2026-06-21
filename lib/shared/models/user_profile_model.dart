@@ -3,7 +3,7 @@
 // Firestore path: users/{uid}
 //
 // The root document for every registered user. Created atomically alongside
-// the subscription, AI profile, and preferences documents on first sign-up.
+// the subscription, Career Profile, and preferences documents on first sign-up.
 // =============================================================================
 
 import 'package:cloud_firestore/cloud_firestore.dart';

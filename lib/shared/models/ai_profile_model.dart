@@ -520,7 +520,7 @@ class CustomSection {
   );
 }
 
-// ─── MAIN AI PROFILE MODEL ──────────────────────────────────────────────
+// ─── MAIN Career Profile MODEL ──────────────────────────────────────────────
 
 class AiProfileModel {
   // Personal Info

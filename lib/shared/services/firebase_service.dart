@@ -32,6 +32,7 @@ import 'package:flutter/material.dart';
 import 'package:web/web.dart' as web;
 
 import '../models/ai_profile_model.dart';
+import '../models/subscription_model.dart';
 
 class FirebaseService {
   // Private constructor — this class is a pure static utility; never instantiate it.
@@ -148,38 +149,13 @@ class FirebaseService {
 
     // 2. ── Subscription — free tier with per-user billing cycle ──────
     final cycleEnd = DateTime.now().add(const Duration(days: 30));
-    batch.set(_subscriptionDoc(uid), {
-      'plan': 'free',
-
-      // Trial
-      'trialStartDate': null,
-      'trialEndDate': null,
-      'trialActive': false,
-      'trialUsed': false,
-
-      // Billing cycle (30 days from signup)
-      'cycleStartDate': now,
-      'cycleEndDate': Timestamp.fromDate(cycleEnd),
-      'lastResetDate': now,
-
-      // Usage counters (reset each cycle)
-      'aiFillCount': 0,
-      'aiRewriteCount': 0,
-      'aiDesignCount': 0,
-      'exportCount': 0,
-      'spellcheckCount': 0,
-
-      // Document counts (lifetime)
-      'cvCount': 0,
-      'coverLetterCount': 0,
-      'proposalCount': 0,
-
-      // Stripe
-      'stripeCustomerId': null,
-      'stripeSubscriptionId': null,
-      'subscriptionStartDate': null,
-      'subscriptionEndDate': null,
-    });
+    final initialSubscription = SubscriptionModel(
+      plan: 'free',
+      cycleStartDate: now.toDate(),
+      cycleEndDate: cycleEnd,
+      lastResetDate: now.toDate(),
+    );
+    batch.set(_subscriptionDoc(uid), initialSubscription.toJson());
 
     // 3. ── Analytics summary — seed with the sign-up login ───────────────────
     batch.set(_analyticsSummaryDoc(uid), {
@@ -290,21 +266,21 @@ class FirebaseService {
 
 
 // ===========================================================================
-  // AI PROFILES (multiple) — users/{uid}/aiProfiles/{profileId}
+  // Career ProfileS (multiple) — users/{uid}/aiProfiles/{profileId}
   // ===========================================================================
 
   static CollectionReference _aiProfilesCollection(String uid) =>
       _userDoc(uid).collection('aiProfiles');
 
-  /// Get all AI profiles for a user, ordered by name.
+  /// Get all Career Profiles for a user, ordered by name.
   static Future<QuerySnapshot> getAiProfiles(String uid) async =>
       await _aiProfilesCollection(uid).orderBy('name').get();
 
-  /// Get a single AI profile by ID.
+  /// Get a single Career Profile by ID.
   static Future<DocumentSnapshot> getAiProfileById(String uid, String profileId) async =>
       await _aiProfilesCollection(uid).doc(profileId).get();
 
-  /// Get the default AI profile. Falls back to first profile if none marked default.
+  /// Get the default Career Profile. Falls back to first profile if none marked default.
   static Future<AiProfileModel?> getDefaultAiProfile(String uid) async {
     // Try new collection first
     final profiles = await _aiProfilesCollection(uid)
@@ -330,7 +306,7 @@ class FirebaseService {
     return await _migrateOldProfile(uid);
   }
 
-  /// Create a new AI profile. Returns the document reference.
+  /// Create a new Career Profile. Returns the document reference.
   static Future<DocumentReference> createAiProfile(
       String uid, Map<String, dynamic> data) async {
     // If this is the first profile, make it default
@@ -341,12 +317,12 @@ class FirebaseService {
     return await _aiProfilesCollection(uid).add(data);
   }
 
-  /// Update an existing AI profile.
+  /// Update an existing Career Profile.
   static Future<void> updateAiProfile(
       String uid, String profileId, Map<String, dynamic> data) async =>
       await _aiProfilesCollection(uid).doc(profileId).update(data);
 
-  /// Save (create or update) an AI profile.
+  /// Save (create or update) an Career Profile.
   static Future<String> saveAiProfileMulti(
       String uid, Map<String, dynamic> data, {String? profileId}) async {
     if (profileId != null) {
@@ -358,7 +334,7 @@ class FirebaseService {
     }
   }
 
-  /// Delete an AI profile.
+  /// Delete an Career Profile.
   static Future<void> deleteAiProfile(String uid, String profileId) async =>
       await _aiProfilesCollection(uid).doc(profileId).delete();
 
@@ -412,8 +388,8 @@ class FirebaseService {
   static DocumentReference _aiProfileDoc(String uid) =>
       _userDoc(uid).collection('data').doc('aiProfile');
 
-  /// Overwrites the AI profile document with [data].
-  /// The AI profile is always saved in full — partial merges are not supported
+  /// Overwrites the Career Profile document with [data].
+  /// The Career Profile is always saved in full — partial merges are not supported
   /// because nested lists (experiences, education) must be replaced atomically.
   static Future<void> saveAiProfile(
       String uid,
@@ -421,7 +397,7 @@ class FirebaseService {
       ) async =>
       await _aiProfileDoc(uid).set(data);
 
-  /// Fetches the AI profile document snapshot.
+  /// Fetches the Career Profile document snapshot.
   static Future<DocumentSnapshot> getAiProfile(String uid) async =>
       await _aiProfileDoc(uid).get();
 

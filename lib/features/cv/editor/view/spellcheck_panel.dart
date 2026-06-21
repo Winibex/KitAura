@@ -1,7 +1,7 @@
 // lib/features/cv/view/spellcheck_panel.dart
 //
-// Floating panel that shows AI spellcheck results.
-// Appears after user clicks "AI Spellcheck" button.
+// Floating panel that shows AI Proofread results.
+// Appears after user clicks "AI Proofread" button.
 // Shows each error with Fix / Ignore buttons + Fix All.
 
 import 'package:flutter/material.dart';
@@ -70,7 +70,7 @@ class SpellcheckPanel extends ConsumerWidget {
           const SizedBox(width: 8),
           const Expanded(
             child: Text(
-              'AI Spellcheck',
+              'AI Proofread',
               style: TextStyle(
                 color: AppColors.white,
                 fontSize: 13,

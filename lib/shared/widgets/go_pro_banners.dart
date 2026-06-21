@@ -1049,7 +1049,7 @@ class _TrialActivationDialogState extends State<TrialActivationDialog>
                   _featureRow(LucideIcons.infinity, 'Unlimited exports',
                       'Download as many PDFs as you need'),
                   _featureRow(LucideIcons.sparkles, 'Unlimited AI generation',
-                      'AI Fill, Rewrite & Spellcheck — no limits'),
+                      'AI Compose, Rewrite & Spellcheck — no limits'),
                   _featureRow(LucideIcons.fileText, 'Unlimited documents',
                       'Create unlimited CVs & cover letters'),
                   _featureRow(LucideIcons.layout, 'All premium templates',
@@ -1511,7 +1511,7 @@ class ProFeaturesDialog extends StatelessWidget {
                     _featureRow(
                       LucideIcons.sparkles,
                       'Unlimited AI Generation',
-                      'AI Fill and AI Rewrite with no limits',
+                      'AI Compose and AI Refine with no limits',
                     ),
                     _featureRow(
                       LucideIcons.fileText,
@@ -1535,7 +1535,7 @@ class ProFeaturesDialog extends StatelessWidget {
                     ),
                     _featureRow(
                       LucideIcons.spellCheck,
-                      'AI Spellcheck',
+                      'AI Proofread',
                       'Catch every typo before you submit',
                     ),
                     _featureRow(

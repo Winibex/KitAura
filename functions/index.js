@@ -93,18 +93,25 @@ async function getSubWithCycleCheck(uid) {
      }
 
   // Billing cycle reset
-  if (sub.cycleEndDate && now > sub.cycleEndDate.toDate()) {
-    const newEnd = new Date(now.getTime() + 30 * 24 * 3600 * 1000);
-    await ref.update({
-      aiFillCount: 0, aiRewriteCount: 0, aiDesignCount: 0,
-      exportCount: 0, spellcheckCount: 0,
-      cycleStartDate: admin.firestore.Timestamp.fromDate(now),
-      cycleEndDate: admin.firestore.Timestamp.fromDate(newEnd),
-      lastResetDate: admin.firestore.Timestamp.fromDate(now),
-    });
-    sub.aiFillCount = 0; sub.aiRewriteCount = 0;
-    sub.aiDesignCount = 0; sub.exportCount = 0; sub.spellcheckCount = 0;
-  }
+    if (sub.cycleEndDate && now > sub.cycleEndDate.toDate()) {
+      const newEnd = new Date(now.getTime() + 30 * 24 * 3600 * 1000);
+      await ref.update({
+        aiFillCount: 0, aiRewriteCount: 0, aiDesignCount: 0,
+        exportCount: 0, spellcheckCount: 0,
+        editorAiCount: 0, editorAiRefusalCount: 0,
+        editorAiHourlyCount: 0,
+        editorAiHourlyResetAt: null,
+        cycleStartDate: admin.firestore.Timestamp.fromDate(now),
+        cycleEndDate: admin.firestore.Timestamp.fromDate(newEnd),
+        lastResetDate: admin.firestore.Timestamp.fromDate(now),
+      });
+      sub.aiFillCount = 0; sub.aiRewriteCount = 0;
+      sub.aiDesignCount = 0; sub.exportCount = 0; sub.spellcheckCount = 0;
+      sub.editorAiCount = 0; sub.editorAiRefusalCount = 0;
+      sub.editorAiHourlyCount = 0;
+      sub.editorAiHourlyResetAt = null;
+    }
+
   return { sub, ref };
 }
 
@@ -126,6 +133,25 @@ async function checkPaywall(sub, counterField, limitField) {
         const name = friendlyNames[limitField] || "usage";
         throw new HttpsError("resource-exhausted",
           `You've reached your ${name} limit on the free plan. Upgrade to Pro for unlimited access.`);
+  }
+}
+
+async function checkCombinedAiContentPaywall(sub) {
+  // Pro/trial: enforce 100/month combined cap.
+  // Free: enforce 15/month combined cap.
+  // Trial = pro-equivalent.
+  const isPro = sub.plan === "pro" || (sub.plan === "trial" && sub.trialActive);
+  const used = (sub.aiFillCount || 0) + (sub.aiRewriteCount || 0);
+  const max = isPro ? 100 : 15;
+
+  if (used >= max) {
+    const upgradeNote = isPro
+      ? ""
+      : " Upgrade to Pro for 100 per month.";
+    throw new HttpsError(
+      "resource-exhausted",
+      `You've used all ${max} AI Compose + Refine calls this cycle.${upgradeNote}`
+    );
   }
 }
 
@@ -181,6 +207,42 @@ async function writeTracking({ uid, data, counterField, summaryField, monthlyFie
   return actRef.id;
 }
 
+async function trackFailure({ uid, tool, type, errorMessage, durationMs,
+  documentId = null, documentTitle = null, templateId = null,
+  sectionType = null, sectionTitle = null, model = null,
+  partialUsage = null }) {
+  try {
+    const now = admin.firestore.Timestamp.fromDate(new Date());
+    const actRef = db.collection(`users/${uid}/aiActivity`).doc();
+    await actRef.set({
+      id: actRef.id,
+      tool,
+      type,
+      status: "error",
+      model,
+      documentId,
+      documentTitle,
+      templateId,
+      sectionType,
+      sectionTitle,
+      rewriteOptions: null,
+      spellcheckSummary: null,
+      errorMessage: (errorMessage || "Unknown error").slice(0, 500),
+      tokens: {
+        inputTokens: (partialUsage && partialUsage.input_tokens) || 0,
+        outputTokens: (partialUsage && partialUsage.output_tokens) || 0,
+        cacheReadTokens: (partialUsage && partialUsage.cache_read_input_tokens) || 0,
+        cacheCreationTokens: (partialUsage && partialUsage.cache_creation_input_tokens) || 0,
+      },
+      cost: { inputCost: 0, outputCost: 0, cacheReadCost: 0, totalCost: 0 },
+      durationMs: durationMs || 0,
+      createdAt: now,
+    });
+  } catch (e) {
+    console.error("trackFailure failed (non-critical):", e.message);
+  }
+}
+
 async function uploadDetail(uid, activityId, detail) {
   try {
     const bucket = admin.storage().bucket();
@@ -203,7 +265,7 @@ exports.aiFill = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", timeo
     beforeText="", jobDetails=null, cvContent=null } = req.data || {};
 
   const { sub } = await getSubWithCycleCheck(uid);
-  await checkPaywall(sub, "aiFillCount", "aiFillPerMonth");
+  await checkCombinedAiContentPaywall(sub);
 
   const pSnap = await db.doc("config/pricing").get();
   const rates = pSnap.exists ? pSnap.data().models[MODEL_SONNET] : { inputPerMTok:3, outputPerMTok:15, cacheReadMultiplier:0.1 };
@@ -583,15 +645,22 @@ techStack, channels, kpiMetrics.`,
       : (tool === "clientExtract" || tool === "clientChat") ? 4096 : 2048;
 
   let text, usage;
-  try {
+    try {
       const r = await callClaude({ model: MODEL_SONNET, system: sys,
         userContent, messages: chatMessages, maxTokens: maxTok,
         apiKey: ANTHROPIC_KEY.value() });
       text = r.text; usage = r.usage;
     } catch (err) {
-    console.error("aiFill API error:", err?.response?.data || err.message);
-    throw new HttpsError("internal", "AI generation failed.");
-  }
+      console.error("aiFill API error:", err?.response?.data || err.message);
+      await trackFailure({
+        uid, tool, type: "aiFill",
+        errorMessage: err?.message || "API call failed",
+        durationMs: Date.now() - t0,
+        documentId, documentTitle, templateId, sectionType, sectionTitle,
+        model: MODEL_SONNET,
+      });
+      throw new HttpsError("internal", "AI generation failed.");
+    }
 
   let cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
     // Salvage: if there's leading/trailing prose, extract the outermost JSON object.
@@ -665,14 +734,22 @@ exports.spellcheck = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", t
   const txt = Object.entries(sections).map(([t,v])=>`--- ${t} ---\n${v}`).join("\n\n");
 
   let result, usage;
-  try {
-    const r = await callClaude({ model:MODEL_HAIKU, system:sys,
-      userContent:`Check spelling:\n\n${txt}`, maxTokens:1024, apiKey:ANTHROPIC_KEY.value() });
-    result = r.text; usage = r.usage;
-  } catch(err) {
-    console.error("spellcheck error:", err?.response?.data || err.message);
-    throw new HttpsError("internal", "Spellcheck failed.");
-  }
+    try {
+      const r = await callClaude({ model: MODEL_HAIKU, system: sys,
+        userContent: `Check spelling:\n\n${txt}`, maxTokens: 1024, apiKey: ANTHROPIC_KEY.value() });
+      result = r.text;
+      usage = r.usage;
+    } catch (err) {
+      console.error("spellcheck error:", err?.response?.data || err.message);
+      await trackFailure({
+        uid, tool, type: "spellcheck",
+        errorMessage: err?.message || "API call failed",
+        durationMs: Date.now() - t0,
+        documentId, documentTitle,
+        model: MODEL_HAIKU,
+      });
+      throw new HttpsError("internal", "Spellcheck failed.");
+    }
 
   let corrections;
   try { corrections = JSON.parse(result.replace(/```json/g,"").replace(/```/g,"").trim()); } catch(e) { corrections = []; }
@@ -708,7 +785,7 @@ exports.aiRewrite = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", ti
   if (!text || !sectionType) throw new HttpsError("invalid-argument", "Missing text or sectionType");
 
   const { sub } = await getSubWithCycleCheck(uid);
-  await checkPaywall(sub, "aiRewriteCount", "aiRewritePerMonth");
+  await checkCombinedAiContentPaywall(sub);
 
   const pSnap = await db.doc("config/pricing").get();
   const rates = pSnap.exists ? pSnap.data().models[MODEL_SONNET] : { inputPerMTok:3, outputPerMTok:15, cacheReadMultiplier:0.1 };
@@ -736,15 +813,22 @@ exports.aiRewrite = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", ti
   }];
 
   let rewrittenText, usage;
-  try {
-    const r = await callClaude({ model: MODEL_SONNET, system: sys,
-      userContent: `Rewrite this ${sectionType} section:\n\n${text}`,
-      maxTokens: 2000, apiKey: ANTHROPIC_KEY.value() });
-    rewrittenText = r.text; usage = r.usage;
-  } catch (err) {
-    console.error("aiRewrite API error:", err?.response?.data || err.message);
-    throw new HttpsError("internal", "AI rewrite failed.");
-  }
+    try {
+      const r = await callClaude({ model: MODEL_SONNET, system: sys,
+        userContent: `Rewrite this ${sectionType} section:\n\n${text}`,
+        maxTokens: 2000, apiKey: ANTHROPIC_KEY.value() });
+      rewrittenText = r.text; usage = r.usage;
+    } catch (err) {
+      console.error("aiRewrite API error:", err?.response?.data || err.message);
+      await trackFailure({
+        uid, tool, type: "aiRewrite",
+        errorMessage: err?.message || "API call failed",
+        durationMs: Date.now() - t0,
+        documentId, documentTitle, templateId, sectionType, sectionTitle,
+        model: MODEL_SONNET,
+      });
+      throw new HttpsError("internal", "AI rewrite failed.");
+    }
 
   const cost = calculateCost(usage, rates);
   const actId = await writeTracking({ uid,
@@ -891,7 +975,6 @@ exports.trackDocCreated = onCall({ region: "us-central1", timeoutSeconds: 30 }, 
   const uid = req.auth.uid;
   const { tool = "cv", documentId = null, documentTitle = null } = req.data || {};
 
-  // Validate tool
   const toolMap = {
     cv:          { sub: "cvCount",          sum: "totalCvsCreated",          mon: "cvsCreated",          tx: "cvCreated" },
     coverLetter: { sub: "coverLetterCount", sum: "totalCoverLettersCreated", mon: "coverLettersCreated", tx: "coverLetterCreated" },
@@ -900,13 +983,32 @@ exports.trackDocCreated = onCall({ region: "us-central1", timeoutSeconds: 30 }, 
   const fields = toolMap[tool];
   if (!fields) throw new HttpsError("invalid-argument", `Unknown tool: ${tool}`);
 
+  // ── NEW: Combined doc cap (5 free / 30 pro) ────────────────────
+  const subRef = db.doc(`users/${uid}/data/subscription`);
+  const subSnap = await subRef.get();
+  if (subSnap.exists) {
+    const sub = subSnap.data();
+    const isPro = sub.plan === "pro" || (sub.plan === "trial" && sub.trialActive);
+    const totalDocs = (sub.cvCount || 0) + (sub.coverLetterCount || 0) + (sub.proposalCount || 0);
+    const maxDocs = isPro ? 30 : 5;
+    if (totalDocs >= maxDocs) {
+      const upgradeNote = isPro
+        ? " Contact support if you need more."
+        : " Upgrade to Pro for up to 30 documents.";
+      throw new HttpsError(
+        "resource-exhausted",
+        `You've reached the ${maxDocs}-document limit.${upgradeNote}`
+      );
+    }
+  }
+  // ── END NEW ─────────────────────────────────────────────────────
+
   const batch = db.batch();
   const now = admin.firestore.Timestamp.fromDate(new Date());
   const FV = admin.firestore.FieldValue;
   const month = new Date().toISOString().slice(0, 7);
 
   // 1. Subscription doc counter
-  const subRef = db.doc(`users/${uid}/data/subscription`);
   batch.update(subRef, { [fields.sub]: FV.increment(1) });
 
   // 2. Analytics summary
@@ -1164,4 +1266,334 @@ exports.activateTrial = onCall({ region: "us-central1", timeoutSeconds: 30 }, as
     trialEndDate: trialEnd.toISOString(),
     daysRemaining: 7,
   };
+});
+
+// ════════════════════════════════════════════════════════════════════════
+// 10. AI EDIT — natural-language editor commands (command-K)
+// ════════════════════════════════════════════════════════════════════════
+//
+// Returns a list of structured ops the frontend applies to CanvasController.
+// Strict abuse prevention:
+//   - System prompt enforces refusal envelope for off-topic requests
+//   - max_tokens 1024 cap (legit op envelope fits easily; off-topic content can't)
+//   - Server-side refusal counter; 5 refusals/cycle → soft block (free + pro alike)
+//   - Separate editorAiCount paywall counter, free=15/month, trial/pro=unlimited
+//
+// Ops returned (11 total) — see /docs op format v2:
+//   updateText, formatText, updateItem, moveItem, deleteItem, duplicateItem,
+//   addItem, updateCanvas, generateContent, updateTable, updateReflow
+
+exports.aiEdit = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", timeoutSeconds: 60 }, async (req) => {
+  if (!req.auth) throw new HttpsError("unauthenticated", "Sign in required.");
+  const uid = req.auth.uid;
+  const t0 = Date.now();
+  const {
+    instruction = "",
+    snapshot = null,           // { pageCount, canvasBackground, items: [...] }
+    tool = "cv",               // cv | coverLetter | proposal
+    documentId = null,
+    documentTitle = null,
+    templateId = null,
+  } = req.data || {};
+
+  if (!instruction || !instruction.trim()) {
+    throw new HttpsError("invalid-argument", "Please type what you want to change.");
+  }
+  if (!snapshot || !Array.isArray(snapshot.items)) {
+    throw new HttpsError("invalid-argument", "Editor state missing — try reloading the page.");
+  }
+
+  // ── Billing cycle + paywall ────────────────────────────────────
+  // ── Billing cycle + paywall ────────────────────────────────────
+    const { sub, ref: subRef } = await getSubWithCycleCheck(uid);
+
+    // Monthly cap (7 free / 100 pro)
+    const isPro = sub.plan === "pro" || (sub.plan === "trial" && sub.trialActive);
+    const monthlyUsed = sub.editorAiCount || 0;
+    const monthlyMax = isPro ? 100 : 7;
+    if (monthlyUsed >= monthlyMax) {
+      const upgradeNote = isPro
+        ? ""
+        : " Upgrade to Pro for 100 per month.";
+      throw new HttpsError(
+        "resource-exhausted",
+        `You've used all ${monthlyMax} AI Assistant calls this cycle.${upgradeNote}`
+      );
+    }
+
+    // Refusal soft-block (5/cycle, all tiers)
+    const refusalCount = sub.editorAiRefusalCount || 0;
+    if (refusalCount >= 5) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "AI Assistant is for editing this document only. You've made several off-topic requests this cycle — it'll reset next cycle."
+      );
+    }
+
+    // Hourly burst (20/hour, Pro only — free's monthly cap is too low for hourly to matter)
+    if (isPro) {
+      const now = new Date();
+      const hourlyResetAt = sub.editorAiHourlyResetAt ? sub.editorAiHourlyResetAt.toDate() : null;
+      let hourlyCount = sub.editorAiHourlyCount || 0;
+
+      // Reset window if it expired
+      if (!hourlyResetAt || now >= hourlyResetAt) {
+        hourlyCount = 0;
+        const newWindow = new Date(now.getTime() + 60 * 60 * 1000); // +1 hour
+        await subRef.update({
+          editorAiHourlyCount: 0,
+          editorAiHourlyResetAt: admin.firestore.Timestamp.fromDate(newWindow),
+        });
+        sub.editorAiHourlyCount = 0;
+        sub.editorAiHourlyResetAt = admin.firestore.Timestamp.fromDate(newWindow);
+      } else if (hourlyCount >= 20) {
+        const minsLeft = Math.ceil((hourlyResetAt - now) / 60000);
+        throw new HttpsError(
+          "resource-exhausted",
+          `You've used 20 AI Assistant calls in the last hour. Try again in ${minsLeft} minutes.`
+        );
+      }
+    }
+
+  // ── Pricing ────────────────────────────────────────────────────
+  const pSnap = await db.doc("config/pricing").get();
+  const rates = pSnap.exists ? pSnap.data().models[MODEL_SONNET]
+    : { inputPerMTok: 3, outputPerMTok: 15, cacheReadMultiplier: 0.1 };
+
+  // ── System prompt: strict gatekeeper + op schema ───────────────
+  const sys = [{
+    type: "text",
+    text: `You are an editor AI for a document-builder app called KitAura. The user is editing a ${tool === "cv" ? "CV" : tool === "coverLetter" ? "cover letter" : "client proposal"} on a free-form canvas. Your ONLY job is to translate the user's instruction into structured JSON ops that modify the canvas. Nothing else.
+
+YOU MUST RETURN ONLY ONE OF THESE TWO ENVELOPE SHAPES — no markdown, no code fences, no preamble:
+
+A) OPS ENVELOPE (user asked for valid edits):
+{
+  "ops": [ ... ],
+  "summary": "Short human-readable description of what you did.",
+  "warnings": [],
+  "refusal": null
+}
+
+B) REFUSAL ENVELOPE (user asked for anything that isn't editing this document):
+{
+  "ops": [],
+  "summary": "Friendly one-sentence message redirecting them.",
+  "warnings": [],
+  "refusal": "off-topic"
+}
+
+C) ADVISORY MESSAGE (user is asking for opinion/advice, not an edit):
+{
+    "ops": [],
+    "summary": "Friendly explanation that you execute edits but they decide what they want.",
+    "warnings": [],
+    "refusal": "advisory"
+}
+
+REFUSE these requests with envelope B:
+- Writing code, scripts, or programs of any kind
+- General chat, jokes, opinions, advice unrelated to the document
+- Math problems, homework, translations not part of editing the document
+- Anything that doesn't map to a structural edit of the canvas items below
+- Requests for harmful, illegal, or unsafe content
+
+ACCEPT these with envelope A:
+- Format changes (bold, color, size, alignment, font)
+- Layout changes (move, resize, rotate, delete, duplicate items)
+- Content edits (rename headings, edit/delete/insert lines)
+- Adding new items (sections, shapes, lines)
+- Page changes (background, add/remove pages)
+- AI content generation for a specific section (writing new summary text, rewriting bullets, etc.) — return as generateContent op
+- Table cell edits
+- Reflow tagging (pin, heading role, group)
+
+QUESTION vs COMMAND detection:
+- If the user is ASKING ("can you do X?", "is it possible to...", "what would happen if..."),
+this is usually still a command in disguise — humans phrase commands as questions to be polite.
+Do the work.
+- BUT if the user is genuinely uncertain or seeking advice
+("which color looks better?", "should I add a hobbies section?", "is my CV too long?"),
+ refuse with a "message" envelope explaining you only execute edits, not give advice.
+ Suggest they make the call and ask you to apply it.
+
+THE CANVAS SNAPSHOT — every item the user can edit, with a temporary id "i0", "i1", etc.:
+${JSON.stringify(snapshot, null, 2)}
+
+EVERY op MUST reference an itemId from this snapshot (except addItem and updateCanvas). If you can't find a matching item, add a clear warning to the warnings array and skip that op.
+
+THE 11 ALLOWED OPS — return only ops in this exact shape:
+
+1. updateText — edit text inside a textSection
+{ "op": "updateText", "itemId": "i0", "mode": "replaceLine" | "deleteLine" | "insertLine" | "replaceRange", "lineIndex": 0, "range": [start, end], "newText": "..." }
+
+2. formatText — change Quill attributes
+{ "op": "formatText", "itemId": "i0", "scope": "whole" | "line" | "range", "lineIndex": 0, "range": [start, end], "attrs": { "bold": true, "italic": null, "underline": null, "color": "#RRGGBB", "size": "14", "font": "Poppins", "align": "left"|"center"|"right" } }
+(null clears an attribute. Omit keys you don't want to change.)
+
+3. updateItem — item visual props
+{ "op": "updateItem", "itemId": "i0", "props": { "color": "#RRGGBB", "borderColor": "#RRGGBB"|null, "borderWidth": 0, "rotation": 0, "flipX": false, "flipY": false, "w": 100, "h": 50 } }
+
+4. moveItem — position / page / alignment
+{ "op": "moveItem", "itemId": "i0", "toPage": 1, "align": "centerH"|"centerV"|"left"|"right"|"top"|"bottom", "x": 40, "y": 120, "dx": 0, "dy": 0 }
+(Use explicit x/y when stated. align when user says "center"/"left". dx/dy for relative moves. Page is 1-based.)
+
+5. deleteItem — remove an item
+{ "op": "deleteItem", "itemId": "i0" }
+
+6. duplicateItem — clone an item
+{ "op": "duplicateItem", "itemId": "i0", "toPage": 1, "offsetY": 20 }
+
+7. addItem — create a new item
+{ "op": "addItem", "type": "textSection"|"rectangle"|"line"|"circle"|"imageBox"|"icon"|"triangle"|"star"|"arrow"|"diamond"|"hexagon"|"skewedRectangle", "page": 1, "x": 40, "y": 600, "w": 515, "h": 80, "color": "#RRGGBB", "sectionType": "hobbies"|"summary"|null, "title": "HOBBIES", "initialText": "• Reading\\n• Hiking", "role": null, "group": null }
+(For textSection, set sectionType and initialText. For shapes, set color.)
+
+8. updateCanvas — page-level
+{ "op": "updateCanvas", "canvasBackground": "#RRGGBB", "pageAction": "add"|"removeLast"|"removeAt", "pageIndex": 2 }
+
+9. generateContent — AI rewrite/generate for a target section
+{ "op": "generateContent", "itemId": "i0", "sectionType": "summary"|"experience"|"skills"|..., "mode": "replace"|"append"|"rewrite", "instruction": "User's content request, e.g. 'focus on Python and ML'", "tone": "professional"|"creative"|"concise" }
+
+10. updateTable — table cell/row/col/style edits (tableSection items)
+{ "op": "updateTable", "itemId": "i0", "action": "setCell"|"setRow"|"setColumn"|"addRow"|"addColumn"|"deleteRow"|"deleteColumn"|"setHeaderStyle"|"setBorderStyle", "row": 0, "col": 0, "value": "...", "rowValues": ["a","b","c"], "style": { "headerBgColor": "#RRGGBB", "headerTextColor": "#RRGGBB", "cellTextColor": "#RRGGBB", "borderColor": "#RRGGBB", "fontSize": 11, "showHeader": true } }
+
+11. updateReflow — reflow engine tags
+{ "op": "updateReflow", "itemId": "i0", "role": "hero"|"top_band"|"pinned"|"heading"|"underline"|"signature"|null, "group": "name"|null, "beforeHeadingGap": 20 }
+
+RULES:
+- Return ONLY the JSON envelope. No prose before or after. No markdown.
+- Omit op fields the user didn't specify rather than guessing values.
+- Multiple ops are fine when the request implies multiple edits.
+- For ambiguous targets ("the heading" when there are several), pick the most likely based on context and add a warning if uncertain.
+- Keep the summary under 20 words.
+- If the user combines structural + content ("delete the old summary and write a new one about X"), emit BOTH a structural op AND a generateContent op.
+
+EXAMPLES:
+
+User: "make the summary heading bold"
+→ { "ops": [{"op":"formatText","itemId":"i0","scope":"line","lineIndex":0,"attrs":{"bold":true}}], "summary": "Made the summary heading bold.", "warnings": [], "refusal": null }
+
+User: "write me a Python script to scrape Reddit"
+→ { "ops": [], "summary": "I can only edit this document. Try asking me to format text, move sections, or rewrite content.", "warnings": [], "refusal": "off-topic" }
+
+User: "what's the capital of France"
+→ { "ops": [], "summary": "I can only edit this document. Ask me to change text, layout, or formatting.", "warnings": [], "refusal": "off-topic" }
+
+User: "rewrite the summary to focus on my Python experience"
+→ { "ops": [{"op":"generateContent","itemId":"i0","sectionType":"summary","mode":"rewrite","instruction":"focus on Python experience"}], "summary": "Rewriting the summary.", "warnings": [], "refusal": null }
+
+User: "delete the navy bar at top and add a thinner red one"
+→ { "ops": [{"op":"deleteItem","itemId":"i2"},{"op":"addItem","type":"rectangle","page":1,"x":0,"y":0,"w":595,"h":40,"color":"#831843"}], "summary": "Replaced the navy bar with a thinner red one.", "warnings": [], "refusal": null }`,
+    cache_control: { type: "ephemeral" },
+  }];
+
+  // ── Call Claude with strict 1024 token cap ─────────────────────
+  const userContent = `Instruction: ${instruction.trim()}\n\nReturn the JSON envelope now.`;
+
+  let text, usage;
+    try {
+      const r = await callClaude({
+        model: MODEL_SONNET,
+        system: sys,
+        userContent,
+        maxTokens: 4096,
+        apiKey: ANTHROPIC_KEY.value(),
+      });
+      text = r.text;
+      usage = r.usage;
+    } catch (err) {
+      console.error("aiEdit API error:", err?.response?.data || err.message);
+      await trackFailure({
+        uid, tool: "editorAI", type: "aiEdit",
+        errorMessage: err?.message || "API call failed",
+        durationMs: Date.now() - t0,
+        documentId, documentTitle, templateId,
+        model: MODEL_SONNET,
+      });
+      throw new HttpsError("internal", "AI editor failed. Please try again.");
+    }
+
+  // ── Parse envelope (with JSON salvage) ─────────────────────────
+  let cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
+  const first = cleaned.indexOf("{");
+  const last = cleaned.lastIndexOf("}");
+  if (first > 0 || (last !== -1 && last < cleaned.length - 1)) {
+    if (first !== -1 && last !== -1 && last > first) {
+      cleaned = cleaned.slice(first, last + 1);
+    }
+  }
+  let envelope;
+  try {
+    envelope = JSON.parse(cleaned);
+  } catch (e) {
+    console.error("aiEdit parse error. Last 200:", cleaned.slice(-200));
+    throw new HttpsError("internal", "AI returned malformed output. Try rephrasing.");
+  }
+
+  // Normalize
+  if (!Array.isArray(envelope.ops)) envelope.ops = [];
+  if (!Array.isArray(envelope.warnings)) envelope.warnings = [];
+  if (typeof envelope.summary !== "string") envelope.summary = "";
+  const isRefusal = envelope.refusal != null && envelope.refusal !== "";
+
+  // ── Tracking + refusal counter ─────────────────────────────────
+  const cost = calculateCost(usage, rates);
+
+  const actId = await writeTracking({
+    uid,
+    data: {
+      tool: "editorAI",
+      type: isRefusal ? "aiEditRefusal" : "aiEdit",
+      status: "success",
+      model: MODEL_SONNET,
+      documentId,
+      documentTitle,
+      templateId,
+      sectionType: null,
+      sectionTitle: null,
+      rewriteOptions: null,
+      spellcheckSummary: null,
+      errorMessage: isRefusal ? envelope.refusal : null,
+      durationMs: Date.now() - t0,
+    },
+    counterField: "editorAiCount",
+    summaryField: "totalEditorAiCalls",
+    monthlyField: "editorAiCalls",
+    monthlyToolField: null,
+    tokens: usage,
+    cost,
+  });
+
+  // Increment refusal counter on the subscription doc (separate from main batch
+  // because writeTracking already committed; this is a small follow-up update).
+  if (isRefusal) {
+    try {
+      await subRef.update({
+        editorAiRefusalCount: FieldValue.increment(1),
+      });
+    } catch (e) {
+      console.error("Refusal counter update failed:", e.message);
+    }
+  }
+
+  // ── Upload detail JSON ─────────────────────────────────────────
+  uploadDetail(uid, actId, {
+    tool: "editorAI",
+    type: isRefusal ? "aiEditRefusal" : "aiEdit",
+    instruction: instruction.trim(),
+    snapshot,
+    envelope,
+  });
+
+  if (isPro) {
+      try {
+        await subRef.update({
+          editorAiHourlyCount: FieldValue.increment(1),
+        });
+      } catch (e) {
+        console.error("Hourly counter update failed:", e.message);
+      }
+    }
+
+  return { envelope };
 });

@@ -1,17 +1,19 @@
 // lib/features/cv/controller/claude_controller.dart
 //
-// AI Fill + AI Rewrite controller. All tracking happens server-side.
+// AI Compose + AI Refine controller. All tracking happens server-side.
 // Frontend only: load profile, call function, apply returned content.
 //
 // CHANGES FROM PREVIOUS VERSION:
-//   1. Added rewriteSection() method for AI Rewrite feature
+//   1. Added rewriteSection() method for AI Refine feature
 //   2. Debug prints on all operations
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../../features/cover_letter/editor/controller/cl_editor_controller.dart';
+import '../../features/cv/editor/controller/section_autofill.dart';
 import '../../features/proposal/editor/controller/prop_editor_controller.dart';
 import '../../features/proposal/template/data/prop_template_data.dart';
 import '../models/ai_profile_model.dart';
@@ -78,7 +80,7 @@ class ClaudeController extends StateNotifier<ClaudeState> {
   AiProfileModel? _cachedProfile;
 
   // ═══════════════════════════════════════════════════════════════════════
-  // AI FILL
+  // AI Compose
   // ═══════════════════════════════════════════════════════════════════════
 
   /// Fill a text section: extract styles → call function → apply styled content.
@@ -92,6 +94,7 @@ class ClaudeController extends StateNotifier<ClaudeState> {
     String? cvTitle,
     String? templateId,
     String tool = 'cv',
+    String? profileId,
   }) async
   {
     if (state.isActive) return;
@@ -105,13 +108,21 @@ class ClaudeController extends StateNotifier<ClaudeState> {
 
     state = ClaudeState(status: AiFillStatus.loading, activeItemId: itemId, activeOperation: 'fill');
 
-    // Load profile
+    // Load profile — if a specific profileId is passed, ALWAYS re-fetch
+    // (bypassing cache) because the user may have switched profiles in
+    // this editor session.
+    AiProfileModel? profile;
     try {
-      _cachedProfile ??= await _loadAiProfile(uid);
+      if (profileId != null) {
+        profile = await _loadAiProfile(uid, profileId: profileId);
+      } else {
+        _cachedProfile ??= await _loadAiProfile(uid);
+        profile = _cachedProfile;
+      }
     } catch (e) {
       debugPrint('🤖 [ClaudeController] Profile load failed: $e');
     }
-    final profile = _cachedProfile ?? const AiProfileModel();
+    profile ??= const AiProfileModel();
 
     // Extract styles from existing template content
     final styles = _extractStyles(controller.document);
@@ -277,8 +288,269 @@ class ClaudeController extends StateNotifier<ClaudeState> {
     }
   }
 
+  /// Fill ALL CV sections at once using the user's Career Profile.
+  /// Single API call — mirrors fillAllClSections and fillAllProposalSections.
+  ///
+  /// Used by the "All Sections" mode in the CV editor right panel when nothing
+  /// is selected. Counts as ONE AI Compose call against the user's quota
+  /// (not one per section).
+  Future<void> fillAllCvSections({
+    required List<CanvasItem> items,
+    String? cvId,
+    String? cvTitle,
+    String? templateId,
+    String? profileId,
+  }) async {
+    if (state.isActive) return;
+    debugPrint('🤖 [ClaudeController] fillAllCvSections');
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      state = const ClaudeState(status: AiFillStatus.error, error: 'Please sign in.');
+      return;
+    }
+
+    state = const ClaudeState(status: AiFillStatus.loading, activeOperation: 'fill');
+
+    // Load the chosen profile (or default if none picked).
+    AiProfileModel? profile;
+    try {
+      profile = await _loadAiProfile(uid, profileId: profileId);
+    } catch (e) {
+      debugPrint('🤖 [ClaudeController] Profile load failed: $e');
+    }
+    if (profile == null ||
+        (profile.fullName.isEmpty && profile.experiences.isEmpty)) {
+      state = const ClaudeState(
+        status: AiFillStatus.error,
+        error: 'Career Profile is empty. Add data to your profile first.',
+      );
+      return;
+    }
+
+    // ── Build the section manifest from the canvas ──────────────────
+    // Only text sections with an autofillable section type get included.
+    // Skip role-tagged items (hero/top_band/signature etc.) — those are
+    // template decorations, not user content.
+    final manifest = <Map<String, dynamic>>[];
+    final keyToItem = <String, CanvasItem>{};
+    int slot = 0;
+    for (final item in items) {
+      if (item.role == 'hero' ||
+          item.role == 'top_band' ||
+          item.role == 'signature' ||
+          item.role == 'heading' ||
+          item.role == 'underline') {
+        continue;
+      }
+      if (!item.isText || item.controller == null) continue;
+      if (!item.sectionType.isAutofillable) continue;
+
+      final key = 's$slot';
+      keyToItem[key] = item;
+      manifest.add({
+        'id': key,
+        'sectionType': item.sectionType.key,
+        'title': item.title,
+        'kind': 'text',
+      });
+      slot++;
+    }
+
+    if (manifest.isEmpty) {
+      state = const ClaudeState(
+        status: AiFillStatus.error,
+        error: 'No fillable sections on this CV.',
+      );
+      return;
+    }
+
+    // ── Single API call with the full manifest ─────────────────────
+    try {
+      final content = await ClaudeService.aiFillSection(
+        sectionType: 'all',
+        tone: profile.tone,
+        experienceLevel: profile.experienceLevel,
+        profile: _sanitizeProfile(profile.toJson()),
+        tool: 'cv',
+        documentId: cvId,
+        documentTitle: cvTitle,
+        templateId: templateId,
+        sectionManifest: manifest,
+      );
+
+      if (!mounted) return;
+      if (content == null) {
+        state = const ClaudeState(
+          status: AiFillStatus.error,
+          error: 'AI returned no content. Add more profile data and try again.',
+        );
+        return;
+      }
+
+      debugPrint('🤖 [CV] returned keys: ${content.keys.toList()}');
+      debugPrint('🤖 [CV] expected keys: ${keyToItem.keys.toList()}');
+
+      // ── Apply each section's content back to its canvas item ──────
+      int filled = 0;
+      content.forEach((key, sec) {
+        final item = keyToItem[key];
+        if (item == null || sec is! Map) return;
+        try {
+          final styles = _extractStyles(item.controller!.document);
+          item.controller!.updateSelection(
+              const TextSelection.collapsed(offset: 0), ChangeSource.local);
+          item.controller!.document = Document.fromJson(
+              _buildStyledDelta(Map<String, dynamic>.from(sec), styles));
+          filled++;
+        } catch (e) {
+          debugPrint('🤖 [ClaudeController] Apply failed for $key: $e');
+        }
+      });
+
+      state = ClaudeState(
+        status: AiFillStatus.done,
+        streamedChars: filled,
+      );
+      debugPrint('🤖 [ClaudeController] fillAllCvSections OK — $filled filled');
+    } catch (e) {
+      if (!mounted) return;
+      final isPaywall = e.toString().contains('limit') || e.toString().contains('Upgrade');
+      state = ClaudeState(
+        status: isPaywall ? AiFillStatus.paywalled : AiFillStatus.error,
+        error: e.toString(),
+      );
+    }
+  }
+
+
+  /// Insert raw Career Profile data into ALL fillable CV sections at once.
+  /// No AI, no tokens — uses SectionAutofill (same engine as the old auto-fill
+  /// on template open).
+  Future<void> composeRawAllCvSections({
+    required List<CanvasItem> items,
+    String? profileId,
+  }) async {
+    if (state.isActive) return;
+    debugPrint('🤖 [ClaudeController] composeRawAllCvSections');
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      state = const ClaudeState(status: AiFillStatus.error, error: 'Please sign in.');
+      return;
+    }
+
+    state = const ClaudeState(status: AiFillStatus.loading, activeOperation: 'fill');
+
+    AiProfileModel? profile;
+    try {
+      profile = await _loadAiProfile(uid, profileId: profileId);
+    } catch (e) {
+      debugPrint('🤖 [ClaudeController] Profile load failed: $e');
+    }
+    if (profile == null ||
+        (profile.fullName.isEmpty && profile.experiences.isEmpty)) {
+      state = const ClaudeState(
+        status: AiFillStatus.error,
+        error: 'Career Profile is empty. Add data to your profile first.',
+      );
+      return;
+    }
+
+    try {
+      // SectionAutofill.fillAll already handles "every fillable section."
+      // Returns the count of sections that received content.
+      final filled = SectionAutofill.fillAll(items, profile);
+      state = ClaudeState(
+        status: AiFillStatus.done,
+        streamedChars: filled,
+      );
+      debugPrint('🤖 [ClaudeController] Raw fill-all OK — $filled sections');
+    } catch (e) {
+      state = ClaudeState(
+        status: AiFillStatus.error,
+        error: 'Could not fill sections: $e',
+      );
+    }
+  }
+
+
   // ═══════════════════════════════════════════════════════════════════════
-  // AI REWRITE
+  // RAW INSERT (no AI, no tokens — uses SectionAutofill)
+  // ═══════════════════════════════════════════════════════════════════════
+
+  /// Inserts raw Career Profile data into the given section WITHOUT calling
+  /// the AI. Reuses the same SectionAutofill that runs on new template
+  /// load, so output is consistent with the rest of the app.
+  ///
+  /// Used by the "Just Insert My Data" button in the editor right panel.
+  Future<void> composeRawFromProfile({
+    required CanvasItem item,
+    String? profileId,
+  }) async
+  {
+    if (state.isActive) return;
+    debugPrint('🤖 [ClaudeController] composeRawFromProfile(${item.title})');
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      state = const ClaudeState(status: AiFillStatus.error, error: 'Please sign in.');
+      return;
+    }
+    if (item.controller == null) return;
+
+    state = ClaudeState(status: AiFillStatus.loading, activeItemId: item.id, activeOperation: 'fill');
+
+    // Load the chosen profile (or default).
+    AiProfileModel? profile;
+    try {
+      profile = await _loadAiProfile(uid, profileId: profileId);
+    } catch (e) {
+      debugPrint('🤖 [ClaudeController] Profile load failed: $e');
+    }
+
+    if (profile == null ||
+        (profile.fullName.isEmpty && profile.experiences.isEmpty)) {
+      state = ClaudeState(
+        status: AiFillStatus.error,
+        activeItemId: item.id,
+        error: 'Career Profile is empty. Add data to your profile first.',
+      );
+      return;
+    }
+
+    // Delegate to the existing SectionAutofill — it knows how to translate
+    // every section type into a styled Quill delta from the profile.
+    try {
+      // SectionAutofill.fillAll runs across a list; we want just this one item.
+      // Wrap it in a single-element list. Result is true if it filled.
+      final filled = SectionAutofill.fillAll([item], profile);
+      if (filled == 0) {
+        state = ClaudeState(
+          status: AiFillStatus.error,
+          activeItemId: item.id,
+          error: 'No data available for this section type. Try AI Compose instead.',
+        );
+        return;
+      }
+      state = ClaudeState(
+        status: AiFillStatus.done,
+        activeItemId: item.id,
+        streamedChars: item.controller!.document.toPlainText().length,
+      );
+      debugPrint('🤖 [ClaudeController] Raw insert OK');
+    } catch (e) {
+      debugPrint('🤖 [ClaudeController] Raw insert failed: $e');
+      state = ClaudeState(
+        status: AiFillStatus.error,
+        activeItemId: item.id,
+        error: 'Could not insert data: $e',
+      );
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // AI Refine
   // ═══════════════════════════════════════════════════════════════════════
 
   /// Rewrite a text section: extract existing text → call function → apply.
@@ -313,7 +585,7 @@ class ClaudeController extends StateNotifier<ClaudeState> {
       state = ClaudeState(
         status: AiFillStatus.error,
         activeItemId: itemId,
-        error: 'Section is empty — nothing to rewrite. Use AI Fill first.',
+        error: 'Section is empty — nothing to rewrite. Use AI Compose first.',
       );
       return;
     }
@@ -453,7 +725,7 @@ class ClaudeController extends StateNotifier<ClaudeState> {
       s == null ? 11 : double.tryParse(s.toString().replaceAll('pt', '')) ?? 11;
 
   // ═══════════════════════════════════════════════════════════════════════
-  // BUILD STYLED DELTA (for AI Fill)
+  // BUILD STYLED DELTA (for AI Compose)
   // ═══════════════════════════════════════════════════════════════════════
 
   List<Map<String, dynamic>> _buildStyledDelta(
@@ -525,8 +797,28 @@ class ClaudeController extends StateNotifier<ClaudeState> {
   void reset() => state = const ClaudeState();
   void invalidateProfile() => _cachedProfile = null;
 
-  Future<AiProfileModel?> _loadAiProfile(String uid) async {
-    debugPrint('🤖 [ClaudeController] Loading default AI profile for $uid');
+  /// Load a specific Career Profile by ID, or the default if [profileId]
+  /// is null. Results are NOT cached across IDs — we always re-fetch when
+  /// the ID changes so the editor can switch profiles mid-session.
+  Future<AiProfileModel?> _loadAiProfile(String uid, {String? profileId}) async {
+    // todo - fix firebase in it
+    if (profileId != null) {
+      debugPrint('🤖 [ClaudeController] Loading specific profile $profileId');
+      try {
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('aiProfiles')
+            .doc(profileId)
+            .get();
+        if (!doc.exists) return null;
+        return AiProfileModel.fromJson(doc.data() as Map<String, dynamic>);
+      } catch (e) {
+        debugPrint('🤖 [ClaudeController] Profile load by ID failed: $e');
+        return null;
+      }
+    }
+    debugPrint('🤖 [ClaudeController] Loading default Career Profile for $uid');
     return await FirebaseService.getDefaultAiProfile(uid);
   }
 

@@ -2,9 +2,9 @@
 //
 // FIXES from previous version:
 //   1. copySection/copyAll format raw text properly (not JSON objects)
-//   2. CV is optional — works with AI Profile alone
-//   3. AI Profile is optional — works with just CV content
-//   4. Loads default AI profile from FirebaseService.getDefaultAiProfile()
+//   2. CV is optional — works with Career Profile alone
+//   3. Career Profile is optional — works with just CV content
+//   4. Loads default Career Profile from FirebaseService.getDefaultAiProfile()
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -155,7 +155,7 @@ class LinkedInController extends StateNotifier<LinkedInState> {
 
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
 
-  // ── Check if AI profile exists ─────────────────────────────────────
+  // ── Check if Career Profile exists ─────────────────────────────────────
 
   Future<void> checkAiProfile() async {
     if (_uid == null) return;
@@ -235,10 +235,10 @@ class LinkedInController extends StateNotifier<LinkedInState> {
       return;
     }
 
-    // Need at least CV or AI Profile
+    // Need at least CV or Career Profile
     if (state.selectedCvId == null && !state.hasAiProfile) {
       state = state.copyWith(
-        error: 'Select a CV or set up an AI Profile in Settings first',
+        error: 'Select a CV or set up an Career Profile in Settings first',
       );
       return;
     }
@@ -252,7 +252,7 @@ class LinkedInController extends StateNotifier<LinkedInState> {
         cvContent = await _loadCvContent(state.selectedCvId!);
       }
 
-      // Load AI profile (optional)
+      // Load Career Profile (optional)
       AiProfileModel? profile;
       try {
         if (state.selectedProfileId != null) {
@@ -276,7 +276,7 @@ class LinkedInController extends StateNotifier<LinkedInState> {
       if ((cvContent == null || cvContent.isEmpty) && profile == null) {
         state = state.copyWith(
           isGenerating: false,
-          error: 'No data found. Please create a CV or set up an AI Profile.',
+          error: 'No data found. Please create a CV or set up an Career Profile.',
         );
         return;
       }
@@ -565,7 +565,7 @@ class LinkedInController extends StateNotifier<LinkedInState> {
 
   Future<String> _saveToFirestore(Map<String, dynamic> content) async {
     final data = {
-      'title': 'LinkedIn Content — ${state.selectedCvTitle ?? "AI Profile"}',
+      'title': 'LinkedIn Content — ${state.selectedCvTitle ?? "Career Profile"}',
       'linkedCvId': state.selectedCvId,
       'linkedCvTitle': state.selectedCvTitle,
       'customPrompt': state.customPrompt,

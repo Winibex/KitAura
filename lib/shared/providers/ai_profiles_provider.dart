@@ -1,6 +1,6 @@
 // lib/shared/providers/ai_profiles_provider.dart
 //
-// Cached AI profiles for the current user. Loads ONCE and caches —
+// Cached Career Profiles for the current user. Loads ONCE and caches —
 // the wizard, LinkedIn generator, and proposal panel all read from here
 // instead of each calling Firebase, keeping read counts (and the bill) low.
 import 'package:firebase_auth/firebase_auth.dart';
@@ -8,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/ai_profile_model.dart';
 import '../services/firebase_service.dart';
 
-/// Fetches all AI profiles for the signed-in user, once, and caches them.
+/// Fetches all Career Profiles for the signed-in user, once, and caches them.
 /// Call `ref.invalidate(aiProfilesProvider)` after creating/editing/deleting
 /// a profile to force a refresh.
 final aiProfilesProvider = FutureProvider<List<AiProfileModel>>((ref) async {

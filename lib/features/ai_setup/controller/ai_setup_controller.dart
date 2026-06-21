@@ -147,7 +147,7 @@ class AiSetupController extends StateNotifier<AiSetupState> {
       await FirebaseService.saveAiProfile(uid, data);
 
       state = state.copyWith(isSaving: false, profileId: savedId);
-      debugPrint('✅ AI profile saved: $savedId');
+      debugPrint('✅ Career Profile saved: $savedId');
       return true;
     } catch (e) {
       state = state.copyWith(isSaving: false, error: 'Save failed: $e');
