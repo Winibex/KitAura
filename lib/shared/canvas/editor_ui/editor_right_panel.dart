@@ -620,7 +620,7 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: SectionType.values.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 4),
+                separatorBuilder: (_, _) => const SizedBox(height: 4),
                 itemBuilder: (_, i) {
                   final t = SectionType.values[i];
                   final isSelected = t == item.sectionType;

@@ -4,6 +4,7 @@
 // Sections: Profile, Account Security, Plan & Billing, Preferences, Career Profile.
 
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -124,18 +125,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (uid == null) return;
 
     try {
+      // Fetch the three small docs in parallel (user profile, subscription,
+      // preferences). The default Career Profile is fetched separately
+      // since getDefaultAiProfile returns a model, not a DocumentSnapshot.
       final results = await Future.wait([
         FirebaseService.getUserProfile(uid),
         FirebaseService.getSubscription(uid),
         FirebaseService.getPreferences(uid),
-        FirebaseService.getAiProfile(uid),
+        FirebaseService.getDefaultAiProfile(uid),
       ]);
 
       if (mounted) {
-        final profileDoc = results[0];
-        final subDoc = results[1];
-        final prefDoc = results[2];
-        final aiDoc = results[3];
+        final profileDoc = results[0] as DocumentSnapshot;
+        final subDoc = results[1] as DocumentSnapshot;
+        final prefDoc = results[2] as DocumentSnapshot;
+        final aiProfile = results[3] as AiProfileModel?;
 
         setState(() {
           _profile = profileDoc.exists
@@ -147,9 +151,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _preferences = prefDoc.exists
               ? UserPreferencesModel.fromJson(prefDoc.data() as Map<String, dynamic>)
               : const UserPreferencesModel();
-          _aiProfile = aiDoc.exists
-              ? AiProfileModel.fromJson(aiDoc.data() as Map<String, dynamic>)
-              : const AiProfileModel();
+          _aiProfile = aiProfile ?? const AiProfileModel();
 
           _nameCtrl.text = _profile?.displayName ?? '';
           _phoneCtrl.text = _profile?.phone ?? '';

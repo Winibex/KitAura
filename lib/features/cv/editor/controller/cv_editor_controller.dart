@@ -13,11 +13,9 @@ import 'package:flutter/material.dart';
 
 import '../../../../shared/ai/claude_service.dart';
 import '../../../../shared/canvas/engine/canvas_controller.dart';
-import '../../../../shared/models/ai_profile_model.dart';
 import '../../../../shared/services/firebase_service.dart';
 import '../../../../shared/services/paywall_service.dart';
 import '../../templates/data/cv_template_data.dart';
-import 'section_autofill.dart';
 
 class CvEditorState {
   final bool isTemplateLoading;
@@ -172,26 +170,6 @@ class CvEditorController extends ChangeNotifier {
       debugPrint('📝 [CvEditor] Load failed: $e');
       state = state.copyWith(error: 'Failed to load CV');
       canvas.init();
-    }
-  }
-
-  // ─── PROFILE AUTOFILL ─────────────────────────────────────────────────
-
-  Future<void> _tryAutofillFromProfile() async {
-    if (_uid == null) return;
-    try {
-      final doc = await FirebaseService.getAiProfile(_uid!);
-      if (!doc.exists) return;
-      final profile = AiProfileModel.fromJson(
-        doc.data() as Map<String, dynamic>,
-      );
-      if (profile.fullName.isEmpty && profile.experiences.isEmpty) return;
-      final filled = SectionAutofill.fillAll(canvas.items, profile);
-      if (filled > 0) {
-        debugPrint('📝 [CvEditor] Autofilled $filled sections from profile');
-      }
-    } catch (e) {
-      debugPrint('📝 [CvEditor] Autofill failed (non-critical): $e');
     }
   }
 

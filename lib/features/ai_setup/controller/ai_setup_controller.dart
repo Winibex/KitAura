@@ -108,11 +108,13 @@ class AiSetupController extends StateNotifier<AiSetupState> {
     if (_uid == null) return;
     state = state.copyWith(isLoading: true);
     try {
-      final doc = await FirebaseService.getAiProfile(_uid!);
-      if (doc.exists) {
-        final profile =
-        AiProfileModel.fromJson(doc.data() as Map<String, dynamic>);
-        state = state.copyWith(isLoading: false, profile: profile);
+      final profile = await FirebaseService.getDefaultAiProfile(_uid!);
+      if (profile != null) {
+        state = state.copyWith(
+          isLoading: false,
+          profile: profile,
+          profileId: profile.id,
+        );
       } else {
         final user = FirebaseAuth.instance.currentUser;
         state = state.copyWith(
@@ -138,13 +140,9 @@ class AiSetupController extends StateNotifier<AiSetupState> {
       final data = state.profile.toJson();
       data['updatedAt'] = FieldValue.serverTimestamp();
 
-      // Save to new multi-profile collection
       final savedId = await FirebaseService.saveAiProfileMulti(
         uid, data, profileId: state.profileId,
       );
-
-      // Also save to legacy path for backward compatibility
-      await FirebaseService.saveAiProfile(uid, data);
 
       state = state.copyWith(isSaving: false, profileId: savedId);
       debugPrint('✅ Career Profile saved: $savedId');
@@ -157,9 +155,17 @@ class AiSetupController extends StateNotifier<AiSetupState> {
 
   Future<void> deleteProfile() async {
     if (_uid == null) return;
-    try {
-      await FirebaseService.saveAiProfile(_uid!, const AiProfileModel().toJson());
+    // If no profile is saved yet, just clear local state.
+    if (state.profileId == null) {
       state = state.copyWith(profile: const AiProfileModel());
+      return;
+    }
+    try {
+      await FirebaseService.deleteAiProfile(_uid!, state.profileId!);
+      state = state.copyWith(
+        profile: const AiProfileModel(),
+        profileId: null,
+      );
     } catch (e) {
       state = state.copyWith(error: 'Failed to delete profile: $e');
     }

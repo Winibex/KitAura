@@ -198,7 +198,7 @@ class _CommandKBarState extends ConsumerState<CommandKBar>
           cursor: SystemMouseCursors.click,
           child: AnimatedBuilder(
             animation: _pulseCtrl,
-            builder: (_, __) {
+            builder: (_, _) {
               final glow = 0.15 + (_pulseCtrl.value * 0.1);
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
@@ -313,7 +313,7 @@ class _CommandKBarState extends ConsumerState<CommandKBar>
           // Leading sparkle (pulses while busy)
           AnimatedBuilder(
             animation: _pulseCtrl,
-            builder: (_, __) {
+            builder: (_, _) {
               final scale = _busy ? 1.0 + (_pulseCtrl.value * 0.15) : 1.0;
               return Transform.scale(
                 scale: scale,
@@ -414,7 +414,7 @@ class _CommandKBarState extends ConsumerState<CommandKBar>
   Widget _buildThinkingText() {
     return AnimatedBuilder(
       animation: _pulseCtrl,
-      builder: (_, __) {
+      builder: (_, _) {
         return Opacity(
           opacity: 0.6 + (_pulseCtrl.value * 0.4),
           child: const Text(

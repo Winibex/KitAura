@@ -650,7 +650,7 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
           SizedBox(height: 14),
         ],
       ),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (profiles) {
         if (profiles.isEmpty) return const SizedBox.shrink();
         final options = <String, String>{
@@ -2262,7 +2262,7 @@ class _SkeletonBoxState extends State<_SkeletonBox>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _ctrl,
-      builder: (_, __) {
+      builder: (_, _) {
         final t = _ctrl.value;
         return Container(
           width: double.infinity,

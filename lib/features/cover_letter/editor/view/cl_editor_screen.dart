@@ -5,7 +5,6 @@
 
 import 'dart:convert';
 import 'dart:js_interop';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,8 +33,9 @@ import '../../../../shared/canvas/engine/snap_guide.dart';
 import '../../../../shared/canvas/engine/viewport_fitter.dart';
 import '../../../../shared/models/ai_profile_model.dart';
 import '../../../../shared/models/canvas_item.dart';
-import '../../../../shared/services/firebase_service.dart';
+import '../../../../shared/providers/ai_profiles_provider.dart';
 import '../../../../shared/widgets/command_k_bar.dart';
+import '../../../ai_setup/view/ai_setup_panel.dart';
 import '../../../cv/editor/view/spellcheck_panel.dart';
 import '../../../settings/view/upgrade_modal.dart';
 import '../../dashboard/controller/cl_dashboard_controller.dart';
@@ -258,6 +258,272 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
     void docListener() => _editor.markDirty();
     _docListeners[item.id] = docListener;
     item.controller!.addListener(docListener);
+  }
+
+  // ─── CAREER PROFILE PICKER ────────────────────────────────────────────
+
+  /// Shows the Career Profile picker modal. Returns the chosen profile name
+  /// (or null if cancelled). Persists the selection to editor state.
+  Future<String?> _pickCareerProfile() async {
+    final profiles = await ref.read(aiProfilesProvider.future);
+
+    if (profiles.isEmpty) {
+      // No profiles yet — open the AI Setup wizard inline.
+      await _openCareerProfileWizard();
+      ref.invalidate(aiProfilesProvider);
+      return null;
+    }
+
+    if (!mounted) return null;
+
+    final picked = await showModalBottomSheet<AiProfileModel>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(16),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(ctx).size.height * 0.7,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppColors.petalFrost,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    LucideIcons.userCircle,
+                    size: 16,
+                    color: AppColors.darkRaspberry,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'Pick a Career Profile',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontFamily: AppFonts.poppins,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.prussianBlue,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(LucideIcons.x, size: 18),
+                  color: AppColors.slateGrey,
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'AI will use this profile to write your cover letter.',
+              style: TextStyle(
+                fontSize: 12,
+                fontFamily: AppFonts.openSans,
+                color: AppColors.slateGrey,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: profiles.length + 1,
+                separatorBuilder: (_, _) => const SizedBox(height: 8),
+                itemBuilder: (_, i) {
+                  // Last item = "Create new" tile
+                  if (i == profiles.length) {
+                    return InkWell(
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        _openCareerProfileWizard();
+                      },
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: AppColors.darkRaspberry,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: AppColors.darkRaspberry
+                                    .withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                LucideIcons.plus,
+                                size: 14,
+                                color: AppColors.darkRaspberry,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            const Expanded(
+                              child: Text(
+                                'Create new Career Profile',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontFamily: AppFonts.poppins,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.darkRaspberry,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                  final p = profiles[i];
+                  final isSelected = p.id == _editor.state.selectedProfileId;
+                  return InkWell(
+                    onTap: () => Navigator.pop(ctx, p),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.lavenderBlush
+                            : AppColors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColors.darkRaspberry
+                              : AppColors.almondSilk,
+                          width: isSelected ? 1.5 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: AppColors.petalFrost,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              LucideIcons.userCircle,
+                              size: 14,
+                              color: AppColors.darkRaspberry,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  (p.name.isNotEmpty)
+                                      ? p.name
+                                      : (p.fullName.isNotEmpty
+                                      ? p.fullName
+                                      : 'Untitled Profile'),
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontFamily: AppFonts.poppins,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.prussianBlue,
+                                  ),
+                                ),
+                                if (p.jobTitle != null && p.jobTitle!.isNotEmpty)
+                                  Text(
+                                    p.jobTitle ?? "Error",
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontFamily: AppFonts.openSans,
+                                      color: AppColors.slateGrey,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          if (p.isDefault)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.darkRaspberry
+                                    .withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'DEFAULT',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontFamily: AppFonts.poppins,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.darkRaspberry,
+                                ),
+                              ),
+                            ),
+                          if (isSelected) ...[
+                            const SizedBox(width: 6),
+                            const Icon(LucideIcons.check,
+                                size: 16, color: AppColors.darkRaspberry),
+                          ],
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (picked != null && picked.id != null) {
+      final displayName = (picked.name.isNotEmpty)
+          ? picked.name
+          : (picked.fullName.isNotEmpty
+          ? picked.fullName
+          : 'Untitled Profile');
+      _editor.selectCareerProfile(
+        profileId: picked.id!,
+        profileName: displayName,
+      );
+      return displayName;
+    }
+    return null;
+  }
+
+  /// Opens the AI Setup wizard as a full-screen modal. After save, the
+  /// aiProfilesProvider is invalidated so the picker sees the new profile.
+  Future<void> _openCareerProfileWizard({String? profileId}) async {
+    await showDialog(
+      context: context,
+      barrierColor: Colors.transparent,
+      barrierDismissible: false,
+      builder: (dialogContext) => AiSetupPanel(
+        profileId: profileId,
+        onContinue: () => Navigator.pop(dialogContext),
+        onSkip: () => Navigator.pop(dialogContext),
+        onClose: () => Navigator.pop(dialogContext),
+      ),
+    );
+    if (mounted) ref.invalidate(aiProfilesProvider);
   }
 
   // ─── Zoom Functions ─────────────────────
@@ -575,6 +841,7 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
                 padding: const EdgeInsets.all(10),
                 child: ClDetailsPanel(
                   editor: _editor,
+                  onPickCareerProfile: _pickCareerProfile,
                   onSpellcheck: () {
                     ref.read(spellcheckControllerProvider.notifier).checkAll(_canvas.items);
                     setState(() => _showSpellcheckPanel = true);
@@ -587,6 +854,7 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
                         .fillAllClSections(
                       items: _canvas.items,
                       editor: _editor,
+                      profileId: _editor.state.selectedProfileId,
                     );
                   },
                   isGenerating: ref.watch(claudeControllerProvider).activeOperation == 'fill',
@@ -1115,13 +1383,5 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
       _marqueeEnd = null;
       if (_canvas.multiSelected.length == 1) _toolbarKey = UniqueKey();
     });
-  }
-
-  Future<AiProfileModel?> _loadProfile() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return null;
-    final doc = await FirebaseService.getAiProfile(uid);
-    if (!doc.exists) return null;
-    return AiProfileModel.fromJson(doc.data() as Map<String, dynamic>);
   }
 }

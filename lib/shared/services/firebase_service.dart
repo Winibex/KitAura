@@ -269,6 +269,8 @@ class FirebaseService {
   // Career ProfileS (multiple) — users/{uid}/aiProfiles/{profileId}
   // ===========================================================================
 
+  // ─── AI PROFILES (Career Profiles) ──────────────────────────────────
+
   static CollectionReference _aiProfilesCollection(String uid) =>
       _userDoc(uid).collection('aiProfiles');
 
@@ -277,42 +279,45 @@ class FirebaseService {
       await _aiProfilesCollection(uid).orderBy('name').get();
 
   /// Get a single Career Profile by ID.
-  static Future<DocumentSnapshot> getAiProfileById(String uid, String profileId) async =>
+  static Future<DocumentSnapshot> getAiProfileById(
+      String uid, String profileId) async =>
       await _aiProfilesCollection(uid).doc(profileId).get();
 
-  /// Get the default Career Profile. Falls back to first profile if none marked default.
+  /// Get the default Career Profile. Falls back to the first profile if
+  /// none is marked default. Returns null if the user has no profiles.
   static Future<AiProfileModel?> getDefaultAiProfile(String uid) async {
-    // Try new collection first
-    final profiles = await _aiProfilesCollection(uid)
+    // Prefer the explicitly default profile.
+    final defaults = await _aiProfilesCollection(uid)
         .where('isDefault', isEqualTo: true)
         .limit(1)
         .get();
-
-    if (profiles.docs.isNotEmpty) {
-      final data = profiles.docs.first.data() as Map<String, dynamic>;
-      data['id'] = profiles.docs.first.id;
+    if (defaults.docs.isNotEmpty) {
+      final data = defaults.docs.first.data() as Map<String, dynamic>;
+      data['id'] = defaults.docs.first.id;
       return AiProfileModel.fromJson(data);
     }
-
-    // No default found — try any profile
+    // No default — return whatever first profile exists (if any).
     final any = await _aiProfilesCollection(uid).limit(1).get();
     if (any.docs.isNotEmpty) {
       final data = any.docs.first.data() as Map<String, dynamic>;
       data['id'] = any.docs.first.id;
       return AiProfileModel.fromJson(data);
     }
-
-    // No profiles at all — try legacy data/aiProfile and auto-migrate
-    return await _migrateOldProfile(uid);
+    return null;
   }
 
-  /// Create a new Career Profile. Returns the document reference.
+  /// Create a new Career Profile. First profile is automatically marked
+  /// default. Subsequent profiles are never default on creation — user
+  /// must explicitly call setDefaultAiProfile to change the default.
   static Future<DocumentReference> createAiProfile(
       String uid, Map<String, dynamic> data) async {
-    // If this is the first profile, make it default
     final existing = await _aiProfilesCollection(uid).limit(1).get();
     if (existing.docs.isEmpty) {
       data['isDefault'] = true;
+    } else {
+      // Force isDefault to false on new profiles after the first.
+      // Use setDefaultAiProfile() to change which profile is default.
+      data['isDefault'] = false;
     }
     return await _aiProfilesCollection(uid).add(data);
   }
@@ -322,84 +327,81 @@ class FirebaseService {
       String uid, String profileId, Map<String, dynamic> data) async =>
       await _aiProfilesCollection(uid).doc(profileId).update(data);
 
-  /// Save (create or update) an Career Profile.
+  /// Save (create or update) a Career Profile. Returns the profile's doc ID.
+  ///
+  /// If the data sets isDefault: true on an existing profile, ALL other
+  /// profiles will have their isDefault cleared to maintain the invariant
+  /// that exactly one profile is default at a time.
   static Future<String> saveAiProfileMulti(
-      String uid, Map<String, dynamic> data, {String? profileId}) async {
-    if (profileId != null) {
-      await _aiProfilesCollection(uid).doc(profileId).set(data, SetOptions(merge: true));
-      return profileId;
-    } else {
+      String uid, Map<String, dynamic> data, {String? profileId}) async
+  {
+    if (profileId == null) {
+      // New profile — createAiProfile handles the default logic.
       final ref = await createAiProfile(uid, data);
       return ref.id;
     }
+
+    // Existing profile update.
+    final isBecomingDefault = data['isDefault'] == true;
+    if (isBecomingDefault) {
+      // Atomically: clear all OTHER defaults, then save this one.
+      final batch = _db.batch();
+      final allProfiles = await _aiProfilesCollection(uid).get();
+      for (final doc in allProfiles.docs) {
+        if (doc.id != profileId && (doc.data() as Map)['isDefault'] == true) {
+          batch.update(doc.reference, {'isDefault': false});
+        }
+      }
+      batch.set(
+        _aiProfilesCollection(uid).doc(profileId),
+        data,
+        SetOptions(merge: true),
+      );
+      await batch.commit();
+    } else {
+      // Normal update, no default change.
+      await _aiProfilesCollection(uid)
+          .doc(profileId)
+          .set(data, SetOptions(merge: true));
+    }
+    return profileId;
   }
 
-  /// Delete an Career Profile.
-  static Future<void> deleteAiProfile(String uid, String profileId) async =>
-      await _aiProfilesCollection(uid).doc(profileId).delete();
+  /// Delete a Career Profile by ID. If the deleted profile was the default
+  /// and other profiles exist, promotes the first remaining profile to default.
+  static Future<void> deleteAiProfile(String uid, String profileId) async {
+    final docRef = _aiProfilesCollection(uid).doc(profileId);
+    final doc = await docRef.get();
+    final wasDefault = doc.exists && (doc.data() as Map)['isDefault'] == true;
 
-  /// Set a profile as default (unsets all others).
+    await docRef.delete();
+
+    if (wasDefault) {
+      final remaining = await _aiProfilesCollection(uid).limit(1).get();
+      if (remaining.docs.isNotEmpty) {
+        await remaining.docs.first.reference.update({'isDefault': true});
+      }
+    }
+  }
+
+  /// Set a profile as default (unsets all other defaults atomically).
   static Future<void> setDefaultAiProfile(String uid, String profileId) async {
     final batch = _db.batch();
-
-    // Unset all current defaults
     final allProfiles = await _aiProfilesCollection(uid).get();
     for (final doc in allProfiles.docs) {
       if (doc.id != profileId && (doc.data() as Map)['isDefault'] == true) {
         batch.update(doc.reference, {'isDefault': false});
       }
     }
-
-    // Set the new default
     batch.update(_aiProfilesCollection(uid).doc(profileId), {'isDefault': true});
-
     await batch.commit();
   }
 
-  /// Migrate old single profile (data/aiProfile) to new collection.
-  /// Returns the migrated profile, or null if no old profile exists.
-  static Future<AiProfileModel?> _migrateOldProfile(String uid) async {
-    try {
-      final oldDoc = await getAiProfile(uid);
-      if (!oldDoc.exists) return null;
-
-      final data = Map<String, dynamic>.from(oldDoc.data() as Map);
-      data['name'] = 'My Profile';
-      data['isDefault'] = true;
-
-      final newRef = await _aiProfilesCollection(uid).add(data);
-
-      debugPrint('🔄 Migrated old aiProfile to aiProfiles/${newRef.id}');
-
-      data['id'] = newRef.id;
-      return AiProfileModel.fromJson(data);
-    } catch (e) {
-      debugPrint('Migration failed: $e');
-      return null;
-    }
-  }
-
-  /// Get profile count for a user.
+  /// Get profile count for a user (for "first profile? make it default" checks).
   static Future<int> getAiProfileCount(String uid) async {
     final snap = await _aiProfilesCollection(uid).get();
     return snap.docs.length;
   }
-
-  static DocumentReference _aiProfileDoc(String uid) =>
-      _userDoc(uid).collection('data').doc('aiProfile');
-
-  /// Overwrites the Career Profile document with [data].
-  /// The Career Profile is always saved in full — partial merges are not supported
-  /// because nested lists (experiences, education) must be replaced atomically.
-  static Future<void> saveAiProfile(
-      String uid,
-      Map<String, dynamic> data,
-      ) async =>
-      await _aiProfileDoc(uid).set(data);
-
-  /// Fetches the Career Profile document snapshot.
-  static Future<DocumentSnapshot> getAiProfile(String uid) async =>
-      await _aiProfileDoc(uid).get();
 
   // ===========================================================================
   // PREFERENCES  —  users/{uid}/data/preferences

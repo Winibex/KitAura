@@ -159,7 +159,7 @@ class _ClientAiChatModalState extends State<ClientAiChatModal> {
         return;
       }
       final model = ClientProfileModel.fromJson(
-          '', Map<String, dynamic>.from(profileJson as Map));
+          '', Map<String, dynamic>.from(profileJson));
       // Add the assistant turn to transcript for completeness.
       _transcript.add({'role': 'assistant', 'content': '[profile complete]'});
       // Close and return the model.

@@ -39,6 +39,7 @@ import '../../../settings/view/upgrade_modal.dart';
 import '../../dashboard/controller/cv_dashboard_controller.dart';
 import '../controller/cv_editor_controller.dart';
 import 'spellcheck_panel.dart';
+import '../../../ai_setup/view/ai_setup_panel.dart';
 
 class CvEditorScreen extends ConsumerStatefulWidget {
   final String docId;
@@ -220,18 +221,11 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
     if (!mounted) return null;
 
     if (profiles.isEmpty) {
-      // No profiles yet — point the user to create one.
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('No Career Profiles found. Create one in Settings → Career Profiles.'),
-          backgroundColor: AppColors.darkRaspberry,
-          action: SnackBarAction(
-            label: 'Settings',
-            textColor: AppColors.white,
-            onPressed: () => context.go(AppRoutes.settings),
-          ),
-        ),
-      );
+      // No profiles — open the AI Setup wizard inline.
+      await _openCareerProfileWizard();
+      // After the wizard closes, invalidate the cache so the next picker
+      // call gets fresh data.
+      ref.invalidate(aiProfilesProvider);
       return null;
     }
 
@@ -298,9 +292,63 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
             Flexible(
               child: ListView.separated(
                 shrinkWrap: true,
-                itemCount: profiles.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                itemCount: profiles.length + 1, // +1 for "Create new" tile
+                separatorBuilder: (_, _) => const SizedBox(height: 8),
                 itemBuilder: (_, i) {
+                  // Last item = "Create new" tile
+                  if (i == profiles.length) {
+                    return InkWell(
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        _openCareerProfileWizard();
+                      },
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: AppColors.darkRaspberry,
+                            width: 1,
+                            style: BorderStyle.solid,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: AppColors.darkRaspberry
+                                    .withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                LucideIcons.plus,
+                                size: 14,
+                                color: AppColors.darkRaspberry,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            const Expanded(
+                              child: Text(
+                                'Create new Career Profile',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontFamily: AppFonts.poppins,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.darkRaspberry,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                  // Regular profile tile
                   final p = profiles[i];
                   final isSelected = p.id == _editor.state.selectedProfileId;
                   return InkWell(
@@ -412,6 +460,23 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
       profileName: picked.name.isEmpty ? 'Untitled Profile' : picked.name,
     );
     return picked.name;
+  }
+
+  /// Opens the AI Setup wizard as a full-screen modal. After save, the
+  /// aiProfilesProvider is invalidated so the picker sees the new profile.
+  Future<void> _openCareerProfileWizard({String? profileId}) async {
+    await showDialog(
+      context: context,
+      barrierColor: Colors.transparent,
+      barrierDismissible: false,
+      builder: (dialogContext) => AiSetupPanel(
+        profileId: profileId,
+        onContinue: () => Navigator.pop(dialogContext),
+        onSkip: () => Navigator.pop(dialogContext),
+        onClose: () => Navigator.pop(dialogContext),
+      ),
+    );
+    if (mounted) ref.invalidate(aiProfilesProvider);
   }
 
   Future<void> _exportPdf() async {
@@ -845,6 +910,29 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
           cvId: _editor.state.firestoreDocId,
           cvTitle: _editor.state.title,
         );
+      },
+      // NEW: All-Sections Compose (only visible when nothing selected)
+      onComposeAll: ({required useAi}) async {
+        _canvas.saveSnapshot();
+        if (useAi) {
+          await ref.read(claudeControllerProvider.notifier).fillAllCvSections(
+            items: _canvas.items,
+            cvId: _editor.state.firestoreDocId,
+            cvTitle: _editor.state.title,
+            templateId: widget.docId,
+            profileId: _editor.state.selectedProfileId,
+          );
+        } else {
+          await ref
+              .read(claudeControllerProvider.notifier)
+              .composeRawAllCvSections(
+            items: _canvas.items,
+            profileId: _editor.state.selectedProfileId,
+          );
+        }
+        // Re-wire focus listeners for newly populated items (in case any
+        // Quill controllers got recreated during fill).
+        _wireFocusListeners();
       },
     );
   }

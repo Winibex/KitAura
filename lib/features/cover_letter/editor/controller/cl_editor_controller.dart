@@ -14,7 +14,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../shared/ai/claude_service.dart';
 import '../../../../shared/canvas/engine/canvas_controller.dart';
-import '../../../../shared/models/ai_profile_model.dart';
 import '../../../../shared/services/firebase_service.dart';
 import '../../../../shared/services/paywall_service.dart';
 import '../../template/data/cl_template_data.dart';
@@ -40,6 +39,11 @@ class ClEditorState {
   final String? jobDescription;
   final String? linkedCvId;
 
+  /// ID of the Career Profile picked for AI generation on this letter.
+  final String? selectedProfileId;
+  /// Display name of the selected profile. Cached for the right panel.
+  final String? selectedProfileName;
+
   const ClEditorState({
     this.isTemplateLoading = true,
     this.isSaving = false,
@@ -57,6 +61,8 @@ class ClEditorState {
     this.companyCityStateZip,
     this.jobDescription,
     this.linkedCvId,
+    this.selectedProfileId,
+    this.selectedProfileName,
   });
 
   /// True if user has filled enough details for AI generation
@@ -82,6 +88,8 @@ class ClEditorState {
     String? companyCityStateZip,
     String? jobDescription,
     String? linkedCvId,
+    String? selectedProfileId,
+    String? selectedProfileName,
   }) {
     return ClEditorState(
       isTemplateLoading: isTemplateLoading ?? this.isTemplateLoading,
@@ -100,6 +108,8 @@ class ClEditorState {
       companyCityStateZip: companyCityStateZip ?? this.companyCityStateZip,
       jobDescription: jobDescription ?? this.jobDescription,
       linkedCvId: linkedCvId ?? this.linkedCvId,
+      selectedProfileId: selectedProfileId ?? this.selectedProfileId,
+      selectedProfileName: selectedProfileName ?? this.selectedProfileName,
     );
   }
 }
@@ -188,6 +198,8 @@ class ClEditorController extends ChangeNotifier {
           companyCityStateZip: data['companyCityStateZip'],
           jobDescription: data['jobDescription'],
           linkedCvId: data['linkedCvId'],
+          selectedProfileId: data['selectedProfileId'] as String?,
+          selectedProfileName: data['selectedProfileName'] as String?,
         );
 
         final canvasData = <String, dynamic>{
@@ -211,13 +223,8 @@ class ClEditorController extends ChangeNotifier {
     if (_uid == null) return;
 
     try {
-      final doc = await FirebaseService.getAiProfile(_uid!);
-      if (!doc.exists) return;
-
-      final profile = AiProfileModel.fromJson(
-        doc.data() as Map<String, dynamic>,
-      );
-      if (profile.fullName.isEmpty) return;
+      final profile = await FirebaseService.getDefaultAiProfile(_uid!);
+      if (profile == null || profile.fullName.isEmpty) return;
 
       final filled = ClSectionAutofill.fillAll(canvas.items, profile);
       if (filled > 0) {
@@ -226,6 +233,19 @@ class ClEditorController extends ChangeNotifier {
     } catch (e) {
       debugPrint('✉️ [ClEditor] Autofill failed (non-critical): $e');
     }
+  }
+
+  void selectCareerProfile({
+    required String profileId,
+    required String profileName,
+  })
+  {
+    state = state.copyWith(
+      selectedProfileId: profileId,
+      selectedProfileName: profileName,
+    );
+    debugPrint('✉️ [ClEditor] Career Profile selected: $profileName ($profileId)');
+    markDirty();
   }
 
   // ─── JOB DETAILS ──────────────────────────────────────────────────────
@@ -239,7 +259,8 @@ class ClEditorController extends ChangeNotifier {
     String? companyCityStateZip,
     String? jobDescription,
     String? linkedCvId,
-  }) {
+  })
+  {
     state = state.copyWith(
       targetCompany: targetCompany ?? state.targetCompany,
       targetRole: targetRole ?? state.targetRole,
@@ -412,6 +433,8 @@ class ClEditorController extends ChangeNotifier {
     data['companyCityStateZip'] = state.companyCityStateZip;
     data['jobDescription'] = state.jobDescription;
     data['linkedCvId'] = state.linkedCvId;
+    data['selectedProfileId'] = state.selectedProfileId;
+    data['selectedProfileName'] = state.selectedProfileName;
     return data;
   }
 

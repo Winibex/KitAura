@@ -190,8 +190,8 @@ class ClaudeController extends StateNotifier<ClaudeState> {
   Future<void> fillAllClSections({
     required List<CanvasItem> items,
     required ClEditorController editor,
-  }) async
-  {
+    String? profileId,
+  }) async {
     if (state.isActive) return;
     debugPrint('🤖 [ClaudeController] fillAllClSections');
 
@@ -203,11 +203,19 @@ class ClaudeController extends StateNotifier<ClaudeState> {
 
     state = const ClaudeState(status: AiFillStatus.loading, activeOperation: 'fill');
 
-    // Load profile
+    // Load profile — use specific one if picked, otherwise default.
+    AiProfileModel? profile;
     try {
-      _cachedProfile ??= await _loadAiProfile(uid);
-    } catch (_) {}
-    final profile = _cachedProfile ?? const AiProfileModel();
+      if (profileId != null) {
+        profile = await _loadAiProfile(uid, profileId: profileId);
+      } else {
+        _cachedProfile ??= await _loadAiProfile(uid);
+        profile = _cachedProfile;
+      }
+    } catch (e) {
+      debugPrint('🤖 [ClaudeController] Profile load failed: $e');
+    }
+    profile ??= const AiProfileModel();
 
     // Load linked CV content
     String? cvContent;
@@ -893,7 +901,7 @@ class ClaudeController extends StateNotifier<ClaudeState> {
           'sectionType': item.sectionType.key,
           'title': item.title,
           'kind': 'text',
-          if (shape != null) 'shape': shape,
+          'shape': ?shape,
         });
         slot++;
       } else if (item.isTable && item.tableData != null) {
