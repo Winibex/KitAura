@@ -155,14 +155,17 @@ class RecentItem {
 }
 
 class DashboardController extends StateNotifier<DashboardState> {
-  DashboardController() : super(const DashboardState());
+  DashboardController() : super(const DashboardState(isLoading: true));
 
   bool _hasLoaded = false;
 
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
 
   Future<void> loadDashboard({bool force = false}) async {
-    if (_hasLoaded && !force) return; // Skip if already loaded
+    if (_hasLoaded && !force) {
+      if (state.isLoading) state = state.copyWith(isLoading: false);
+      return;
+    }
     if (_uid == null) return;
     debugPrint("Loading Main Dashboard");
     state = state.copyWith(isLoading: true, error: null);

@@ -17,6 +17,7 @@ import '../../../../shared/widgets/stat_card.dart';
 import '../../../dashboard/controller/dashboard_controller.dart';
 import '../../../settings/view/upgrade_modal.dart';
 import '../controller/prop_dashboard_controller.dart';
+import '../model/prop_summary_model.dart';
 import 'prop_card_widget.dart';
 
 class PropDashboardScreen extends ConsumerStatefulWidget {
@@ -28,6 +29,22 @@ class PropDashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _PropDashboardScreenState extends ConsumerState<PropDashboardScreen> {
+
+  static final List<PropSummaryModel> _skeletonProps = List.generate(
+    6,
+        (i) => PropSummaryModel(
+      id: 'skeleton_$i',
+      title: 'Placeholder proposal title',
+      templateId: 'custom',
+      clientName: 'Client Name',
+      projectScope: 'Project Scope',
+      updatedAt: DateTime.now().subtract(const Duration(hours: 2)),
+      createdAt: DateTime.now().subtract(const Duration(days: 1)),
+      canvasBackground: '#FFFFFF',
+      items: const [],
+    ),
+  );
+
   @override
   void initState() {
     super.initState();
@@ -177,31 +194,34 @@ class _PropDashboardScreenState extends ConsumerState<PropDashboardScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(
-              width: AppSizes.proposalPrimaryButtonWidth(context),
-              child: ElevatedButton.icon(
-                onPressed: () => context.go(AppRoutes.proposalTemplates),
-                icon: const Icon(LucideIcons.plus, size: 16),
-                label: const Text('New Proposal'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.darkRaspberry,
-                  foregroundColor: AppColors.white,
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                  textStyle: TextStyle(
-                    fontFamily: AppFonts.poppins,
-                    fontWeight: FontWeight.w600,
-                    fontSize: AppSizes.body(context),
+            if (!state.isLoading)
+              SizedBox(
+                width: AppSizes.proposalPrimaryButtonWidth(context),
+                child: ElevatedButton.icon(
+                  onPressed: () => context.go(AppRoutes.proposalTemplates),
+                  icon: const Icon(LucideIcons.plus, size: 16),
+                  label: const Text('New Proposal'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.darkRaspberry,
+                    foregroundColor: AppColors.white,
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    textStyle: TextStyle(
+                      fontFamily: AppFonts.poppins,
+                      fontWeight: FontWeight.w600,
+                      fontSize: AppSizes.body(context),
+                    ),
                   ),
                 ),
               ),
-            ),
           ],
         ),
         const SizedBox(height: 20),
-        if (state.proposals.isEmpty)
+        if (state.isLoading)
+          RepaintBoundary(child: _buildSkeletonGrid())
+        else if (state.proposals.isEmpty)
           _buildEmptyState()
         else
           RepaintBoundary(child: _buildProposalGrid(state)),
@@ -262,6 +282,32 @@ class _PropDashboardScreenState extends ConsumerState<PropDashboardScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSkeletonGrid() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns =
+        AppSizes.docGridColumns(context, constraints.maxWidth);
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            crossAxisSpacing: AppSizes.sm,
+            mainAxisSpacing: AppSizes.sm,
+            childAspectRatio: 0.75,
+          ),
+          itemCount: _skeletonProps.length,
+          itemBuilder: (context, index) => PropCardWidget(
+            prop: _skeletonProps[index],
+            onTap: () {},
+            onDelete: () {},
+            onRename: (_) {},
+          ),
+        );
+      },
     );
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_fonts.dart';
 import '../../../../core/constants/app_routes.dart';
@@ -14,6 +15,7 @@ import '../../../../shared/widgets/stat_card.dart';
 import '../../../dashboard/controller/dashboard_controller.dart';
 import '../../../settings/view/upgrade_modal.dart';
 import '../controller/cv_dashboard_controller.dart';
+import '../model/cv_summary_model.dart';
 import 'cv_card_widget.dart';
 import 'empty_state_widget.dart';
 
@@ -25,6 +27,19 @@ class CVDashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
+
+  static final List<CvSummaryModel> _skeletonCvs = List.generate(
+    6,
+        (i) => CvSummaryModel(
+      id: 'skeleton_$i',
+      title: 'Placeholder CV title',
+      templateId: 'classic_navy',
+      updatedAt: DateTime.now().subtract(const Duration(hours: 2)),
+      createdAt: DateTime.now().subtract(const Duration(days: 1)),
+      canvasBackground: '#FFFFFF',
+      items: const [],
+    ),
+  );
 
   @override
   void initState() {
@@ -114,34 +129,37 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
       ),
     ];
 
-    return ResponsiveBuilder(
-      mobile: GridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 2,
-        crossAxisSpacing: AppSizes.md,
-        mainAxisSpacing: AppSizes.md,
-        childAspectRatio: AppSizes.statAspectRatio(context),
-        children: statCards.toList(),
-      ),
-      tablet: GridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 3,
-        crossAxisSpacing: AppSizes.md,
-        mainAxisSpacing: AppSizes.md,
-        childAspectRatio: AppSizes.statAspectRatio(context),
-        children: statCards.toList(),
-      ),
-      desktop: GridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 4,
-        crossAxisSpacing: AppSizes.md,
-        mainAxisSpacing: AppSizes.md,
-        childAspectRatio: AppSizes.statAspectRatio(context),
-        children: statCards.toList(),
-      ),
+    return Skeletonizer(
+      enabled: state.isLoading,
+      child: ResponsiveBuilder(
+        mobile: GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          crossAxisSpacing: AppSizes.md,
+          mainAxisSpacing: AppSizes.md,
+          childAspectRatio: AppSizes.statAspectRatio(context),
+          children: statCards.toList(),
+        ),
+        tablet: GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 3,
+          crossAxisSpacing: AppSizes.md,
+          mainAxisSpacing: AppSizes.md,
+          childAspectRatio: AppSizes.statAspectRatio(context),
+          children: statCards.toList(),
+        ),
+        desktop: GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 4,
+          crossAxisSpacing: AppSizes.md,
+          mainAxisSpacing: AppSizes.md,
+          childAspectRatio: AppSizes.statAspectRatio(context),
+          children: statCards.toList(),
+        ),
+      )
     ).animate().fadeIn(duration: 300.ms, delay: 100.ms);
   }
 
@@ -163,6 +181,7 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
+            if (!state.isLoading)
             SizedBox(
               width: 140,
               child: ElevatedButton.icon(
@@ -181,7 +200,9 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
           ],
         ),
         const SizedBox(height: 20),
-          if (state.cvs.isEmpty)
+        if (state.isLoading)
+          RepaintBoundary(child: _buildSkeletonGrid())
+        else if (state.cvs.isEmpty)
           SizedBox(
             height: 300,
             child: EmptyStateWidget(
@@ -191,6 +212,34 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
         else
           RepaintBoundary(child: _buildCVGrid(state)),
       ],
+    );
+  }
+
+  Widget _buildSkeletonGrid() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = AppSizes.docGridColumns(context, constraints.maxWidth);
+        return Skeletonizer(
+          enabled: true,
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: columns,
+              crossAxisSpacing: AppSizes.sm,
+              mainAxisSpacing: AppSizes.sm,
+              childAspectRatio: 0.75,
+            ),
+            itemCount: _skeletonCvs.length,
+            itemBuilder: (context, index) => CvCardWidget(
+              cv: _skeletonCvs[index],
+              onTap: () {},
+              onDelete: () {},
+              onRename: (_) {},
+            ),
+          ),
+        );
+      },
     );
   }
 

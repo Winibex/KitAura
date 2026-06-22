@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:kitaura/core/constants/app_sizes.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_fonts.dart';
 import '../../../../shared/widgets/template_thumbnail.dart';
@@ -53,15 +54,19 @@ class ClCardWidget extends StatelessWidget {
             Positioned(
               top: 8,
               right: 8,
-              child: Container(padding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 2,
-              ),
+              child: Skeleton.ignore(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.darkRaspberry,
                     borderRadius: BorderRadius.circular(999),
                   ),
-                  child: _buildMenu(context)),
+                  child: _buildMenu(context),
+                ),
+              ),
             ),
           ],
         ),
@@ -149,24 +154,26 @@ class ClCardWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.petalFrost,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  cl.templateId ?? 'custom',
-                  style: const TextStyle(
-                    color: AppColors.darkRaspberry,
-                    fontSize: 10,
-                    fontFamily: AppFonts.poppins,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+          Skeleton.leaf(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.petalFrost,
+                borderRadius: BorderRadius.circular(999),
               ),
+              child: Text(
+                cl.templateId ?? 'custom',
+                style: const TextStyle(
+                  color: AppColors.darkRaspberry,
+                  fontSize: 10,
+                  fontFamily: AppFonts.poppins,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
         ],
       ),
     );

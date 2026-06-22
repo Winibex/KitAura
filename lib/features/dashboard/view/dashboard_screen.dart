@@ -28,6 +28,17 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
+  static final List<RecentItem> _skeletonRecentItems = List.generate(
+    4,
+        (i) => RecentItem(
+      id: 'skeleton_$i',
+      title: 'Placeholder document title',
+      type: 'cv',
+      templateId: 'classic_navy',
+      updatedAt: DateTime.now().subtract(Duration(hours: i + 1)),
+    ),
+  );
+
   @override
   void initState() {
     super.initState();
@@ -209,14 +220,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         children: [
           Row(
             children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: data.color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+              Skeleton.ignore(
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: data.color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                  ),
+                  child: Icon(data.icon, color: data.color, size: 16),
                 ),
-                child: Icon(data.icon, color: data.color, size: 16),
               ),
               SizedBox(width: 10,),
               Flexible(
@@ -248,14 +261,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
           const SizedBox(height: 4),
           if (data.progress != null) ...[
-            ClipRRect(
-              borderRadius: BorderRadius.circular(3),
-              child: LinearProgressIndicator(
-                value: data.progress!.clamp(0.0, 1.0),
-                minHeight: 3,
-                backgroundColor: const Color(0xFFF0EBE6),
-                valueColor: AlwaysStoppedAnimation(
-                  data.progress! >= 1.0 ? AppColors.error : data.color,
+            Skeleton.ignore(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(3),
+                child: LinearProgressIndicator(
+                  value: data.progress!.clamp(0.0, 1.0),
+                  minHeight: 3,
+                  backgroundColor: const Color(0xFFF0EBE6),
+                  valueColor: AlwaysStoppedAnimation(
+                    data.progress! >= 1.0 ? AppColors.error : data.color,
+                  ),
                 ),
               ),
             ),
@@ -430,13 +445,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             children: [
               Row(
                 children: [
-                  Container(
-                    width: 32, height: 32,
-                    decoration: BoxDecoration(
-                      color: AppColors.petalFrost,
-                      borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                  Skeleton.ignore(
+                    child: Container(
+                      width: 32, height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.petalFrost,
+                        borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                      ),
+                      child: Icon(data.icon, size: 16, color: AppColors.darkRaspberry),
                     ),
-                    child: Icon(data.icon, size: 16, color: AppColors.darkRaspberry),
                   ),
                   const Spacer(),
                   if (data.comingSoon)
@@ -531,8 +548,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildRecentItemsMobile(DashboardState state) {
-    if (state.recentItems.isEmpty) return _buildEmptyState();
-
+    final items = state.isLoading ? _skeletonRecentItems : state.recentItems;
+    if (items.isEmpty) return _buildEmptyState();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -548,7 +565,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        ...state.recentItems.map((item) => Container(
+        ...items.map((item) => Container(
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -623,6 +640,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildRecentActivity(DashboardState state) {
+    final items = state.isLoading ? _skeletonRecentItems : state.recentItems;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -638,7 +656,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
             ),
             const Spacer(),
-            if (state.recentItems.isNotEmpty)
+            if (!state.isLoading && state.recentItems.isNotEmpty)
               MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
@@ -657,7 +675,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ],
         ),
         const SizedBox(height: 16),
-        if (state.recentItems.isEmpty)
+        if (items.isEmpty)
           _buildEmptyState()
         else
           Container(
@@ -702,7 +720,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   )
                 ),
                 // Rows
-                ...state.recentItems.map((item) => _buildRecentRow(item)),
+                ...items.map((item) => _buildRecentRow(item)),
               ],
             ),
           ),
@@ -756,15 +774,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 flex: 4,
                 child: Row(
                   children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: AppColors.petalFrost,
-                        borderRadius: BorderRadius.circular(8),
+                    Skeleton.ignore(
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: AppColors.petalFrost,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(_iconForType(item.type),
+                            size: 14, color: AppColors.darkRaspberry),
                       ),
-                      child: Icon(_iconForType(item.type),
-                          size: 14, color: AppColors.darkRaspberry),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -786,19 +806,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 flex: 2,
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: AppColors.petalFrost,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      item.typeLabel,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontFamily: AppFonts.poppins,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.darkRaspberry,
+                  child: Skeleton.leaf(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.petalFrost,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        item.typeLabel,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontFamily: AppFonts.poppins,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.darkRaspberry,
+                        ),
                       ),
                     ),
                   ),

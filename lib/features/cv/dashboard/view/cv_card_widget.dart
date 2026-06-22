@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_fonts.dart';
 import '../../../../core/constants/app_sizes.dart';
@@ -54,15 +55,17 @@ class CvCardWidget extends StatelessWidget {
             Positioned(
               top: 8,
               right: 8,
-              child: Container(padding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 3,
+              child: Skeleton.ignore(
+                child: Container(padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 3,
+                ),
+                    decoration: BoxDecoration(
+                      color: AppColors.darkRaspberry,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: _buildMenu(context)),
               ),
-                  decoration: BoxDecoration(
-                    color: AppColors.darkRaspberry,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: _buildMenu(context)),
             ),
           ],
         ),
@@ -72,27 +75,31 @@ class CvCardWidget extends StatelessWidget {
 
   Widget _buildThumbnail() {
     return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        color: Color(0xFFF5F0EB),
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(14),
-          topRight: Radius.circular(14),
-        ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: (cv.items != null && cv.items!.isNotEmpty)
-          ? TemplateThumbnail.fromJson(
-        json: {
-          'canvasBackground': cv.canvasBackground ?? '#FFFFFF',
-          'items': cv.items,
-        },
         width: double.infinity,
-        height: 300,
-        borderRadius: 0,
-        showShadow: false,
-      )
-          : _buildBlankPreview(),
+        decoration: const BoxDecoration(
+          color: Color(0xFFF5F0EB),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(14),
+            topRight: Radius.circular(14),
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Skeleton.replace(
+          width: double.infinity,
+          height: 300,
+          child: (cv.items != null && cv.items!.isNotEmpty)
+              ? TemplateThumbnail.fromJson(
+            json: {
+              'canvasBackground': cv.canvasBackground ?? '#FFFFFF',
+              'items': cv.items,
+            },
+            width: double.infinity,
+            height: 300,
+            borderRadius: 0,
+            showShadow: false,
+          )
+              : _buildBlankPreview(),
+        )
     );
   }
 
@@ -143,25 +150,27 @@ class CvCardWidget extends StatelessWidget {
           ),
           const SizedBox(height: 10),
               // Template tag
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.petalFrost,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  cv.templateId,
-                  style: const TextStyle(
-                    color: AppColors.darkRaspberry,
-                    fontSize: 10,
-                    fontFamily: AppFonts.poppins,
-                    fontWeight: FontWeight.w500,
+          Skeleton.leaf(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  decoration: BoxDecoration(
+                    color: AppColors.petalFrost,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    cv.templateId,
+                    style: const TextStyle(
+                      color: AppColors.darkRaspberry,
+                      fontSize: 10,
+                      fontFamily: AppFonts.poppins,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
         ],

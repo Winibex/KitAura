@@ -64,7 +64,7 @@ class ClDashboardState {
 }
 
 class ClDashboardController extends StateNotifier<ClDashboardState> {
-  ClDashboardController() : super(ClDashboardState());
+  ClDashboardController() : super(ClDashboardState(isLoading: true));
 
   bool _hasLoaded = false;
 
@@ -72,7 +72,10 @@ class ClDashboardController extends StateNotifier<ClDashboardState> {
 
   Future<void> loadDashboard({bool force = false}) async {
     debugPrint("Loading Cover Letter Dashboard");
-    if (_hasLoaded && !force) return; // Skip if already loaded
+    if (_hasLoaded && !force) {
+      if (state.isLoading) state = state.copyWith(isLoading: false);
+      return;
+    }
     if (_uid == null) return;
     state = state.copyWith(isLoading: true, error: null);
 

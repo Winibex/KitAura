@@ -63,7 +63,7 @@ class CvDashboardState {
 }
 
 class DashboardController extends StateNotifier<CvDashboardState> {
-  DashboardController() : super(CvDashboardState());
+  DashboardController() : super(CvDashboardState(isLoading: true));
 
   bool _hasLoaded = false;
 
@@ -73,7 +73,10 @@ class DashboardController extends StateNotifier<CvDashboardState> {
 
   Future<void> loadDashboard({bool force = false}) async {
     debugPrint("Loading CV Dashboard");
-    if (_hasLoaded && !force) return; // Skip if already loaded
+    if (_hasLoaded && !force) {
+      if (state.isLoading) state = state.copyWith(isLoading: false);
+      return;
+    }
     if (_uid == null) return;
     state = state.copyWith(isLoading: true, error: null);
     try {

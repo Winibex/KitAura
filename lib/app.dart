@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+import 'core/constants/app_colors.dart';
 import 'core/constants/app_routes.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/view/auth_screen.dart';
@@ -125,21 +127,31 @@ class KitAuraApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return MaterialApp.router(
-      title: 'Kitaura',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      routerConfig: _router,
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        FlutterQuillLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('en')],
-      builder: (context, child) {
-        return NoInternetOverlay(child: child ?? const SizedBox.shrink());
-      },
+    return SkeletonizerConfig(
+      data: SkeletonizerConfigData(
+        effect: ShimmerEffect(
+          baseColor: AppColors.petalFrost,
+          highlightColor: AppColors.lavenderBlush,
+          duration: const Duration(milliseconds: 1200),
+        ),
+        justifyMultiLineText: true,
+      ),
+      child: MaterialApp.router(
+        title: 'Kitaura',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        routerConfig: _router,
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+          FlutterQuillLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('en')],
+        builder: (context, child) {
+          return NoInternetOverlay(child: child ?? const SizedBox.shrink());
+        },
+      ),
     );
   }
 }

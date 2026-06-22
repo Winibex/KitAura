@@ -18,6 +18,7 @@ import '../../../dashboard/controller/dashboard_controller.dart';
 import '../../../settings/view/upgrade_modal.dart';
 import '../controller/cl_dashboard_controller.dart';
 import 'cl_card_widget.dart';
+import '../model/cl_summary_model.dart';
 
 class ClDashboardScreen extends ConsumerStatefulWidget {
   const ClDashboardScreen({super.key});
@@ -27,6 +28,22 @@ class ClDashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
+
+  static final List<ClSummaryModel> _skeletonCls = List.generate(
+    6,
+        (i) => ClSummaryModel(
+      id: 'skeleton_$i',
+      title: 'Placeholder cover letter title',
+      templateId: 'custom',
+      targetCompany: 'Company Name',
+      targetRole: 'Job Role',
+      updatedAt: DateTime.now().subtract(const Duration(hours: 2)),
+      createdAt: DateTime.now().subtract(const Duration(days: 1)),
+      canvasBackground: '#FFFFFF',
+      items: const [],
+    ),
+  );
+
   @override
   void initState() {
     super.initState();
@@ -167,25 +184,28 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
                 fontFamily: AppFonts.poppins,
                 fontWeight: FontWeight.bold,
               ),),
-            SizedBox(
-              width: AppSizes.coverLetterPrimaryButtonWidth(context),
-              child: ElevatedButton.icon(
-                onPressed: () => context.go(AppRoutes.clTemplates),
-                icon: const Icon(LucideIcons.plus, size: 16),
-                label: const Text('New Cover Letter'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.darkRaspberry,
-                  foregroundColor: AppColors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  textStyle:TextStyle(fontFamily: AppFonts.poppins, fontWeight: FontWeight.w600, fontSize: AppSizes.body(context),),
+            if (!state.isLoading)
+              SizedBox(
+                width: AppSizes.coverLetterPrimaryButtonWidth(context),
+                child: ElevatedButton.icon(
+                  onPressed: () => context.go(AppRoutes.clTemplates),
+                  icon: const Icon(LucideIcons.plus, size: 16),
+                  label: const Text('New Cover Letter'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.darkRaspberry,
+                    foregroundColor: AppColors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    textStyle:TextStyle(fontFamily: AppFonts.poppins, fontWeight: FontWeight.w600, fontSize: AppSizes.body(context),),
+                  ),
                 ),
               ),
-            ),
           ],
         ),
         const SizedBox(height: 20),
-          if (state.coverLetters.isEmpty)
+        if (state.isLoading)
+          RepaintBoundary(child: _buildSkeletonGrid())
+        else if (state.coverLetters.isEmpty)
           _buildEmptyState()
         else
           RepaintBoundary(child: _buildCLGrid(state)),
@@ -231,6 +251,31 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSkeletonGrid() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = AppSizes.docGridColumns(context, constraints.maxWidth);
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            crossAxisSpacing: AppSizes.sm,
+            mainAxisSpacing: AppSizes.sm,
+            childAspectRatio: 0.75,
+          ),
+          itemCount: _skeletonCls.length,
+          itemBuilder: (context, index) => ClCardWidget(
+            cl: _skeletonCls[index],
+            onTap: () {},
+            onDelete: () {},
+            onRename: (_) {},
+          ),
+        );
+      },
     );
   }
 
