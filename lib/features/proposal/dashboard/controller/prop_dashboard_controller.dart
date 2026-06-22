@@ -3,9 +3,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../../../../shared/ai/claude_service.dart';
 import '../../../../shared/services/firebase_service.dart';
+import '../../../dashboard/controller/dashboard_controller.dart';
 import '../model/prop_summary_model.dart';
 
 class PropDashboardState {
@@ -63,7 +65,8 @@ class PropDashboardState {
 }
 
 class PropDashboardController extends StateNotifier<PropDashboardState> {
-  PropDashboardController() : super(PropDashboardState(isLoading: true));
+  PropDashboardController(this._ref) : super(PropDashboardState(isLoading: true));
+  final Ref _ref;
 
   bool _hasLoaded = false;
 
@@ -140,12 +143,22 @@ class PropDashboardController extends StateNotifier<PropDashboardState> {
     } catch (_) {}
 
     try {
-      // Optimistic update
+
+      // 1. Server first — only update state if it succeeds
+      await FirebaseService.deleteProposal(_uid!, propId);
+
+      // 2. Server succeeded → update local state
       state = state.copyWith(
         proposals: state.proposals.where((p) => p.id != propId).toList(),
       );
-      await FirebaseService.deleteProposal(_uid!, propId);
 
+      // 3. Notify main dashboard (synchronous, won't fail)
+      _ref.read(dashboardControllerProvider.notifier).removeRecentItem(
+        id: propId,
+        type: 'proposal',
+      );
+
+      // 4. Fire-and-forget tracking (don't wait, don't block)
       ClaudeService.trackDocDeleted(
         tool: 'proposal',
         documentId: propId,
@@ -163,6 +176,8 @@ class PropDashboardController extends StateNotifier<PropDashboardState> {
         'title': newTitle,
         'updatedAt': Timestamp.fromDate(DateTime.now()),
       });
+
+      // Server succeeded → update local state
       final updated = state.proposals.map((p) {
         if (p.id == propId) {
           return PropSummaryModel(
@@ -180,14 +195,68 @@ class PropDashboardController extends StateNotifier<PropDashboardState> {
         }
         return p;
       }).toList();
+
       state = state.copyWith(proposals: updated);
+
+      _ref.read(dashboardControllerProvider.notifier).updateRecentItemTitle(
+        id: propId,
+        newTitle: newTitle,
+      );
     } catch (e) {
       debugPrint('renameProposal error: $e');
     }
+  }
+
+  void addProposal(PropSummaryModel prop) {
+    state = state.copyWith(proposals: [prop, ...state.proposals]);
+    _ref.read(dashboardControllerProvider.notifier).addRecentItem(
+      id: prop.id,
+      title: prop.title,
+      type: 'proposal',
+      templateId: prop.templateId ?? 'custom',
+    );
+  }
+
+  void updateProposal(String propId, {String? newTitle}) {
+    final updated = state.proposals.map((p) {
+      if (p.id == propId) {
+        return PropSummaryModel(
+          id: p.id,
+          title: newTitle ?? p.title,
+          thumbnailUrl: p.thumbnailUrl,
+          templateId: p.templateId,
+          clientName: p.clientName,
+          projectScope: p.projectScope,
+          updatedAt: DateTime.now(),
+          createdAt: p.createdAt,
+          items: p.items,
+          canvasBackground: p.canvasBackground,
+        );
+      }
+      return p;
+    }).toList();
+    state = state.copyWith(proposals: updated);
+
+    if (newTitle != null) {
+      _ref.read(dashboardControllerProvider.notifier).updateRecentItemTitle(
+        id: propId,
+        newTitle: newTitle,
+      );
+    }
+  }
+
+  void incrementAiUsage() {
+    state = state.copyWith(aiUsageCount: state.aiUsageCount + 1);
+    _ref.read(dashboardControllerProvider.notifier).incrementAiUsage();
+  }
+
+  void incrementExportCount() {
+    state = state.copyWith(exportCount: state.exportCount + 1);
+    _ref.read(dashboardControllerProvider.notifier).incrementExportCount();
   }
 }
 
 final propDashboardControllerProvider =
 StateNotifierProvider<PropDashboardController, PropDashboardState>(
-      (ref) => PropDashboardController(),
+      (ref) => PropDashboardController(ref),
 );

@@ -300,6 +300,94 @@ class DashboardController extends StateNotifier<DashboardState> {
     }
   }
 
+  /// Add a newly created document to recent items + increment count.
+  /// Called by CV/CL/Proposal controllers after successful create.
+  void addRecentItem({
+    required String id,
+    required String title,
+    required String type, // 'cv' | 'coverLetter' | 'proposal'
+    required String templateId,
+  })
+  {
+    final newItem = RecentItem(
+      id: id,
+      title: title,
+      type: type,
+      templateId: templateId,
+      updatedAt: DateTime.now(),
+    );
+
+    // Prepend new item, keep only top 5
+    final updatedRecent = [newItem, ...state.recentItems].take(5).toList();
+
+    // Increment the right counter
+    state = state.copyWith(
+      recentItems: updatedRecent,
+      cvCount: type == 'cv' ? state.cvCount + 1 : state.cvCount,
+      coverLetterCount: type == 'coverLetter'
+          ? state.coverLetterCount + 1
+          : state.coverLetterCount,
+      proposalCount: type == 'proposal'
+          ? state.proposalCount + 1
+          : state.proposalCount,
+    );
+  }
+
+  /// Remove a deleted document from recent items + decrement count.
+  void removeRecentItem({
+    required String id,
+    required String type,
+  })
+  {
+    final updatedRecent =
+    state.recentItems.where((item) => item.id != id).toList();
+
+    state = state.copyWith(
+      recentItems: updatedRecent,
+      cvCount: type == 'cv' ? (state.cvCount - 1).clamp(0, 9999) : state.cvCount,
+      coverLetterCount: type == 'coverLetter'
+          ? (state.coverLetterCount - 1).clamp(0, 9999)
+          : state.coverLetterCount,
+      proposalCount: type == 'proposal'
+          ? (state.proposalCount - 1).clamp(0, 9999)
+          : state.proposalCount,
+    );
+  }
+
+  /// Update a renamed document in recent items.
+  void updateRecentItemTitle({
+    required String id,
+    required String newTitle,
+  })
+  {
+    final updatedRecent = state.recentItems.map((item) {
+      if (item.id == id) {
+        return RecentItem(
+          id: item.id,
+          title: newTitle,
+          type: item.type,
+          templateId: item.templateId,
+          updatedAt: DateTime.now(),
+        );
+      }
+      return item;
+    }).toList();
+
+    state = state.copyWith(recentItems: updatedRecent);
+  }
+
+  /// Bump AI Compose or AI Refine counter (called after each AI call).
+  void incrementAiUsage({bool isRewrite = false}) {
+    state = state.copyWith(
+      aiFillCount: isRewrite ? state.aiFillCount : state.aiFillCount + 1,
+      aiRewriteCount: isRewrite ? state.aiRewriteCount + 1 : state.aiRewriteCount,
+    );
+  }
+
+  /// Bump export count (called after each PDF download).
+  void incrementExportCount() {
+    state = state.copyWith(exportCount: state.exportCount + 1);
+  }
 }
 
 final dashboardControllerProvider =

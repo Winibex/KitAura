@@ -3,9 +3,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../../../../shared/ai/claude_service.dart';
 import '../../../../shared/services/firebase_service.dart';
+import '../../../dashboard/controller/dashboard_controller.dart';
 import '../model/cl_summary_model.dart';
 
 class ClDashboardState {
@@ -64,10 +66,10 @@ class ClDashboardState {
 }
 
 class ClDashboardController extends StateNotifier<ClDashboardState> {
-  ClDashboardController() : super(ClDashboardState(isLoading: true));
+  ClDashboardController(this._ref) : super(ClDashboardState(isLoading: true));
+  final Ref _ref;
 
   bool _hasLoaded = false;
-
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
 
   Future<void> loadDashboard({bool force = false}) async {
@@ -136,16 +138,28 @@ class ClDashboardController extends StateNotifier<ClDashboardState> {
     } catch (_) {}
 
     try {
+
+      // 1. Server first — only update state if it succeeds
+      await FirebaseService.deleteCoverLetter(_uid!, clId);
+
+      // 2. Server succeeded → update local state
       state = state.copyWith(
         coverLetters: state.coverLetters.where((c) => c.id != clId).toList(),
       );
-      await FirebaseService.deleteCoverLetter(_uid!, clId);
 
+      // 3. Notify main dashboard (synchronous, won't fail)
+      _ref.read(dashboardControllerProvider.notifier).removeRecentItem(
+        id: clId,
+        type: 'coverLetter',
+      );
+
+      // 4. Fire-and-forget tracking (don't wait, don't block)
       ClaudeService.trackDocDeleted(
         tool: 'coverLetter',
         documentId: clId,
         documentTitle: title,
       );
+
     } catch (e) {
       debugPrint('Delete cover letter failed: $e');
       await loadDashboard(force: true);
@@ -158,6 +172,8 @@ class ClDashboardController extends StateNotifier<ClDashboardState> {
         'title': newTitle,
         'updatedAt': Timestamp.fromDate(DateTime.now()),
       });
+
+      // Server succeeded → update local state
       final updated = state.coverLetters.map((cl) {
         if (cl.id == clId) {
           return ClSummaryModel(
@@ -173,14 +189,68 @@ class ClDashboardController extends StateNotifier<ClDashboardState> {
         }
         return cl;
       }).toList();
+
       state = state.copyWith(coverLetters: updated);
+
+      _ref.read(dashboardControllerProvider.notifier).updateRecentItemTitle(
+        id: clId,
+        newTitle: newTitle,
+      );
     } catch (e) {
       debugPrint('renameCL error: $e');
     }
+  }
+
+  void addCl(ClSummaryModel cl) {
+    state = state.copyWith(coverLetters: [cl, ...state.coverLetters]);
+    _ref.read(dashboardControllerProvider.notifier).addRecentItem(
+      id: cl.id,
+      title: cl.title,
+      type: 'coverLetter',
+      templateId: cl.templateId ?? 'custom',
+    );
+  }
+
+  void updateCl(String clId, {String? newTitle}) {
+    final updated = state.coverLetters.map((cl) {
+      if (cl.id == clId) {
+        return ClSummaryModel(
+          id: cl.id,
+          title: newTitle ?? cl.title,
+          thumbnailUrl: cl.thumbnailUrl,
+          templateId: cl.templateId,
+          targetCompany: cl.targetCompany,
+          targetRole: cl.targetRole,
+          updatedAt: DateTime.now(),
+          createdAt: cl.createdAt,
+          items: cl.items,
+          canvasBackground: cl.canvasBackground,
+        );
+      }
+      return cl;
+    }).toList();
+    state = state.copyWith(coverLetters: updated);
+
+    if (newTitle != null) {
+      _ref.read(dashboardControllerProvider.notifier).updateRecentItemTitle(
+        id: clId,
+        newTitle: newTitle,
+      );
+    }
+  }
+
+  void incrementAiUsage() {
+    state = state.copyWith(aiUsageCount: state.aiUsageCount + 1);
+    _ref.read(dashboardControllerProvider.notifier).incrementAiUsage();
+  }
+
+  void incrementExportCount() {
+    state = state.copyWith(exportCount: state.exportCount + 1);
+    _ref.read(dashboardControllerProvider.notifier).incrementExportCount();
   }
 }
 
 final clDashboardControllerProvider =
 StateNotifierProvider<ClDashboardController, ClDashboardState>(
-      (ref) => ClDashboardController(),
+      (ref) => ClDashboardController(ref),
 );

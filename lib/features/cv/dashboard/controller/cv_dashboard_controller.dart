@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../../../../shared/ai/claude_service.dart';
 import '../../../../shared/services/firebase_service.dart';
+import '../../../dashboard/controller/dashboard_controller.dart';
 import '../model/cv_summary_model.dart';
 
 // Dashboard state
@@ -63,12 +65,11 @@ class CvDashboardState {
 }
 
 class DashboardController extends StateNotifier<CvDashboardState> {
-  DashboardController() : super(CvDashboardState(isLoading: true));
+  DashboardController(this._ref) : super(CvDashboardState(isLoading: true));
+  final Ref _ref;
 
   bool _hasLoaded = false;
-
   final _auth = FirebaseAuth.instance;
-
   String? get _uid => _auth.currentUser?.uid;
 
   Future<void> loadDashboard({bool force = false}) async {
@@ -133,21 +134,29 @@ class DashboardController extends StateNotifier<CvDashboardState> {
     }
   }
 
-  // REPLACE the `empty()` lookup with this:
   Future<void> deleteCV(String cvId) async {
-    // Capture title BEFORE removing from state (for transaction log)
     String title = 'Untitled';
     try {
       final cv = state.cvs.firstWhere((c) => c.id == cvId);
       title = cv.title;
-    } catch (_) {
-      // CV not in state — fall through with default title
-    }
+    } catch (_) {}
 
     try {
-      state = state.copyWith(cvs: state.cvs.where((c) => c.id != cvId).toList());
+      // 1. Server first — only update state if it succeeds
       await FirebaseService.deleteCV(_uid!, cvId);
 
+      // 2. Server succeeded → update local state
+      state = state.copyWith(
+        cvs: state.cvs.where((c) => c.id != cvId).toList(),
+      );
+
+      // 3. Notify main dashboard (synchronous, won't fail)
+      _ref.read(dashboardControllerProvider.notifier).removeRecentItem(
+        id: cvId,
+        type: 'cv',
+      );
+
+      // 4. Fire-and-forget tracking (don't wait, don't block)
       ClaudeService.trackDocDeleted(
         tool: 'cv',
         documentId: cvId,
@@ -155,7 +164,7 @@ class DashboardController extends StateNotifier<CvDashboardState> {
       );
     } catch (e) {
       debugPrint('Delete CV failed: $e');
-      await loadDashboard(force: true);
+      // State was never updated, so nothing to roll back
     }
   }
 
@@ -165,6 +174,7 @@ class DashboardController extends StateNotifier<CvDashboardState> {
         'title': newTitle,
         'updatedAt': Timestamp.fromDate(DateTime.now()),
       });
+      // Server succeeded → update local state
       final updated = state.cvs.map((cv) {
         if (cv.id == cvId) {
           return CvSummaryModel(
@@ -179,14 +189,66 @@ class DashboardController extends StateNotifier<CvDashboardState> {
         return cv;
       }).toList();
       state = state.copyWith(cvs: updated);
+
+      _ref.read(dashboardControllerProvider.notifier).updateRecentItemTitle(
+        id: cvId,
+        newTitle: newTitle,
+      );
     } catch (e) {
       debugPrint('renameCV error: $e');
     }
   }
+
+  /// Called by CV editor after a new CV is created.
+  void addCv(CvSummaryModel cv) {
+    state = state.copyWith(cvs: [cv, ...state.cvs]);
+    _ref.read(dashboardControllerProvider.notifier).addRecentItem(
+      id: cv.id,
+      title: cv.title,
+      type: 'cv',
+      templateId: cv.templateId,
+    );
+  }
+
+  /// Called by CV editor after CV is updated (title or content).
+  void updateCv(String cvId, {String? newTitle}) {
+    final updated = state.cvs.map((cv) {
+      if (cv.id == cvId) {
+        return CvSummaryModel(
+          id: cv.id,
+          title: newTitle ?? cv.title,
+          thumbnailUrl: cv.thumbnailUrl,
+          templateId: cv.templateId,
+          updatedAt: DateTime.now(),
+          createdAt: cv.createdAt,
+        );
+      }
+      return cv;
+    }).toList();
+    state = state.copyWith(cvs: updated);
+
+    if (newTitle != null) {
+      _ref.read(dashboardControllerProvider.notifier).updateRecentItemTitle(
+        id: cvId,
+        newTitle: newTitle,
+      );
+    }
+  }
+
+  /// Bump AI usage counter on CV dashboard.
+  void incrementAiUsage() {
+    state = state.copyWith(aiUsageCount: state.aiUsageCount + 1);
+    _ref.read(dashboardControllerProvider.notifier).incrementAiUsage();
+  }
+
+  /// Bump export counter on CV dashboard.
+  void incrementExportCount() {
+    state = state.copyWith(exportCount: state.exportCount + 1);
+    _ref.read(dashboardControllerProvider.notifier).incrementExportCount();
+  }
 }
 
-// Providers
 final cvDashboardControllerProvider =
 StateNotifierProvider<DashboardController, CvDashboardState>(
-      (ref) => DashboardController(),
+      (ref) => DashboardController(ref),
 );

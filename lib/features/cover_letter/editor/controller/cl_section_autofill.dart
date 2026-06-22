@@ -96,7 +96,8 @@ class ClSectionAutofill {
       SectionType type,
       AiProfileModel p,
       _Styles styles,
-      ) {
+      )
+  {
     switch (type) {
       case SectionType.senderAddress:
         if (p.fullName.isEmpty) return null;
@@ -147,7 +148,8 @@ class ClSectionAutofill {
       String text,
       Map<String, dynamic> attrs, {
         bool bold = false,
-      }) {
+      })
+  {
     final a = Map<String, dynamic>.from(attrs);
     if (bold) a['bold'] = true;
     if (text.isEmpty) {

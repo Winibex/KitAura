@@ -84,6 +84,8 @@ class PropEditorController extends ChangeNotifier {
   final CanvasController canvas;
   Timer? _autoSaveTimer;
   PropEditorState _state = const PropEditorState();
+  bool _disposed = false;
+  bool _initialized = false;
 
   PropEditorState get state => _state;
 
@@ -97,8 +99,6 @@ class PropEditorController extends ChangeNotifier {
 
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
 
-  bool _disposed = false;
-
   @override
   void dispose() {
     _disposed = true;
@@ -108,7 +108,6 @@ class PropEditorController extends ChangeNotifier {
 
   // ─── INITIALIZATION ───────────────────────────────────────────────────
 
-  bool _initialized = false;
   Future<void> initialize(String docId) async {
     if (_initialized) return;
     _initialized = true;

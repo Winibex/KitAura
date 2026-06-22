@@ -180,7 +180,8 @@ class CvEditorController extends ChangeNotifier {
   void selectCareerProfile({
     required String profileId,
     required String profileName,
-  }) {
+  })
+  {
     state = state.copyWith(
       selectedProfileId: profileId,
       selectedProfileName: profileName,
