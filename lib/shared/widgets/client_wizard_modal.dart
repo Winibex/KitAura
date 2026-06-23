@@ -32,7 +32,8 @@ class ClientWizardModal extends ConsumerStatefulWidget {
   static Future<ClientProfileModel?> show(
     BuildContext context, {
     ClientProfileModel? existing,
-  }) {
+  })
+  {
     return showDialog<ClientProfileModel>(
       context: context,
       barrierDismissible: false,
@@ -719,17 +720,9 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ── Tap-to-expand header (works for both free + pro) ─────
         GestureDetector(
-          onTap: () {
-            if (!isPro) {
-              showDialog(
-                context: context,
-                builder: (_) => const UpgradeModal(),
-              );
-              return;
-            }
-            setState(() => _briefOpen = !_briefOpen);
-          },
+          onTap: () => setState(() => _briefOpen = !_briefOpen),
           child: MouseRegion(
             cursor: SystemMouseCursors.click,
             child: Container(
@@ -786,107 +779,216 @@ class _ClientWizardModalState extends ConsumerState<ClientWizardModal> {
                           color: AppColors.white,
                         ),
                       ),
-                    )
-                  else
-                    Icon(
-                      _briefOpen
-                          ? LucideIcons.chevronUp
-                          : LucideIcons.chevronDown,
-                      size: 16,
-                      color: AppColors.white,
                     ),
+                  const SizedBox(width: 6),
+                  Icon(
+                    _briefOpen
+                        ? LucideIcons.chevronUp
+                        : LucideIcons.chevronDown,
+                    size: 16,
+                    color: AppColors.white,
+                  ),
                 ],
               ),
             ),
           ),
         ),
-        if (_briefOpen && isPro) ...[
+
+        // ── Expanded section (different content for free vs pro) ─
+        if (_briefOpen) ...[
           const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.petalFrost,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Row(
-              children: [
-                Icon(
-                  LucideIcons.shieldCheck,
-                  size: 13,
-                  color: AppColors.darkRaspberry,
-                ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Your brief isn\'t saved. Closing or reloading clears it.',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontFamily: AppFonts.openSans,
-                      color: AppColors.prussianBlue,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          if (!isPro) _buildFreeUserPreview() else _buildProUserChat(),
+        ],
+
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  /// Free-user view: explains the feature, shows a disabled input field,
+  /// and pops the upgrade modal when they try to send.
+  Widget _buildFreeUserPreview() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // What the feature does — bullet list
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.lavenderBlush,
+            borderRadius: BorderRadius.circular(10),
           ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _briefCtrl,
-            maxLines: 4,
-            style: _inputStyle(),
-            decoration: _inputDeco(
-              'Describe your client and project — paste a brief, email, or notes. AI will ask follow-ups if needed and fill the form.',
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                'What this does',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontFamily: AppFonts.poppins,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.prussianBlue,
+                ),
+              ),
+              SizedBox(height: 8),
+              _FeatureBullet('Skip the 6-step wizard'),
+              _FeatureBullet('Just describe your client and project in plain English'),
+              _FeatureBullet('AI asks follow-up questions for missing details'),
+              _FeatureBullet('Auto-fills sender, client, scope, timeline, and budget'),
+              _FeatureBullet('You review and edit before saving'),
+            ],
           ),
-          const SizedBox(height: 8),
-          GestureDetector(
-            onTap: _aiBusy ? null : _runAutoFill,
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: _aiBusy
-                      ? AppColors.slateGrey
-                      : AppColors.darkRaspberry,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (_aiBusy)
-                      const SizedBox(
-                        width: 15,
-                        height: 15,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.white,
-                        ),
-                      )
-                    else
-                      Icon(
-                        LucideIcons.sparkles,
-                        size: 15,
-                        color: AppColors.white,
-                      ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _aiBusy ? 'Working...' : 'Start with AI',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontFamily: AppFonts.poppins,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.white,
-                      ),
-                    ),
-                  ],
-                ),
+        ),
+        const SizedBox(height: 10),
+
+        // Disabled textarea (so they can see the input UI)
+        Opacity(
+          opacity: 0.55,
+          child: IgnorePointer(
+            child: TextField(
+              maxLines: 4,
+              enabled: false,
+              style: _inputStyle(),
+              decoration: _inputDeco(
+                'Describe your client and project here...',
               ),
             ),
           ),
-        ],
-        const SizedBox(height: 16),
+        ),
+        const SizedBox(height: 8),
+
+        // Send button that opens the upgrade modal
+        GestureDetector(
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (_) => const UpgradeModal(),
+            );
+          },
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.darkRaspberry,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(
+                    LucideIcons.sparkles,
+                    size: 15,
+                    color: AppColors.white,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Unlock with Pro',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontFamily: AppFonts.poppins,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Pro/Trial user view: the actual chat brief composer.
+  Widget _buildProUserChat() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppColors.petalFrost,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Row(
+            children: [
+              Icon(
+                LucideIcons.shieldCheck,
+                size: 13,
+                color: AppColors.darkRaspberry,
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Your brief isn\'t saved. Closing or reloading clears it.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontFamily: AppFonts.openSans,
+                    color: AppColors.prussianBlue,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _briefCtrl,
+          maxLines: 4,
+          style: _inputStyle(),
+          decoration: _inputDeco(
+            'Describe your client and project — paste a brief, email, or notes. AI will ask follow-ups if needed and fill the form.',
+          ),
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: _aiBusy ? null : _runAutoFill,
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: _aiBusy
+                    ? AppColors.slateGrey
+                    : AppColors.darkRaspberry,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (_aiBusy)
+                    const SizedBox(
+                      width: 15,
+                      height: 15,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.white,
+                      ),
+                    )
+                  else
+                    const Icon(
+                      LucideIcons.sparkles,
+                      size: 15,
+                      color: AppColors.white,
+                    ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _aiBusy ? 'Working...' : 'Start with AI',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontFamily: AppFonts.poppins,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -2273,6 +2375,41 @@ class _SkeletonBoxState extends State<_SkeletonBox>
           ),
         );
       },
+    );
+  }
+}
+
+// ─── Bullet row for the free-user feature preview ────────────────────
+class _FeatureBullet extends StatelessWidget {
+  final String text;
+  const _FeatureBullet(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            LucideIcons.check,
+            size: 13,
+            color: AppColors.darkRaspberry,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 12,
+                fontFamily: AppFonts.openSans,
+                color: AppColors.prussianBlue,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

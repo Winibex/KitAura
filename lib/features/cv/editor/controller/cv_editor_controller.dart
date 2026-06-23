@@ -82,7 +82,20 @@ class CvEditorState {
 
 class CvEditorController extends ChangeNotifier {
   final CanvasController canvas;
+
+  /// Called once after the CV is created in Firestore (first save).
+  /// View wires this to update the dashboards.
+  final void Function({
+  required String docId,
+  required String title,
+  required String templateId,
+  })? onDocCreated;
+
+  /// Called after a successful PDF export.
+  final void Function()? onExported;
+
   Timer? _autoSaveTimer;
+
   CvEditorState _state = const CvEditorState();
   CvEditorState get state => _state;
 
@@ -92,10 +105,16 @@ class CvEditorController extends ChangeNotifier {
     notifyListeners();
   }
 
-  CvEditorController({required this.canvas});
+  CvEditorController({
+    required this.canvas,
+    this.onDocCreated,
+    this.onExported,
+  });
 
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
+
   bool _disposed = false;
+  String _templateId = 'blank';
 
   @override
   void dispose() {
@@ -115,9 +134,11 @@ class CvEditorController extends ChangeNotifier {
 
     final info = CvTemplateData.getInfo(docId);
     if (docId == 'blank') {
+      _templateId = 'blank';
       state = state.copyWith(title: 'Untitled CV');
       canvas.init();
     } else if (info != null) {
+      _templateId = docId;
       state = state.copyWith(title: '${info.label} CV');
       final json = await CvTemplateData.loadTemplateJson(docId);
       canvas.applyTemplateJson(json);
@@ -249,6 +270,12 @@ class CvEditorController extends ChangeNotifier {
           documentId: docRef.id,
           documentTitle: state.title,
         );
+        // Notify dashboard to add this CV to its list
+        onDocCreated?.call(
+          docId: docRef.id,
+          title: state.title,
+          templateId: _templateId,
+        );
       }
       state = state.copyWith(isSaved: true, isSaving: false, error: null);
       debugPrint('📝 [CvEditor] Auto-save complete');
@@ -277,6 +304,8 @@ class CvEditorController extends ChangeNotifier {
         documentTitle: state.title,
       );
       state = state.copyWith(isExporting: false);
+      // Notify dashboard to bump export counter
+      onExported?.call();
       return true;
     } on FirebaseFunctionsException catch (e) {
       state = state.copyWith(isExporting: false);

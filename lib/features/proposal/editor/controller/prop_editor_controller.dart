@@ -82,6 +82,17 @@ class PropEditorState {
 
 class PropEditorController extends ChangeNotifier {
   final CanvasController canvas;
+
+  /// Called once after the proposal is created in Firestore.
+  final void Function({
+  required String docId,
+  required String title,
+  required String templateId,
+  })? onDocCreated;
+
+  /// Called after a successful PDF export.
+  final void Function()? onExported;
+
   Timer? _autoSaveTimer;
   PropEditorState _state = const PropEditorState();
   bool _disposed = false;
@@ -95,7 +106,11 @@ class PropEditorController extends ChangeNotifier {
     notifyListeners();
   }
 
-  PropEditorController({required this.canvas});
+  PropEditorController({
+    required this.canvas,
+    this.onDocCreated,
+    this.onExported,
+  });
 
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
 
@@ -367,6 +382,12 @@ class PropEditorController extends ChangeNotifier {
           documentId: docRef.id,
           documentTitle: state.title,
         );
+        // Notify dashboard
+        onDocCreated?.call(
+          docId: docRef.id,
+          title: state.title,
+          templateId: state.templateId ?? 'custom',
+        );
       }
 
       state = state.copyWith(isSaved: true, isSaving: false, error: null);
@@ -412,6 +433,7 @@ class PropEditorController extends ChangeNotifier {
         documentTitle: state.title,
       );
       state = state.copyWith(isExporting: false);
+      onExported?.call();
       return true;
     } on FirebaseFunctionsException catch (e) {
       state = state.copyWith(isExporting: false);

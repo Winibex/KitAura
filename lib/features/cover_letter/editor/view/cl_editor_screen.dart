@@ -39,6 +39,7 @@ import '../../../ai_setup/view/ai_setup_panel.dart';
 import '../../../cv/editor/view/spellcheck_panel.dart';
 import '../../../settings/view/upgrade_modal.dart';
 import '../../dashboard/controller/cl_dashboard_controller.dart';
+import '../../dashboard/model/cl_summary_model.dart';
 import '../controller/cl_editor_controller.dart';
 
 class ClEditorScreen extends ConsumerStatefulWidget {
@@ -81,7 +82,23 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
     super.initState();
 
     _canvas = CanvasController();
-    _editor = ClEditorController(canvas: _canvas);
+    _editor = ClEditorController(
+      canvas: _canvas,
+      onDocCreated: ({required docId, required title, required templateId}) {
+        ref.read(clDashboardControllerProvider.notifier).addCl(
+          ClSummaryModel(
+            id: docId,
+            title: title,
+            templateId: templateId,
+            updatedAt: DateTime.now(),
+            createdAt: DateTime.now(),
+          ),
+        );
+      },
+      onExported: () {
+        ref.read(clDashboardControllerProvider.notifier).incrementExportCount();
+      },
+    );
 
     _canvas.addListener(_onCanvasUpdate);
     _editor.addListener(_onEditorStateChange);
@@ -727,7 +744,6 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
       isEditingTitle: _isEditingTitle,
       titleController: _titleCtrl,
       onBack: () {
-        ref.read(clDashboardControllerProvider.notifier).loadDashboard(force: true);
         if (context.canPop()) {
           context.pop();
         } else {
@@ -741,6 +757,13 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
       onTitleSubmitted: (val) {
         _editor.updateTitle(val);
         setState(() => _isEditingTitle = false);
+        if (_editor.state.firestoreDocId != null) {
+          final newTitle = val.trim().isEmpty ? 'Untitled Cover Letter' : val.trim();
+          ref.read(clDashboardControllerProvider.notifier).updateCl(
+            _editor.state.firestoreDocId!,
+            newTitle: newTitle,
+          );
+        }
       },
       canUndo: _canvas.canUndo,
       canRedo: _canvas.canRedo,

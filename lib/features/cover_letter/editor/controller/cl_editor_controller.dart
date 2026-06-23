@@ -116,6 +116,17 @@ class ClEditorState {
 
 class ClEditorController extends ChangeNotifier {
   final CanvasController canvas;
+
+  /// Called once after the cover letter is created in Firestore.
+  final void Function({
+  required String docId,
+  required String title,
+  required String templateId,
+  })? onDocCreated;
+
+  /// Called after a successful PDF export.
+  final void Function()? onExported;
+
   Timer? _autoSaveTimer;
   ClEditorState _state = const ClEditorState();
 
@@ -127,11 +138,16 @@ class ClEditorController extends ChangeNotifier {
     notifyListeners();
   }
 
-  ClEditorController({required this.canvas});
+  ClEditorController({
+    required this.canvas,
+    this.onDocCreated,
+    this.onExported,
+  });
 
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
 
   bool _disposed = false;
+  String _templateId = 'custom';
 
   @override
   void dispose() {
@@ -150,9 +166,11 @@ class ClEditorController extends ChangeNotifier {
 
     final info = ClTemplateData.getInfo(docId);
     if (docId == 'blank') {
+      _templateId = 'blank';
       state = state.copyWith(title: 'Untitled Cover Letter');
       canvas.init();
     } else if (info != null) {
+      _templateId = docId;
       state = state.copyWith(title: '${info.label} Cover Letter');
       final json = await ClTemplateData.loadTemplateJson(docId);
       canvas.applyTemplateJson(json);
@@ -404,6 +422,12 @@ class ClEditorController extends ChangeNotifier {
           documentId: docRef.id,
           documentTitle: state.title,
         );
+        // Notify dashboard
+        onDocCreated?.call(
+          docId: docRef.id,
+          title: state.title,
+          templateId: _templateId,
+        );
       }
 
       state = state.copyWith(isSaved: true, isSaving: false, error: null);
@@ -454,6 +478,7 @@ class ClEditorController extends ChangeNotifier {
         documentTitle: state.title,
       );
       state = state.copyWith(isExporting: false);
+      onExported?.call();
       return true;
     } on FirebaseFunctionsException catch (e) {
       state = state.copyWith(isExporting: false);

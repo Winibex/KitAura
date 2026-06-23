@@ -11,9 +11,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import '../../features/cover_letter/dashboard/controller/cl_dashboard_controller.dart';
 import '../../features/cover_letter/editor/controller/cl_editor_controller.dart';
+import '../../features/cv/dashboard/controller/cv_dashboard_controller.dart';
 import '../../features/cv/editor/controller/section_autofill.dart';
+import '../../features/dashboard/controller/dashboard_controller.dart';
+import '../../features/proposal/dashboard/controller/prop_dashboard_controller.dart';
 import '../../features/proposal/editor/controller/prop_editor_controller.dart';
 import '../../features/proposal/template/data/prop_template_data.dart';
 import '../models/ai_profile_model.dart';
@@ -75,9 +80,35 @@ class _StyleSet {
 // ─── CONTROLLER ──────────────────────────────────────────────────────────
 
 class ClaudeController extends StateNotifier<ClaudeState> {
-  ClaudeController() : super(const ClaudeState());
+  ClaudeController(this._ref) : super(const ClaudeState());
 
+  final Ref _ref;
   AiProfileModel? _cachedProfile;
+
+  /// Bumps the dashboard counters for AI Compose / AI Refine after a
+  /// successful AI call. Routes to the correct sub-dashboard based on tool,
+  /// and the Main Dashboard gets updated via cascade.
+  void _bumpDashboardCounter({required String tool, required bool isRewrite}) {
+    try {
+      if (tool == 'cv') {
+        _ref.read(cvDashboardControllerProvider.notifier)
+            .incrementAiUsage(); // CV dashboard tracks combined
+        _ref.read(dashboardControllerProvider.notifier)
+            .incrementAiUsage(isRewrite: isRewrite); // Main dashboard tracks split
+      } else if (tool == 'coverLetter') {
+        _ref.read(clDashboardControllerProvider.notifier).incrementAiUsage();
+        _ref.read(dashboardControllerProvider.notifier)
+            .incrementAiUsage(isRewrite: isRewrite);
+      } else if (tool == 'proposal') {
+        _ref.read(propDashboardControllerProvider.notifier).incrementAiUsage();
+        _ref.read(dashboardControllerProvider.notifier)
+            .incrementAiUsage(isRewrite: isRewrite);
+      }
+    } catch (e) {
+      // Counter bump is non-critical — don't break AI flow if it fails
+      debugPrint('🤖 [ClaudeController] Dashboard counter bump failed: $e');
+    }
+  }
 
   // ═══════════════════════════════════════════════════════════════════════
   // AI Compose
@@ -122,7 +153,17 @@ class ClaudeController extends StateNotifier<ClaudeState> {
     } catch (e) {
       debugPrint('🤖 [ClaudeController] Profile load failed: $e');
     }
-    profile ??= const AiProfileModel();
+
+    // Guard: profile must have at least name + some content
+    if (profile == null ||
+        (profile.fullName.isEmpty && profile.experiences.isEmpty)) {
+      state = ClaudeState(
+        status: AiFillStatus.error,
+        activeItemId: itemId,
+        error: 'Career Profile is empty. Please add your details first by clicking the Career Profile picker.',
+      );
+      return;
+    }
 
     // Extract styles from existing template content
     final styles = _extractStyles(controller.document);
@@ -173,6 +214,7 @@ class ClaudeController extends StateNotifier<ClaudeState> {
         activeItemId: itemId,
         streamedChars: controller.document.toPlainText().length,
       );
+      _bumpDashboardCounter(tool: tool, isRewrite: false);
       debugPrint('🤖 [ClaudeController] fillSection OK');
     } catch (e) {
       if (!mounted) return;
@@ -191,7 +233,8 @@ class ClaudeController extends StateNotifier<ClaudeState> {
     required List<CanvasItem> items,
     required ClEditorController editor,
     String? profileId,
-  }) async {
+  }) async
+  {
     if (state.isActive) return;
     debugPrint('🤖 [ClaudeController] fillAllClSections');
 
@@ -215,13 +258,29 @@ class ClaudeController extends StateNotifier<ClaudeState> {
     } catch (e) {
       debugPrint('🤖 [ClaudeController] Profile load failed: $e');
     }
-    profile ??= const AiProfileModel();
 
     // Load linked CV content
     String? cvContent;
     if (editor.state.linkedCvId != null) {
       cvContent = await editor.getLinkedCvContent();
     }
+
+    // Guard: need EITHER a usable Career Profile OR a usable linked CV.
+    final hasUsefulProfile = profile != null &&
+        profile.fullName.isNotEmpty &&
+        profile.experiences.isNotEmpty;
+    final hasUsefulCv = cvContent != null && cvContent.trim().length > 30;
+
+    if (!hasUsefulProfile && !hasUsefulCv) {
+      state = const ClaudeState(
+        status: AiFillStatus.error,
+        error: 'Add a Career Profile or link a CV with content before using AI Compose.',
+      );
+      return;
+    }
+
+    // If profile is still null at this point, we have a usable CV — use empty placeholder.
+    profile ??= const AiProfileModel();
 
     // Build job details map
     final jobDetails = <String, dynamic>{
@@ -285,6 +344,7 @@ class ClaudeController extends StateNotifier<ClaudeState> {
         status: AiFillStatus.done,
         streamedChars: filled,
       );
+      _bumpDashboardCounter(tool: 'coverLetter', isRewrite: false);
       debugPrint('🤖 [ClaudeController] fillAllClSections OK — $filled sections filled');
     } catch (e) {
       if (!mounted) return;
@@ -308,7 +368,8 @@ class ClaudeController extends StateNotifier<ClaudeState> {
     String? cvTitle,
     String? templateId,
     String? profileId,
-  }) async {
+  }) async
+  {
     if (state.isActive) return;
     debugPrint('🤖 [ClaudeController] fillAllCvSections');
 
@@ -420,6 +481,7 @@ class ClaudeController extends StateNotifier<ClaudeState> {
         status: AiFillStatus.done,
         streamedChars: filled,
       );
+      _bumpDashboardCounter(tool: 'cv', isRewrite: false);
       debugPrint('🤖 [ClaudeController] fillAllCvSections OK — $filled filled');
     } catch (e) {
       if (!mounted) return;
@@ -438,7 +500,8 @@ class ClaudeController extends StateNotifier<ClaudeState> {
   Future<void> composeRawAllCvSections({
     required List<CanvasItem> items,
     String? profileId,
-  }) async {
+  }) async
+  {
     if (state.isActive) return;
     debugPrint('🤖 [ClaudeController] composeRawAllCvSections');
 
@@ -634,6 +697,7 @@ class ClaudeController extends StateNotifier<ClaudeState> {
         activeItemId: itemId,
         streamedChars: controller.document.toPlainText().length,
       );
+      _bumpDashboardCounter(tool: tool, isRewrite: true);
       debugPrint('🤖 [ClaudeController] rewriteSection OK (${rewritten.length} chars)');
     } catch (e) {
       if (!mounted) return;
@@ -991,6 +1055,7 @@ class ClaudeController extends StateNotifier<ClaudeState> {
       editor.markDirty();
 
       state = ClaudeState(status: AiFillStatus.done, streamedChars: filled);
+      _bumpDashboardCounter(tool: 'proposal', isRewrite: false);
       debugPrint('🤖 [ClaudeController] fillAllProposalSections OK — $filled filled');
     } catch (e) {
       if (!mounted) return;
@@ -1412,7 +1477,8 @@ class ClaudeController extends StateNotifier<ClaudeState> {
       List<CanvasItem> items, {
         required ClientProfileModel client,
         required AiProfileModel profile,
-      }) {
+      })
+  {
     for (final item in items) {
       if (item.role != 'signature' || !item.isText || item.controller == null) {
         continue;
@@ -1530,5 +1596,5 @@ class ClaudeController extends StateNotifier<ClaudeState> {
 
 final claudeControllerProvider =
 StateNotifierProvider.autoDispose<ClaudeController, ClaudeState>(
-      (ref) => ClaudeController(),
+      (ref) => ClaudeController(ref),
 );

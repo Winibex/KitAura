@@ -134,9 +134,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       _StatCardData(
         icon: LucideIcons.fileText,
         label: 'Documents',
-        value: '${state.totalDocuments}',
-        subtitle: '${state.totalDocuments} total created',
+        value: state.isPro
+            ? '${state.totalDocuments} / ∞'
+            : '${state.totalDocuments} / ${state.maxDocs}',
+        subtitle: state.isPro
+            ? 'Unlimited'
+            : '${state.maxDocs - state.totalDocuments} remaining',
         color: AppColors.magentaBloom,
+        progress: state.isPro ? null : state.totalDocuments / state.maxDocs,
+        detailLineHeaders: const ['CV', 'CL', 'Proposal'],
+        detailLineData: [
+          '${state.cvCount}',
+          '${state.coverLetterCount}',
+          '${state.proposalCount}',
+        ],
       ),
       _StatCardData(
         icon: LucideIcons.download,
@@ -151,20 +162,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         label: 'AI Use',
         value: state.isPro
             ? '${state.aiFillCount + state.aiRewriteCount} / ∞'
-            : '${state.aiFillCount + state.aiRewriteCount} / ${state.maxAiFills + state.maxAiRewrites}',
+            : '${state.aiFillCount + state.aiRewriteCount} / ${state.maxAiFills}',
         subtitle: state.isPro
             ? 'Unlimited'
-            : '${(state.maxAiFills - state.aiFillCount) + (state.maxAiRewrites - state.aiRewriteCount)} remaining',
+            : '${state.maxAiFills - (state.aiFillCount + state.aiRewriteCount)} remaining',
         color: AppColors.dustyMauve,
         progress: state.isPro
             ? null
-            : (state.aiFillCount + state.aiRewriteCount) / (state.maxAiFills + state.maxAiRewrites),
+            : (state.aiFillCount + state.aiRewriteCount) / state.maxAiFills,
         detailLineHeaders: state.isPro
             ? null
-            : ['Fills',  'Rewrites'],
+            : ['Compose', 'Refine'],
         detailLineData: state.isPro
             ? null
-            : ['${state.aiFillCount}/${state.maxAiFills}', '${state.aiRewriteCount}/${state.maxAiRewrites}'],
+            : ['${state.aiFillCount}', '${state.aiRewriteCount}'],
       ),
       _StatCardData(
         icon: LucideIcons.logIn,
@@ -287,47 +298,36 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
           if (data.detailLineHeaders != null && data.detailLineHeaders!.isNotEmpty &&
               data.detailLineData != null && data.detailLineData!.isNotEmpty) ...[
-            Spacer(),
+            const Spacer(),
             Row(
               children: [
-                Text(
-                  '${data.detailLineHeaders![0]}: ',
-                  style: TextStyle(
-                    fontSize: Responsive.isMobile(context) ? 8 : 10,
-                    fontFamily: AppFonts.openSans,
-                    color: AppColors.darkRaspberry,
-                    fontWeight: FontWeight.w500,
+                for (int i = 0; i < data.detailLineHeaders!.length; i++) ...[
+                  if (i > 0)
+                    Text(
+                      ' · ',
+                      style: TextStyle(
+                        fontSize: Responsive.isMobile(context) ? 8 : 10,
+                        color: AppColors.slateGrey,
+                      ),
+                    ),
+                  Text(
+                    '${data.detailLineHeaders![i]}: ',
+                    style: TextStyle(
+                      fontSize: Responsive.isMobile(context) ? 8 : 10,
+                      fontFamily: AppFonts.openSans,
+                      color: AppColors.darkRaspberry,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  '${data.detailLineData![0]} ',
-                  style: TextStyle(
-                    fontSize: Responsive.isMobile(context) ? 8 : 10,
-                    fontFamily: AppFonts.openSans,
-                    color: AppColors.prussianBlue,
+                  Text(
+                    data.detailLineData![i],
+                    style: TextStyle(
+                      fontSize: Responsive.isMobile(context) ? 8 : 10,
+                      fontFamily: AppFonts.openSans,
+                      color: AppColors.prussianBlue,
+                    ),
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  '- ${data.detailLineHeaders![1]}: ',
-                  style: TextStyle(
-                    fontSize: Responsive.isMobile(context) ? 8 : 10,
-                    fontFamily: AppFonts.openSans,
-                    color: AppColors.darkRaspberry,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  data.detailLineData![1],
-                  style: TextStyle(
-                    fontSize: Responsive.isMobile(context) ? 8 : 10,
-                    fontFamily: AppFonts.openSans,
-                    color: AppColors.prussianBlue,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+                ],
               ],
             ),
           ],

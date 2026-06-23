@@ -687,6 +687,7 @@ class FirebaseService {
             'aiFillPerMonth': _resolveLimit(planLimits['aiFillPerMonth'], 15),
             'aiRewritePerMonth': _resolveLimit(planLimits['aiRewritePerMonth'], 15),
             'aiDesignPerMonth': _resolveLimit(planLimits['aiDesignPerMonth'], 5),
+            'maxDocs': _resolveLimit(planLimits['maxDocs'], 5),
           };
         }
       }
@@ -698,6 +699,7 @@ class FirebaseService {
       'maxCvs': 3, 'maxCoverLetters': 3, 'maxProposals': 3,
       'exportsPerMonth': 3, 'aiFillPerMonth': 15,
       'aiRewritePerMonth': 15, 'aiDesignPerMonth': 5,
+      'maxDocs': 5,
     };
   }
 

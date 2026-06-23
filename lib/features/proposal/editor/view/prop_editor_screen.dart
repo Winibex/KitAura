@@ -35,6 +35,7 @@ import '../../../../shared/widgets/command_k_bar.dart';
 import '../../../cv/editor/view/spellcheck_panel.dart';
 import '../../../settings/view/upgrade_modal.dart';
 import '../../dashboard/controller/prop_dashboard_controller.dart';
+import '../../dashboard/model/prop_summary_model.dart';
 import '../controller/prop_editor_controller.dart';
 import 'prop_details_panel.dart';
 
@@ -77,7 +78,23 @@ class _PropEditorScreenState extends ConsumerState<PropEditorScreen> {
     super.initState();
 
     _canvas = CanvasController();
-    _editor = PropEditorController(canvas: _canvas);
+    _editor = PropEditorController(
+      canvas: _canvas,
+      onDocCreated: ({required docId, required title, required templateId}) {
+        ref.read(propDashboardControllerProvider.notifier).addProposal(
+          PropSummaryModel(
+            id: docId,
+            title: title,
+            templateId: templateId,
+            updatedAt: DateTime.now(),
+            createdAt: DateTime.now(),
+          ),
+        );
+      },
+      onExported: () {
+        ref.read(propDashboardControllerProvider.notifier).incrementExportCount();
+      },
+    );
 
     _canvas.addListener(_onCanvasUpdate);
     _editor.addListener(_onEditorStateChange);
@@ -427,7 +444,6 @@ class _PropEditorScreenState extends ConsumerState<PropEditorScreen> {
       isEditingTitle: _isEditingTitle,
       titleController: _titleCtrl,
       onBack: () {
-        ref.read(propDashboardControllerProvider.notifier).loadDashboard(force: true);
         if (context.canPop()) {
           context.pop();
         } else {
@@ -441,6 +457,13 @@ class _PropEditorScreenState extends ConsumerState<PropEditorScreen> {
       onTitleSubmitted: (val) {
         _editor.updateTitle(val);
         setState(() => _isEditingTitle = false);
+        if (_editor.state.firestoreDocId != null) {
+          final newTitle = val.trim().isEmpty ? 'Untitled Proposal' : val.trim();
+          ref.read(propDashboardControllerProvider.notifier).updateProposal(
+            _editor.state.firestoreDocId!,
+            newTitle: newTitle,
+          );
+        }
       },
       canUndo: _canvas.canUndo,
       canRedo: _canvas.canRedo,

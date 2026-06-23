@@ -37,6 +37,7 @@ import '../../../../shared/widgets/command_k_bar.dart';
 import '../../../dashboard/controller/dashboard_controller.dart';
 import '../../../settings/view/upgrade_modal.dart';
 import '../../dashboard/controller/cv_dashboard_controller.dart';
+import '../../dashboard/model/cv_summary_model.dart';
 import '../controller/cv_editor_controller.dart';
 import 'spellcheck_panel.dart';
 import '../../../ai_setup/view/ai_setup_panel.dart';
@@ -83,7 +84,23 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
 
     // Create controllers
     _canvas = CanvasController();
-    _editor = CvEditorController(canvas: _canvas);
+    _editor = CvEditorController(
+      canvas: _canvas,
+      onDocCreated: ({required docId, required title, required templateId}) {
+        ref.read(cvDashboardControllerProvider.notifier).addCv(
+          CvSummaryModel(
+            id: docId,
+            title: title,
+            templateId: templateId,
+            updatedAt: DateTime.now(),
+            createdAt: DateTime.now(),
+          ),
+        );
+      },
+      onExported: () {
+        ref.read(cvDashboardControllerProvider.notifier).incrementExportCount();
+      },
+    );
 
     // Listen to canvas changes → rebuild toolbar + mark dirty
     _canvas.addListener(_onCanvasUpdate);
@@ -786,7 +803,6 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
       isEditingTitle: _isEditingTitle,
       titleController: _titleCtrl,
       onBack: () {
-        ref.read(cvDashboardControllerProvider.notifier).loadDashboard(force: true);
         if (context.canPop()) {
           context.pop();
         } else {
@@ -800,6 +816,14 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
       onTitleSubmitted: (val) {
         _editor.updateTitle(val);
         setState(() => _isEditingTitle = false);
+        // Keep dashboard in sync if doc already exists in Firestore
+        if (_editor.state.firestoreDocId != null) {
+          final newTitle = val.trim().isEmpty ? 'Untitled CV' : val.trim();
+          ref.read(cvDashboardControllerProvider.notifier).updateCv(
+            _editor.state.firestoreDocId!,
+            newTitle: newTitle,
+          );
+        }
       },
       canUndo: _canvas.canUndo,
       canRedo: _canvas.canRedo,

@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_fonts.dart';
 import '../../../core/constants/app_sizes.dart';
@@ -664,17 +665,40 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
   }
 
   Widget _dropdownLoading() {
-    return Container(
-      height: 44,
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.almondSilk),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: const Center(
-        child: SizedBox(
-          width: 16,
-          height: 16,
-          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.darkRaspberry),
+    return Skeletonizer(
+      enabled: true,
+      child: Container(
+        width: double.infinity,
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.almondSilk),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            Skeleton.leaf(
+              child: Container(
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: AppColors.petalFrost,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                'Loading placeholder profile name',
+                style: TextStyle(fontSize: 12, fontFamily: AppFonts.openSans),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Skeleton.ignore(
+              child: Icon(LucideIcons.chevronDown, size: 14, color: AppColors.slateGrey),
+            ),
+          ],
         ),
       ),
     );

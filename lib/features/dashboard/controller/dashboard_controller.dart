@@ -8,28 +8,37 @@ import '../../../shared/services/firebase_service.dart';
 class DashboardState {
   final bool isLoading;
   final String? error;
+
   final String displayName;
   final String plan;
+
   final bool trialActive;
   final bool trialUsed;
-  final double proPrice;
   final int? trialDaysRemaining;
+
+  final double proPrice;
+
   final int exportCount;
   final int aiFillCount;
   final int aiRewriteCount;
+  final int totalAiFills;
+
   final int cvCount;
   final int coverLetterCount;
   final int proposalCount;
-  final int totalExports;
-  final int totalAiFills;
   final int totalCvsCreated;
+
+  final int totalExports;
+
   final int loginCount;
   final DateTime? lastActiveAt;
   final List<RecentItem> recentItems;
+
   // Limits from Firebase config/limits
   final int maxExports;
   final int maxAiFills;
   final int maxAiRewrites;
+  final int maxDocs;
 
   const DashboardState({
     this.isLoading = false,
@@ -55,6 +64,7 @@ class DashboardState {
     this.maxExports = 3,
     this.maxAiFills = 15,
     this.maxAiRewrites = 15,
+    this.maxDocs = 5,
   });
 
   bool get isPro => plan == 'pro' || (plan == 'trial' && trialActive);
@@ -89,6 +99,7 @@ class DashboardState {
     int? maxExports,
     int? maxAiRewrites,
     int? maxAiFills,
+    int? maxDocs,
   })
   {
     return DashboardState(
@@ -115,6 +126,7 @@ class DashboardState {
       maxExports: maxExports ?? this.maxExports,
       maxAiRewrites: maxAiRewrites ?? this.maxAiRewrites,
       maxAiFills: maxAiFills ?? this.maxAiFills,
+      maxDocs: maxDocs ?? this.maxDocs,
     );
   }
 }
@@ -233,12 +245,13 @@ class DashboardController extends StateNotifier<DashboardState> {
       }
 
       // Load limits from config/limits
-      int maxExports = 3, maxAiFills = 15; int maxAiRewrites = 15;
+      int maxExports = 3, maxAiFills = 15, maxAiRewrites = 15, maxDocs = 5;
       final limits = await FirebaseService.getPlanLimits(state.plan);
       final proPrice = await FirebaseService.getProPrice();
       maxExports = limits['exportsPerMonth']!;
       maxAiFills = limits['aiFillPerMonth']!;
       maxAiRewrites = limits['aiRewritePerMonth']!;
+      maxDocs = limits['maxDocs']!;
 
       // Load recent cover letters too
       int actualClCount = 0;
@@ -291,6 +304,7 @@ class DashboardController extends StateNotifier<DashboardState> {
         maxExports: maxExports == -1 ? 999 : maxExports,
         maxAiFills: maxAiFills == -1 ? 999 : maxAiFills,
         maxAiRewrites: maxAiRewrites == -1 ? 999 : maxAiRewrites,
+        maxDocs: maxDocs == -1 ? 999 : maxDocs,
         proPrice: proPrice,
         proposalCount: actualPropCount,
       );
