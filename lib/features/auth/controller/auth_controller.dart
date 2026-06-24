@@ -261,7 +261,9 @@ class AuthController extends StateNotifier<AuthState> {
       if (user != null) {
         // Force a server refresh — the cached value won't update on its own.
         await user.reload();
-        return FirebaseAuth.instance.currentUser?.emailVerified ?? false;
+        return FirebaseAuth.instance.currentUser?.emailVerified ?? true;
+        // return FirebaseAuth.instance.currentUser?.emailVerified ?? false;
+        // todo : emails are not sending so email check is currently turned off
       }
     } catch (e) {
       debugPrint('checkEmailVerified error: $e');
