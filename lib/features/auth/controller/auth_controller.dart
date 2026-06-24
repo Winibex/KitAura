@@ -109,9 +109,9 @@ class AuthController extends StateNotifier<AuthState> {
         // failures should never prevent the user from reaching the dashboard.
         ClaudeService.trackLogin();
 
-        state = AuthState(
-          navigate: user.emailVerified ? AuthNav.dashboard : AuthNav.verifyEmail,
-        );
+        // state = AuthState(navigate: user.emailVerified ? AuthNav.dashboard : AuthNav.verifyEmail);
+        // todo : email verification check is currently paused
+        state = AuthState(navigate: AuthNav.dashboard);
       }
     } on FirebaseAuthException catch (e) {
       state = AuthState(error: _mapFirebaseError(e.code));
@@ -164,7 +164,9 @@ class AuthController extends StateNotifier<AuthState> {
       );
 
       // Email verification is required before dashboard access.
-      state = const AuthState(navigate: AuthNav.verifyEmail);
+      // state = const AuthState(navigate: AuthNav.verifyEmail);
+      // todo : email verification check is currently paused
+      state = const AuthState(navigate: AuthNav.dashboard);
     } on FirebaseAuthException catch (e) {
       state = AuthState(error: _mapFirebaseError(e.code));
     } catch (e) {
@@ -261,9 +263,7 @@ class AuthController extends StateNotifier<AuthState> {
       if (user != null) {
         // Force a server refresh — the cached value won't update on its own.
         await user.reload();
-        return FirebaseAuth.instance.currentUser?.emailVerified ?? true;
-        // return FirebaseAuth.instance.currentUser?.emailVerified ?? false;
-        // todo : emails are not sending so email check is currently turned off
+        return FirebaseAuth.instance.currentUser?.emailVerified ?? false;
       }
     } catch (e) {
       debugPrint('checkEmailVerified error: $e');

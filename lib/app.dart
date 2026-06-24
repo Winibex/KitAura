@@ -109,15 +109,20 @@ final _router = GoRouter(
         state.matchedLocation == AppRoutes.auth;
     final isVerify = state.matchedLocation == AppRoutes.verifyEmail;
 
+    // if (isLoggedIn && isAuthRoute) {
+    //   return user.emailVerified ? AppRoutes.dashboard : AppRoutes.verifyEmail;
+    // }
+    // todo : email verification check is currently paused
     if (isLoggedIn && isAuthRoute) {
-      return user.emailVerified ? AppRoutes.dashboard : AppRoutes.verifyEmail;
+      return AppRoutes.dashboard;
     }
     if (!isLoggedIn && !isAuthRoute && state.matchedLocation != AppRoutes.resetPassword) {
       return AppRoutes.auth;
     }
-    if (isLoggedIn && !user.emailVerified && !isVerify && !isAuthRoute) {
-      return AppRoutes.verifyEmail;
-    }
+    // todo : email verification check is currently paused
+    // if (isLoggedIn && !user.emailVerified && !isVerify && !isAuthRoute) {
+    //   return AppRoutes.verifyEmail;
+    // }
     return null;
   },
 );
