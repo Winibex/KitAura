@@ -83,6 +83,7 @@ class DashboardController extends StateNotifier<CvDashboardState> {
     try {
       // Load subscription data
       final subDoc = await FirebaseService.getSubscription(_uid!);
+      if (!mounted) return;
       String plan = 'free';
       int exportCount = 0;
       int aiUsageCount = 0;
@@ -96,7 +97,8 @@ class DashboardController extends StateNotifier<CvDashboardState> {
 
       // Load limits from config/limits (not hardcoded)
       int maxCvs = 3, maxExports = 3, maxAiFills = 15;
-      final limits = await FirebaseService.getPlanLimits(state.plan);
+      final limits = await FirebaseService.getPlanLimits(plan);
+      if (!mounted) return;
       maxCvs = limits['maxCvs']!;
       maxExports = limits['exportsPerMonth']!;
       maxAiFills = limits['aiFillPerMonth']!;
@@ -115,6 +117,7 @@ class DashboardController extends StateNotifier<CvDashboardState> {
       List<CvSummaryModel> cvs = [];
       try {
         final cvsSnapshot = await FirebaseService.getUserCVs(_uid!);
+        if (!mounted) return;
 
         cvs = cvsSnapshot.docs
             .map((doc) => CvSummaryModel.fromJson(
@@ -144,7 +147,7 @@ class DashboardController extends StateNotifier<CvDashboardState> {
     try {
       // 1. Server first — only update state if it succeeds
       await FirebaseService.deleteCV(_uid!, cvId);
-
+      if (!mounted) return;
       // 2. Server succeeded → update local state
       state = state.copyWith(
         cvs: state.cvs.where((c) => c.id != cvId).toList(),
@@ -174,6 +177,7 @@ class DashboardController extends StateNotifier<CvDashboardState> {
         'title': newTitle,
         'updatedAt': Timestamp.fromDate(DateTime.now()),
       });
+      if (!mounted) return;
       // Server succeeded → update local state
       final updated = state.cvs.map((cv) {
         if (cv.id == cvId) {

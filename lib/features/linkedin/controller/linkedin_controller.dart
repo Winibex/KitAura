@@ -11,9 +11,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import '../../../shared/ai/claude_service.dart';
 import '../../../shared/models/ai_profile_model.dart';
 import '../../../shared/services/firebase_service.dart';
-import '../../../shared/ai/claude_service.dart';
 
 // ── Section keys ─────────────────────────────────────────────────────
 
@@ -63,6 +63,10 @@ class LinkedInState {
   final List<SavedLinkedIn> savedItems;
   final bool savedLoaded;
 
+  // CV dropdown list (loaded on init)
+  final List<CvDropdownItem> cvList;
+  final bool loadingCvs;
+
   const LinkedInState({
     this.isLoading = false,
     this.isGenerating = false,
@@ -82,6 +86,8 @@ class LinkedInState {
     this.activeDocId,
     this.savedItems = const [],
     this.savedLoaded = false,
+    this.cvList = const [],
+    this.loadingCvs = true,
   });
 
   bool get hasResults => generatedContent != null;
@@ -104,6 +110,8 @@ class LinkedInState {
     String? activeDocId,
     List<SavedLinkedIn>? savedItems,
     bool? savedLoaded,
+    List<CvDropdownItem>? cvList,
+    bool? loadingCvs,
   }) {
     return LinkedInState(
       isLoading: isLoading ?? this.isLoading,
@@ -121,6 +129,8 @@ class LinkedInState {
       activeDocId: activeDocId ?? this.activeDocId,
       savedItems: savedItems ?? this.savedItems,
       savedLoaded: savedLoaded ?? this.savedLoaded,
+      cvList: cvList ?? this.cvList,
+      loadingCvs: loadingCvs ?? this.loadingCvs,
     );
   }
 }
@@ -192,6 +202,30 @@ class LinkedInController extends StateNotifier<LinkedInState> {
     }
   }
 
+  /// Loads the user's CVs for the dropdown. Called on init.
+  Future<void> loadCvs() async {
+    if (_uid == null) {
+      state = state.copyWith(loadingCvs: false);
+      return;
+    }
+    try {
+      final snap = await FirebaseService.getUserCVs(_uid!);
+      if (!mounted) return;
+      final cvs = snap.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return CvDropdownItem(
+          id: doc.id,
+          title: data['title'] ?? 'Untitled CV',
+        );
+      }).toList();
+      state = state.copyWith(cvList: cvs, loadingCvs: false);
+    } catch (e) {
+      debugPrint('LinkedIn load CVs error: $e');
+      if (!mounted) return;
+      state = state.copyWith(loadingCvs: false);
+    }
+  }
+
   void selectCv(String? id, String? title) {
     state = state.copyWith(selectedCvId: id ?? '', selectedCvTitle: title ?? '');
   }
@@ -211,6 +245,7 @@ class LinkedInController extends StateNotifier<LinkedInState> {
       activeDocId: state.activeDocId,
       savedItems: state.savedItems,
       savedLoaded: state.savedLoaded,
+      selectedProfileId: state.selectedProfileId,
     );
   }
 
@@ -438,6 +473,9 @@ class LinkedInController extends StateNotifier<LinkedInState> {
         savedLoaded: true,
         hasAiProfile: state.hasAiProfile,
         profileName: state.profileName,
+        selectedProfileId: state.selectedProfileId,   // ← NEW
+        cvList: state.cvList,                          // ← NEW
+        loadingCvs: state.loadingCvs,                  // ← NEW
       );
     }
     await loadSaved();
@@ -449,6 +487,9 @@ class LinkedInController extends StateNotifier<LinkedInState> {
       savedLoaded: true,
       hasAiProfile: state.hasAiProfile,
       profileName: state.profileName,
+      selectedProfileId: state.selectedProfileId,   // ← NEW — preserve picked profile
+      cvList: state.cvList,                          // ← NEW — preserve loaded CV list
+      loadingCvs: state.loadingCvs,                  // ← NEW
     );
   }
 
@@ -590,3 +631,10 @@ final linkedInControllerProvider =
 StateNotifierProvider<LinkedInController, LinkedInState>(
       (ref) => LinkedInController(),
 );
+
+/// Lightweight CV entry used by the LinkedIn screen's CV dropdown.
+class CvDropdownItem {
+  final String id;
+  final String title;
+  const CvDropdownItem({required this.id, required this.title});
+}

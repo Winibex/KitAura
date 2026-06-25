@@ -21,22 +21,22 @@ class ConnectivityService {
   static Timer? _pollTimer;
   static bool _initialized = false;
 
+  static JSFunction? _onOnlineJs;
+  static JSFunction? _onOfflineJs;
+
   /// Call once in main.dart before runApp
   static void initialize() {
     if (_initialized) return;
     _initialized = true;
 
-    // Listen to browser online/offline events
-    web.window.addEventListener('online', _onOnline.toJS);
-    web.window.addEventListener('offline', _onOffline.toJS);
+    // Cache the JS wrappers so removeEventListener can use the SAME reference.
+    _onOnlineJs = _onOnline.toJS;
+    _onOfflineJs = _onOffline.toJS;
+    web.window.addEventListener('online', _onOnlineJs);
+    web.window.addEventListener('offline', _onOfflineJs);
 
-    // Set initial state from browser
     _isOnline = web.window.navigator.onLine;
-
-    // Start polling for REAL connectivity (not just WiFi connected)
     _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) => checkConnectivity());
-
-    // Initial check
     checkConnectivity();
   }
 
@@ -51,14 +51,11 @@ class ConnectivityService {
   /// Performs an actual network request to verify internet access.
   /// Returns true if internet is reachable.
   static Future<bool> checkConnectivity() async {
+    final controller = web.AbortController();
+    final signal = controller.signal;
+    final timer = Timer(const Duration(seconds: 5), () => controller.abort());
+
     try {
-      // Use a lightweight endpoint that returns fast
-      final controller = web.AbortController();
-      final signal = controller.signal;
-
-      // 5 second timeout
-      final timer = Timer(const Duration(seconds: 5), () => controller.abort());
-
       await web.window.fetch(
         'https://www.gstatic.com/generate_204'.toJS,
         web.RequestInit(
@@ -67,13 +64,13 @@ class ConnectivityService {
           mode: 'no-cors',
         ),
       ).toDart;
-
-      timer.cancel();
       _updateStatus(true);
       return true;
     } catch (e) {
       _updateStatus(false);
       return false;
+    } finally {
+      timer.cancel();                                // ← ALWAYS cancels now
     }
   }
 
@@ -87,6 +84,15 @@ class ConnectivityService {
 
   static void dispose() {
     _pollTimer?.cancel();
+    if (_onOnlineJs != null) {
+      web.window.removeEventListener('online', _onOnlineJs);
+      _onOnlineJs = null;
+    }
+    if (_onOfflineJs != null) {
+      web.window.removeEventListener('offline', _onOfflineJs);
+      _onOfflineJs = null;
+    }
     _controller.close();
+    _initialized = false;
   }
 }

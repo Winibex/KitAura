@@ -242,6 +242,7 @@ class ClEditorController extends ChangeNotifier {
 
     try {
       final profile = await FirebaseService.getDefaultAiProfile(_uid!);
+      if (_disposed) return;
       if (profile == null || profile.fullName.isEmpty) return;
 
       final filled = ClSectionAutofill.fillAll(canvas.items, profile);
@@ -388,6 +389,7 @@ class ClEditorController extends ChangeNotifier {
   }
 
   Future<void> _autoSave() async {
+    if (_disposed) return;
     if (state.isSaving || state.isTemplateLoading) return;
     if (_uid == null) return;
 
@@ -405,6 +407,7 @@ class ClEditorController extends ChangeNotifier {
         );
       } else {
         final check = await PaywallService.canCreateCoverLetter();
+        if (_disposed) return;
         if (!check.allowed) {
           state = state.copyWith(
             isSaving: false,
@@ -414,6 +417,7 @@ class ClEditorController extends ChangeNotifier {
         }
         data['createdAt'] = FieldValue.serverTimestamp();
         final docRef = await FirebaseService.createCoverLetter(_uid!, data);
+        if (_disposed) return;
         state = state.copyWith(firestoreDocId: docRef.id);
         debugPrint('✉️ [ClEditor] Created new cover letter: ${docRef.id}');
 
@@ -430,6 +434,7 @@ class ClEditorController extends ChangeNotifier {
         );
       }
 
+      if (_disposed) return;
       state = state.copyWith(isSaved: true, isSaving: false, error: null);
       debugPrint('✉️ [ClEditor] Auto-save complete');
 
@@ -437,6 +442,7 @@ class ClEditorController extends ChangeNotifier {
         _autoSaveTimer = Timer(const Duration(seconds: 2), _autoSave);
       }
     } catch (e) {
+      if (_disposed) return;
       debugPrint('✉️ [ClEditor] Auto-save failed: $e');
       state = state.copyWith(isSaving: false, error: 'Save failed: $e');
     }

@@ -62,6 +62,7 @@ class _CommandKBarState extends ConsumerState<CommandKBar>
   bool _busy = false;
   final _ctrl = TextEditingController();
   final _focus = FocusNode();
+  final _kbdListenerFocus = FocusNode(skipTraversal: true);
 
   // Result state — null when nothing to show.
   OpResult? _result;
@@ -81,6 +82,7 @@ class _CommandKBarState extends ConsumerState<CommandKBar>
   void dispose() {
     _ctrl.dispose();
     _focus.dispose();
+    _kbdListenerFocus.dispose();
     _pulseCtrl.dispose();
     super.dispose();
   }
@@ -93,6 +95,7 @@ class _CommandKBarState extends ConsumerState<CommandKBar>
       _error = null;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       _focus.requestFocus();
     });
   }
@@ -340,7 +343,7 @@ class _CommandKBarState extends ConsumerState<CommandKBar>
             child: _busy
                 ? _buildThinkingText()
                 : KeyboardListener(
-              focusNode: FocusNode(skipTraversal: true),
+              focusNode: _kbdListenerFocus,
               onKeyEvent: (event) {
                 if (event is KeyDownEvent) {
                   if (event.logicalKey == LogicalKeyboardKey.escape) {

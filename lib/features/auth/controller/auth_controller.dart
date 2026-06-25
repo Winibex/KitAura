@@ -20,6 +20,7 @@ import 'package:flutter_riverpod/legacy.dart';
 
 import '../../../shared/ai/claude_service.dart';
 import '../../../shared/services/firebase_service.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 // =============================================================================
 // AUTH STATE
@@ -98,20 +99,16 @@ class AuthController extends StateNotifier<AuthState> {
       state = AuthState(error: validationError);
       return;
     }
-
     state = const AuthState(isLoading: true);
     try {
       await FirebaseService.signInWithEmail(email, password);
       final user = FirebaseAuth.instance.currentUser;
-
       if (user != null) {
-        // Track the login event without blocking navigation — analytics
-        // failures should never prevent the user from reaching the dashboard.
-        ClaudeService.trackLogin();
-
-        // state = AuthState(navigate: user.emailVerified ? AuthNav.dashboard : AuthNav.verifyEmail);
-        // todo : email verification check is currently paused
-        state = AuthState(navigate: AuthNav.dashboard);
+        // Wait one frame for the auth token to fully attach before firing
+        // analytics. Without this, trackLogin can race ahead of the token
+        // refresh and the callable rejects with "unauthenticated".
+        _safeTrackLogin();
+        state = AuthState(navigate: user.emailVerified ? AuthNav.dashboard : AuthNav.verifyEmail);
       }
     } on FirebaseAuthException catch (e) {
       state = AuthState(error: _mapFirebaseError(e.code));
@@ -163,10 +160,9 @@ class AuthController extends StateNotifier<AuthState> {
         signupSource: 'email',
       );
 
+      sendEmailVerification();
       // Email verification is required before dashboard access.
-      // state = const AuthState(navigate: AuthNav.verifyEmail);
-      // todo : email verification check is currently paused
-      state = const AuthState(navigate: AuthNav.dashboard);
+      state = const AuthState(navigate: AuthNav.verifyEmail);
     } on FirebaseAuthException catch (e) {
       state = AuthState(error: _mapFirebaseError(e.code));
     } catch (e) {
@@ -202,7 +198,7 @@ class AuthController extends StateNotifier<AuthState> {
         );
         // Skip trackLogin — createNewUserDocuments already seeded loginCount=1
       } else {
-        ClaudeService.trackLogin();
+        _safeTrackLogin();
       }
 
       // Google accounts arrive pre-verified, but we still check the flag so
@@ -244,9 +240,15 @@ class AuthController extends StateNotifier<AuthState> {
   Future<void> sendEmailVerification() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user != null && !user.emailVerified) {
-        await user.sendEmailVerification();
-      }
+      if (user == null || user.emailVerified) return;
+
+      // Force a fresh ID token so the callable picks up valid auth.
+      await user.getIdToken(true);
+
+      final callable = FirebaseFunctions
+          .instanceFor(region: 'us-central1')
+          .httpsCallable('sendVerificationEmail');
+      await callable.call();
     } catch (e) {
       debugPrint('sendEmailVerification error: $e');
     }
@@ -284,21 +286,47 @@ class AuthController extends StateNotifier<AuthState> {
       state = const AuthState(error: 'Please enter your email address.');
       return false;
     }
-
     state = const AuthState(isLoading: true);
     try {
-      await FirebaseService.sendPasswordResetEmail(email);
-      state = const AuthState(); // clear loading; no error
+      // Calls our Cloud Function (Resend SMTP) instead of Firebase's
+      // default reset email — branded HTML, better deliverability.
+      final callable = FirebaseFunctions
+          .instanceFor(region: 'us-central1')
+          .httpsCallable('sendPasswordResetEmail');
+      await callable.call({'email': email.trim()});
+      state = const AuthState();
       return true;
-    } on FirebaseAuthException catch (e) {
-      state = AuthState(error: _mapFirebaseError(e.code));
-      return false;
     } catch (e) {
       debugPrint('PasswordReset error: $e');
-      state =
-      const AuthState(error: 'Something went wrong. Please try again.');
+      state = const AuthState(error: 'Something went wrong. Please try again.');
       return false;
     }
+  }
+
+  // ===========================================================================
+  // Safe Analytics
+  // ===========================================================================
+  /// Fires `trackLogin` as a true fire-and-forget operation.
+  ///
+  /// - Waits one frame so the Firebase Auth token has time to attach to
+  ///   pending HTTPS callable requests. Without this, the call can race
+  ///   ahead of the token refresh and be rejected as unauthenticated.
+  /// - Forces the user to get a fresh ID token before the call, which
+  ///   guarantees `request.auth.uid` is populated server-side.
+  /// - Swallows any error with `debugPrint` so analytics failures never
+  ///   surface as red errors in the console or crash the auth flow.
+  void _safeTrackLogin() {
+    Future<void>.delayed(const Duration(milliseconds: 200), () async {
+      try {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user == null) return;
+        // Force a fresh ID token — guarantees the callable picks up valid auth.
+        await user.getIdToken(true);
+        await ClaudeService.trackLogin();
+      } catch (e) {
+        debugPrint('trackLogin (non-critical) failed: $e');
+      }
+    });
   }
 
   // ===========================================================================

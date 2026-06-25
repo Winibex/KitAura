@@ -580,6 +580,8 @@ class ClaudeController extends StateNotifier<ClaudeState> {
       debugPrint('🤖 [ClaudeController] Profile load failed: $e');
     }
 
+    if (!mounted) return;
+
     if (profile == null ||
         (profile.fullName.isEmpty && profile.experiences.isEmpty)) {
       state = ClaudeState(

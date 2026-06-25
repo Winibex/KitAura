@@ -97,7 +97,7 @@ class ClDashboardController extends StateNotifier<ClDashboardState> {
 
       // Load limits from config/limits
       int maxCL = 3, maxExports = 3, maxAiFills = 15;
-      final limits = await FirebaseService.getPlanLimits(state.plan);
+      final limits = await FirebaseService.getPlanLimits(plan);
       maxCL = limits['maxCoverLetters']!;
       maxExports = limits['exportsPerMonth']!;
       maxAiFills = limits['aiFillPerMonth']!;

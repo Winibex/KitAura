@@ -65,7 +65,6 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
   bool _isEditingTitle = false;
   List<GuideLine> _snapGuides = [];
 
-  final ScrollController _verticalScrollCtrl = ScrollController();
   final TransformationController _zoomCtrl = TransformationController();
   double _currentZoom = 1.0;
   Offset? _zoomPanelPos; // null = default bottom-right
@@ -214,7 +213,6 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
     _canvas.disposeAll();
     _canvas.dispose();
     _editor.dispose();
-    _verticalScrollCtrl.dispose();
     _zoomCtrl.dispose();
     _titleCtrl.dispose();
     super.dispose();
@@ -499,7 +497,7 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
   Future<void> _exportPdf() async {
     if (!_canvas.fontsLoaded) return;
 
-    String plan = ref.watch(dashboardControllerProvider).plan;
+    String plan = ref.read(dashboardControllerProvider).plan;
 
     final allowed = await _editor.trackExport();
     if (!allowed) return;

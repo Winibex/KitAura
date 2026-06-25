@@ -39,6 +39,13 @@ const API_VERSION = "2023-06-01";
 const MODEL_SONNET = "claude-sonnet-4-6";
 const MODEL_HAIKU = "claude-haiku-4-5-20251001";
 
+const { Resend } = require("resend");
+const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
+
+const FROM_EMAIL = '"KitAura" <noreply@kitaura.winibex.com>';
+const SUPPORT_EMAIL = "support@kitaura.winibex.com";
+const APP_URL = "https://app-kitaura.winibex.com";
+
 // ════════════════════════════════════════════════════════════════════════
 // HELPERS
 // ════════════════════════════════════════════════════════════════════════
@@ -174,9 +181,11 @@ async function writeTracking({ uid, data, counterField, summaryField, monthlyFie
     cost, createdAt: now,
   });
 
-  // 2. subscription counter
-  const subRef = db.doc(`users/${uid}/data/subscription`);
-  batch.update(subRef, { [counterField]: FV.increment(1) });
+  // 2. subscription counter (skip if not provided — used for chat mid-turns)
+    if (counterField) {
+      const subRef = db.doc(`users/${uid}/data/subscription`);
+      batch.update(subRef, { [counterField]: FV.increment(1) });
+    }
 
   // 3. analytics summary
   const sumRef = db.doc(`users/${uid}/analytics/summary`);
@@ -265,7 +274,12 @@ exports.aiFill = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", timeo
     beforeText="", jobDetails=null, cvContent=null } = req.data || {};
 
   const { sub } = await getSubWithCycleCheck(uid);
-  await checkCombinedAiContentPaywall(sub);
+    // For clientChat, skip the combined cap — we only "charge" when the
+    // conversation completes (handled in writeTracking decision below).
+    // The 20-turn server-side cap on transcript length is the real safety net.
+    if (tool !== "clientChat") {
+      await checkCombinedAiContentPaywall(sub);
+    }
 
   const pSnap = await db.doc("config/pricing").get();
   const rates = pSnap.exists ? pSnap.data().models[MODEL_SONNET] : { inputPerMTok:3, outputPerMTok:15, cacheReadMultiplier:0.1 };
@@ -692,12 +706,28 @@ techStack, channels, kpiMetrics.`,
     }
 
   const cost = calculateCost(usage, rates);
-  const actId = await writeTracking({ uid,
-    data: { tool, type:"aiFill", status:"success", model:MODEL_SONNET,
-      documentId, documentTitle, templateId, sectionType, sectionTitle,
-      rewriteOptions:null, spellcheckSummary:null, errorMessage:null, durationMs:Date.now()-t0 },
-    counterField:"aiFillCount", summaryField:"totalAiFills",
-    monthlyField:"aiFills", monthlyToolField:`${tool}AiFills`, tokens:usage, cost });
+
+    // ── Counter decision (Phase E10) ──────────────────────────────
+    // For clientChat: only charge a credit when the conversation actually
+    // produces a complete client profile. Mid-turn questions are tracked
+    // for cost visibility but don't burn the user's monthly allowance.
+    let counterField = "aiFillCount";
+    let monthlyToolField = `${tool}AiFills`;
+    if (tool === "clientChat") {
+      const isComplete = content && content.mode === "complete";
+      if (!isComplete) {
+        counterField = null;          // skip counter bump
+        monthlyToolField = null;      // skip monthly tool counter
+      }
+    }
+
+    const actId = await writeTracking({ uid,
+      data: { tool, type:"aiFill", status:"success", model:MODEL_SONNET,
+        documentId, documentTitle, templateId, sectionType, sectionTitle,
+        rewriteOptions:null, spellcheckSummary:null, errorMessage:null, durationMs:Date.now()-t0 },
+      counterField, summaryField:"totalAiFills",
+      monthlyField:"aiFills", monthlyToolField, tokens:usage, cost });
+
 
   uploadDetail(uid, actId, { tool, type:"aiFill", sectionType, beforeText,
     afterText:JSON.stringify(content), generatedContent:content,
@@ -1597,3 +1627,214 @@ User: "delete the navy bar at top and add a thinner red one"
 
   return { envelope };
 });
+
+// ════════════════════════════════════════════════════════════════════════
+// EMAIL — verification + password reset via Resend
+// ════════════════════════════════════════════════════════════════════════
+
+function getVerificationTemplate(displayName, verifyLink) {
+  const name = displayName || "there";
+  const year = new Date().getFullYear();
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Verify your email – KitAura</title>
+</head>
+<body style="margin:0;padding:0;background-color:#F8F5F2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<div style="max-width:580px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 32px rgba(15,23,42,0.08);">
+  <div style="background:linear-gradient(135deg,#831843 0%,#CF4D6F 60%,#CC7E85 100%);padding:48px 40px 40px;text-align:center;">
+    <div style="font-family:Georgia,serif;font-size:26px;font-weight:600;color:#ffffff;letter-spacing:0.04em;margin-bottom:28px;">KitAura</div>
+    <div style="width:64px;height:64px;background:rgba(255,255,255,0.15);border-radius:50%;margin:0 auto 20px;line-height:64px;">
+      <span style="display:inline-block;vertical-align:middle;color:#ffffff;font-size:30px;">✉</span>
+    </div>
+    <h1 style="font-family:Georgia,serif;font-size:30px;font-weight:500;color:#ffffff;line-height:1.2;margin:0;">Confirm your email address</h1>
+    <p style="font-size:14px;color:rgba(255,255,255,0.85);margin:8px 0 0;">One quick step to activate your KitAura account</p>
+  </div>
+  <div style="padding:44px 40px 36px;">
+    <p style="font-family:Georgia,serif;font-size:22px;font-weight:500;color:#0F172A;margin:0 0 16px;">Hello, ${name} 👋</p>
+    <p style="font-size:15px;color:#76818E;line-height:1.75;margin:0 0 32px;">
+      Thank you for joining <strong style="color:#831843;">KitAura</strong>.
+      To complete your registration and unlock your account, please verify
+      your email address by clicking the button below.
+    </p>
+    <div style="text-align:center;margin-bottom:36px;">
+      <a href="${verifyLink}" style="display:inline-block;background:#831843;color:#ffffff !important;text-decoration:none;font-size:15px;font-weight:500;letter-spacing:0.03em;padding:16px 48px;border-radius:50px;">Verify my email</a>
+    </div>
+    <div style="background:#FFF1F5;border-radius:10px;padding:18px 20px;margin-bottom:28px;">
+      <p style="font-size:12.5px;color:#76818E;margin:0 0 8px;">Button not working? Copy and paste this link into your browser:</p>
+      <a href="${verifyLink}" style="font-size:11.5px;color:#831843;word-break:break-all;text-decoration:none;font-weight:500;">${verifyLink}</a>
+    </div>
+    <div style="background:#FFF1F5;border-left:3px solid #CF4D6F;border-radius:0 8px 8px 0;padding:14px 16px;margin-bottom:28px;">
+      <p style="font-size:13px;color:#76818E;line-height:1.6;margin:0;">
+        <strong style="color:#0F172A;font-weight:500;">Didn't request this?</strong> You can safely ignore this email —
+        your account won't be activated unless you click the button above.
+        This link expires in <strong>24 hours</strong>.
+      </p>
+    </div>
+    <hr style="border:none;border-top:1px solid #FFE4EC;margin:32px 0;"/>
+    <p style="font-size:13px;color:#76818E;text-align:center;line-height:1.7;margin:0;">
+      Need help? Reach us at
+      <a href="mailto:${SUPPORT_EMAIL}" style="color:#831843;font-weight:500;text-decoration:none;">${SUPPORT_EMAIL}</a>
+    </p>
+  </div>
+  <div style="background:#0F172A;padding:28px 40px;text-align:center;">
+    <div style="font-family:Georgia,serif;font-size:18px;font-weight:500;color:#C5AFA4;letter-spacing:0.05em;margin-bottom:10px;">KitAura</div>
+    <p style="font-size:12px;color:#76818E;line-height:1.8;margin:0;">© ${year} KitAura. All rights reserved.<br/>You're receiving this because you created an account with us.</p>
+  </div>
+</div>
+</body>
+</html>`;
+}
+
+function getPasswordResetTemplate(displayName, resetLink) {
+  const name = displayName || "there";
+  const year = new Date().getFullYear();
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reset your password – KitAura</title>
+</head>
+<body style="margin:0;padding:0;background-color:#F8F5F2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<div style="max-width:580px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 32px rgba(15,23,42,0.08);">
+  <div style="background:linear-gradient(135deg,#0F172A 0%,#1e293b 100%);padding:48px 40px 40px;text-align:center;">
+    <div style="font-family:Georgia,serif;font-size:26px;font-weight:600;color:#ffffff;letter-spacing:0.04em;margin-bottom:28px;">KitAura</div>
+    <div style="width:64px;height:64px;background:rgba(131,24,67,0.2);border-radius:50%;margin:0 auto 20px;line-height:64px;">
+      <span style="display:inline-block;vertical-align:middle;color:#CC7E85;font-size:28px;">🔒</span>
+    </div>
+    <h1 style="font-family:Georgia,serif;font-size:28px;font-weight:500;color:#ffffff;margin:0;">Reset your password</h1>
+    <p style="font-size:14px;color:rgba(255,255,255,0.7);margin:8px 0 0;">We received a request to reset your KitAura password</p>
+  </div>
+  <div style="padding:44px 40px 36px;">
+    <p style="font-family:Georgia,serif;font-size:22px;font-weight:500;color:#0F172A;margin:0 0 16px;">Hello, ${name} 👋</p>
+    <p style="font-size:15px;color:#76818E;line-height:1.75;margin:0 0 32px;">
+      We received a request to reset the password for your <strong style="color:#831843;">KitAura</strong> account.
+      Click the button below to choose a new password. This link is valid for <strong>1 hour</strong>.
+    </p>
+    <div style="text-align:center;margin-bottom:36px;">
+      <a href="${resetLink}" style="display:inline-block;background:#831843;color:#ffffff !important;text-decoration:none;font-size:15px;font-weight:500;letter-spacing:0.03em;padding:16px 48px;border-radius:50px;">Reset my password</a>
+    </div>
+    <div style="background:#FFF1F5;border-radius:10px;padding:18px 20px;margin-bottom:28px;">
+      <p style="font-size:12.5px;color:#76818E;margin:0 0 8px;">Button not working? Copy and paste this link into your browser:</p>
+      <a href="${resetLink}" style="font-size:11.5px;color:#831843;word-break:break-all;text-decoration:none;font-weight:500;">${resetLink}</a>
+    </div>
+    <div style="background:#FFF1F5;border-left:3px solid #CF4D6F;border-radius:0 8px 8px 0;padding:14px 16px;margin-bottom:28px;">
+      <p style="font-size:13px;color:#76818E;line-height:1.6;margin:0;">
+        <strong style="color:#0F172A;font-weight:500;">Didn't request this?</strong> Ignore this email — your password won't change.
+        If you're concerned, contact us at <a href="mailto:${SUPPORT_EMAIL}" style="color:#831843;text-decoration:none;">${SUPPORT_EMAIL}</a>.
+      </p>
+    </div>
+    <hr style="border:none;border-top:1px solid #FFE4EC;margin:32px 0;"/>
+    <p style="font-size:13px;color:#76818E;text-align:center;line-height:1.7;margin:0;">
+      Need help? <a href="mailto:${SUPPORT_EMAIL}" style="color:#831843;font-weight:500;text-decoration:none;">${SUPPORT_EMAIL}</a>
+    </p>
+  </div>
+  <div style="background:#0F172A;padding:28px 40px;text-align:center;">
+    <div style="font-family:Georgia,serif;font-size:18px;font-weight:500;color:#C5AFA4;letter-spacing:0.05em;margin-bottom:10px;">KitAura</div>
+    <p style="font-size:12px;color:#76818E;line-height:1.8;margin:0;">© ${year} KitAura. All rights reserved.</p>
+  </div>
+</div>
+</body>
+</html>`;
+}
+
+async function sendEmail({ to, subject, html, apiKey }) {
+  const resend = new Resend(apiKey);
+  const result = await resend.emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject,
+    html,
+  });
+  if (result.error) {
+    throw new Error(`Resend send failed: ${JSON.stringify(result.error)}`);
+  }
+  return result.data;
+}
+
+// Action code settings — emails route back to your app so the user lands on
+// a clean Firebase-handled page.
+const actionCodeSettings = {
+  url: `${APP_URL}/auth`,
+  handleCodeInApp: false,
+};
+
+// ─── Callable: send verification email ─────────────────────────────────
+// Called by the frontend right after sign-up (and from the "Resend email"
+// button on the verify-email screen). Uses the currently-authenticated
+// user so it can't be abused to spam arbitrary addresses.
+exports.sendVerificationEmail = onCall(
+  { secrets: [RESEND_API_KEY], region: "us-central1", timeoutSeconds: 30 },
+  async (req) => {
+    if (!req.auth) throw new HttpsError("unauthenticated", "Sign in required.");
+    const uid = req.auth.uid;
+
+    try {
+      const user = await admin.auth().getUser(uid);
+      if (user.emailVerified) {
+        return { success: true, alreadyVerified: true };
+      }
+      if (!user.email) {
+        throw new HttpsError("failed-precondition", "No email on account.");
+      }
+
+      const verifyLink = await admin.auth().generateEmailVerificationLink(
+        user.email,
+        actionCodeSettings,
+      );
+      const html = getVerificationTemplate(user.displayName, verifyLink);
+      await sendEmail({
+        to: user.email,
+        subject: "Verify your email – KitAura",
+        html,
+        apiKey: RESEND_API_KEY.value(),
+      });
+
+      console.log(`Verification email sent to ${user.email}`);
+      return { success: true };
+    } catch (err) {
+      console.error("sendVerificationEmail failed:", err.message);
+      if (err.code === "auth/user-not-found") {
+        throw new HttpsError("not-found", "User not found.");
+      }
+      throw new HttpsError("internal", "Could not send verification email.");
+    }
+  },
+);
+
+// ─── Callable: send password reset email ───────────────────────────────
+// Public — does NOT require auth (user is locked out by definition).
+// Always returns success to prevent email enumeration attacks.
+exports.sendPasswordResetEmail = onCall(
+  { secrets: [RESEND_API_KEY], region: "us-central1", timeoutSeconds: 30 },
+  async (req) => {
+    const email = (req.data && req.data.email || "").trim().toLowerCase();
+    if (!email) {
+      throw new HttpsError("invalid-argument", "Email is required.");
+    }
+
+    try {
+      const user = await admin.auth().getUserByEmail(email);
+      const resetLink = await admin.auth().generatePasswordResetLink(
+        email,
+        actionCodeSettings,
+      );
+      const html = getPasswordResetTemplate(user.displayName, resetLink);
+      await sendEmail({
+        to: email,
+        subject: "Reset your password – KitAura",
+        html,
+        apiKey: RESEND_API_KEY.value(),
+      });
+      console.log(`Password reset email sent to ${email}`);
+    } catch (err) {
+      // Log but don't expose — security best practice.
+      console.error("sendPasswordResetEmail (silent):", err.message);
+    }
+
+    return { success: true };
+  },
+);

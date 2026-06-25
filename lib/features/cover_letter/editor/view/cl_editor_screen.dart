@@ -215,7 +215,7 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
   Future<void> _exportPdf() async {
     if (!_canvas.fontsLoaded) return;
 
-    String plan = ref.watch(dashboardControllerProvider).plan;
+    String plan = ref.read(dashboardControllerProvider).plan;
 
     final allowed = await _editor.trackExport();
     if (!allowed) return;
@@ -283,15 +283,15 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
   /// (or null if cancelled). Persists the selection to editor state.
   Future<String?> _pickCareerProfile() async {
     final profiles = await ref.read(aiProfilesProvider.future);
+    if (!mounted) return null;
 
     if (profiles.isEmpty) {
       // No profiles yet — open the AI Setup wizard inline.
       await _openCareerProfileWizard();
+      if (!mounted) return null;
       ref.invalidate(aiProfilesProvider);
       return null;
     }
-
-    if (!mounted) return null;
 
     final picked = await showModalBottomSheet<AiProfileModel>(
       context: context,
@@ -510,6 +510,8 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
         ),
       ),
     );
+
+    if (!mounted) return null;
 
     if (picked != null && picked.id != null) {
       final displayName = (picked.name.isNotEmpty)

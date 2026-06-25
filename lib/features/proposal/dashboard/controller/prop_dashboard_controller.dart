@@ -87,6 +87,7 @@ class PropDashboardController extends StateNotifier<PropDashboardState> {
         FirebaseService.getSubscription(_uid!),
         FirebaseService.getUserProposals(_uid!),
       ]);
+      if (!mounted) return;
       final subDoc = results[0] as DocumentSnapshot;
       final propsSnapshot = results[1] as QuerySnapshot;
 
@@ -103,6 +104,7 @@ class PropDashboardController extends StateNotifier<PropDashboardState> {
       // Limits depends on plan, so this stays sequential
       int maxProp = 3, maxExports = 3, maxAiFills = 15;
       final limits = await FirebaseService.getPlanLimits(plan);
+      if (!mounted) return;
       maxProp = limits['maxProposals']!;
       maxExports = limits['exportsPerMonth']!;
       maxAiFills = limits['aiFillPerMonth']!;

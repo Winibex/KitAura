@@ -141,12 +141,15 @@ class CvEditorController extends ChangeNotifier {
       _templateId = docId;
       state = state.copyWith(title: '${info.label} CV');
       final json = await CvTemplateData.loadTemplateJson(docId);
+      if (_disposed) return;
       canvas.applyTemplateJson(json);
     } else {
       // Firestore document — already has user's content
       state = state.copyWith(firestoreDocId: docId);
       await _loadFromFirestore(docId);
+      if (_disposed) return;
       await canvas.preloadFonts();
+      if (_disposed) return;
       state = state.copyWith(isTemplateLoading: false);
       debugPrint('📝 [CvEditor] Initialization complete (existing doc)');
       return;
@@ -156,6 +159,7 @@ class CvEditorController extends ChangeNotifier {
     // Users explicitly choose a Career Profile + click "Just Insert My Data"
     // or "Generate with AI" in the right panel.
     await canvas.preloadFonts();
+    if (_disposed) return;
     state = state.copyWith(isTemplateLoading: false);
     debugPrint('📝 [CvEditor] Initialization complete');
     // Auto-save initial state
@@ -240,6 +244,7 @@ class CvEditorController extends ChangeNotifier {
   }
 
   Future<void> _autoSave() async {
+    if (_disposed) return;
     if (state.isSaving || state.isTemplateLoading) return;
     if (_uid == null) return;
     state = state.copyWith(isSaving: true);
@@ -254,6 +259,7 @@ class CvEditorController extends ChangeNotifier {
         await FirebaseService.updateCV(_uid!, state.firestoreDocId!, data);
       } else {
         final check = await PaywallService.canCreateCV();
+        if (_disposed) return;
         if (!check.allowed) {
           state = state.copyWith(
             isSaving: false,
@@ -263,6 +269,7 @@ class CvEditorController extends ChangeNotifier {
         }
         data['createdAt'] = FieldValue.serverTimestamp();
         final docRef = await FirebaseService.createCV(_uid!, data);
+        if (_disposed) return;
         state = state.copyWith(firestoreDocId: docRef.id);
         debugPrint('📝 [CvEditor] Created new CV: ${docRef.id}');
         ClaudeService.trackDocCreated(
@@ -277,12 +284,14 @@ class CvEditorController extends ChangeNotifier {
           templateId: _templateId,
         );
       }
+      if (_disposed) return;
       state = state.copyWith(isSaved: true, isSaving: false, error: null);
       debugPrint('📝 [CvEditor] Auto-save complete');
       if (!state.isSaved) {
         _autoSaveTimer = Timer(const Duration(seconds: 2), _autoSave);
       }
     } catch (e) {
+      if (_disposed) return;
       debugPrint('📝 [CvEditor] Auto-save failed: $e');
       state = state.copyWith(isSaving: false, error: 'Save failed: $e');
     }

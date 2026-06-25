@@ -13,11 +13,8 @@ import '../../../core/constants/app_fonts.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../shared/providers/ai_profiles_provider.dart';
-import '../../../shared/services/firebase_service.dart';
 import '../../../shared/widgets/responsive_scaffold.dart';
-import '../../cover_letter/editor/controller/cl_editor_controller.dart';
 import '../controller/linkedin_controller.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class LinkedInScreen extends ConsumerStatefulWidget {
   const LinkedInScreen({super.key});
@@ -27,41 +24,17 @@ class LinkedInScreen extends ConsumerStatefulWidget {
 
 class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
   final _promptCtrl = TextEditingController();
-  List<CvDropdownItem> _cvList = [];
-  bool _loadingCvs = true;
   String? _selectedProfileId;
 
   @override
   void initState() {
     super.initState();
-    _loadCvs();
     Future.microtask(() {
-      ref.read(linkedInControllerProvider.notifier).checkAiProfile();
-      ref.read(linkedInControllerProvider.notifier).loadSaved();
+      final ctrl = ref.read(linkedInControllerProvider.notifier);
+      ctrl.checkAiProfile();
+      ctrl.loadSaved();
+      ctrl.loadCvs();
     });
-  }
-
-  Future<void> _loadCvs() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-    try {
-      final snap = await FirebaseService.getUserCVs(uid);
-      final cvs = snap.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        return CvDropdownItem(
-          id: doc.id,
-          title: data['title'] ?? 'Untitled CV',
-        );
-      }).toList();
-      if (mounted) {
-        setState(() {
-          _cvList = cvs;
-          _loadingCvs = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) setState(() => _loadingCvs = false);
-    }
   }
 
   @override
@@ -97,6 +70,7 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
       // Inform the controller (after this frame to avoid setState-in-build).
       final name = profileList.firstWhere((p) => p.id == chosen).name;
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
         ref.read(linkedInControllerProvider.notifier).selectProfile(chosen, name);
       });
     }
@@ -257,9 +231,9 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
                   icon: LucideIcons.fileText,
                   label: 'CV (Optional)',
                   sublabel: 'For richer, more detailed content',
-                  child: _loadingCvs
+                  child: state.loadingCvs
                       ? _dropdownLoading()
-                      : _cvList.isEmpty
+                      : state.cvList.isEmpty
                       ? _dropdownEmpty('No CVs yet')
                       : _buildCvDropdown(state, ctrl),
                 ),
@@ -285,9 +259,9 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
                       icon: LucideIcons.fileText,
                       label: 'CV (Optional)',
                       sublabel: 'For richer, more detailed content',
-                      child: _loadingCvs
+                      child: state.loadingCvs
                           ? _dropdownLoading()
-                          : _cvList.isEmpty
+                          : state.cvList.isEmpty
                           ? _dropdownEmpty('No CVs yet')
                           : _buildCvDropdown(state, ctrl),
                     )),
@@ -433,7 +407,7 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
               ),
             ),
           ),
-          if (!state.hasAiProfile && _cvList.isEmpty && !_loadingCvs && !loadingProfiles) ...[
+          if (!state.hasAiProfile && state.cvList.isEmpty && !state.loadingCvs && !loadingProfiles) ...[
             const SizedBox(height: 14),
             Container(
               width: double.infinity,
@@ -634,7 +608,7 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
               child: Text('None — use Career Profile only',
                   style: TextStyle(fontSize: 12, color: AppColors.slateGrey)),
             ),
-            ..._cvList.map(
+            ...state.cvList.map(
                   (cv) => DropdownMenuItem<String?>(
                 value: cv.id,
                 child: Row(
@@ -655,7 +629,7 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
             if (id == null) {
               ctrl.clearCv();
             } else {
-              final title = _cvList.firstWhere((c) => c.id == id).title;
+              final title = state.cvList.firstWhere((c) => c.id == id).title;
               ctrl.selectCv(id, title);
             }
           },
