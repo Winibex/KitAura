@@ -32,15 +32,27 @@ class _NoInternetOverlayState extends State<NoInternetOverlay>
     super.initState();
     _isOnline = ConnectivityService.isOnline;
     _sub = ConnectivityService.onConnectivityChanged.listen((online) {
-      if (mounted) setState(() => _isOnline = online);
+      if (mounted) {
+        setState(() => _isOnline = online);
+        // Start/stop pulse based on visibility (perf fix — was burning CPU when online)
+        if (online) {
+          _pulseCtrl.stop();
+        } else if (!_pulseCtrl.isAnimating) {
+          _pulseCtrl.repeat(reverse: true);
+        }
+      }
     });
     _pulseCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
-    )..repeat(reverse: true);
+    );
     _pulseAnim = Tween<double>(begin: 0.6, end: 1.0).animate(
       CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
     );
+    // Only animate if starting offline
+    if (!_isOnline) {
+      _pulseCtrl.repeat(reverse: true);
+    }
   }
 
   @override

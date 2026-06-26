@@ -15,6 +15,17 @@ void main() async {
   );
   ConnectivityService.initialize();
   debugPaintSizeEnabled = false;
+
+
+  // Enable Flutter timeline tracing for Chrome DevTools profiling.
+  // SAFE to leave in — these flags only activate in profile/debug mode,
+  // and only emit data when Chrome is recording.
+  debugProfileBuildsEnabled = true;
+  debugProfileBuildsEnabledUserWidgets = true;
+  debugProfileLayoutsEnabled = true;
+  debugProfilePaintsEnabled = true;
+
+
   runApp(
     const ProviderScope(
       child: KitAuraApp(),
