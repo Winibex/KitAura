@@ -207,7 +207,7 @@ class _PropEditorScreenState extends ConsumerState<PropEditorScreen> {
   Future<void> _exportPdf() async {
     if (!_canvas.fontsLoaded) return;
 
-    String plan = ref.watch(dashboardControllerProvider).plan;
+    String plan = ref.read(dashboardControllerProvider).plan;
 
     final allowed = await _editor.trackExport();
     if (!allowed) return;
@@ -421,7 +421,7 @@ class _PropEditorScreenState extends ConsumerState<PropEditorScreen> {
                       child: CommandKBar(
                         key: _commandKBarKey,
                         canvasController: _canvas,
-                        tool: 'cv',
+                        tool: 'proposal',
                         documentId: _editor.state.firestoreDocId,
                         documentTitle: _editor.state.title,
                         templateId: widget.docId,
@@ -725,12 +725,13 @@ class _PropEditorScreenState extends ConsumerState<PropEditorScreen> {
         onPointerSignal: (event) {
           if (event is PointerScrollEvent) {
             final m = _zoomCtrl.value.clone()
-              ..translate(-event.scrollDelta.dx, -event.scrollDelta.dy);
+              ..translateByDouble(-event.scrollDelta.dx, -event.scrollDelta.dy, 0, 1);
             _zoomCtrl.value = m;
             _clampPan();
           } else if (event is PointerScaleEvent) {
             final newZoom = (_currentZoom * event.scale).clamp(0.3, 2.0);
-            final m = _zoomCtrl.value.clone()..scale(newZoom / _currentZoom);
+            final factor = newZoom / _currentZoom;
+            final m = _zoomCtrl.value.clone()..scaleByDouble(factor, factor, factor, 1);
             _zoomCtrl.value = m;
             setState(() => _currentZoom = newZoom);
           }

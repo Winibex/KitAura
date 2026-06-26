@@ -4,8 +4,7 @@
 // Sections: Profile, Account Security, Plan & Billing, Preferences, Career Profile.
 
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth, User;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,17 +17,12 @@ import '../../../core/constants/app_fonts.dart';
 import '../../../core/constants/app_routes.dart';
 import '../../../shared/models/ai_profile_model.dart';
 import '../../../shared/models/client_profile_model.dart';
-import '../../../shared/models/subscription_model.dart';
-import '../../../shared/models/user_preferences_model.dart';
-import '../../../shared/models/user_profile_model.dart';
-import '../../../shared/services/firebase_service.dart';
 import '../../../shared/widgets/client_wizard_modal.dart';
 import '../../../shared/widgets/go_pro_banners.dart';
 import '../../ai_setup/view/ai_setup_panel.dart';
 import '../../auth/controller/auth_controller.dart';
+import '../controller/settings_controller.dart';
 import 'upgrade_modal.dart';
-
-enum SettingsTab { profile, security, billing, preferences, aiProfile, clientProfiles }
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -39,31 +33,37 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   SettingsTab _activeTab = SettingsTab.profile;
-  bool _isLoading = true;
 
-  // Data
-  UserProfileModel? _profile;
-  SubscriptionModel? _subscription;
-  UserPreferencesModel? _preferences;
-  AiProfileModel? _aiProfile;
-
-  // Editing state
+  // UI-only editing state (text controllers live with the view; their values
+  // get pushed to the controller on save).
   final _nameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _locationCtrl = TextEditingController();
   final _bioCtrl = TextEditingController();
-  bool _isSaving = false;
 
-  List<AiProfileModel> _aiProfiles = [];
-  bool _loadingProfiles = true;
-
-  List<ClientProfileModel> _clientProfiles = [];
-  bool _loadingClients = true;
+  /// Tracks the last feedback id we showed so we don't double-fire on rebuild.
+  int _lastFeedbackId = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(settingsControllerProvider.notifier).loadAll();
+    });
+  }
+
+  /// Pushes the loaded profile into the text controllers. Called from build()
+  /// when state.profile changes (via ref.listen).
+  void _syncProfileToControllers(SettingsState s) {
+    final p = s.profile;
+    if (p == null) return;
+    // Avoid overwriting unsaved user edits — only sync when current text
+    // matches the previous backing value (i.e. user hasn't touched it).
+    if (_nameCtrl.text.isEmpty) _nameCtrl.text = p.displayName;
+    if (_phoneCtrl.text.isEmpty) _phoneCtrl.text = p.phone ?? '';
+    if (_locationCtrl.text.isEmpty) _locationCtrl.text = p.location ?? '';
+    if (_bioCtrl.text.isEmpty) _bioCtrl.text = p.bio ?? '';
   }
 
   @override
@@ -75,139 +75,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     super.dispose();
   }
 
-  Future<void> _loadAiProfiles() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-
-    setState(() => _loadingProfiles = true);
-    try {
-      final snap = await FirebaseService.getAiProfiles(uid);
-      final profiles = snap.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        data['id'] = doc.id;
-        return AiProfileModel.fromJson(data);
-      }).toList();
-
-      // If empty, try migration
-      if (profiles.isEmpty) {
-        final migrated = await FirebaseService.getDefaultAiProfile(uid);
-        if (migrated != null) {
-          profiles.add(migrated);
-        }
-      }
-
-      if (mounted) setState(() { _aiProfiles = profiles; _loadingProfiles = false; });
-    } catch (e) {
-      debugPrint('Load Career Profiles error: $e');
-      if (mounted) setState(() => _loadingProfiles = false);
-    }
-  }
-
-  Future<void> _loadClientProfiles() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-    setState(() => _loadingClients = true);
-    try {
-      final snap = await FirebaseService.getClientProfiles(uid);
-      final profiles = snap.docs
-          .map((doc) => ClientProfileModel.fromJson(
-          doc.id, doc.data() as Map<String, dynamic>))
-          .toList();
-      if (mounted) setState(() { _clientProfiles = profiles; _loadingClients = false; });
-    } catch (e) {
-      debugPrint('Load client profiles error: $e');
-      if (mounted) setState(() => _loadingClients = false);
-    }
-  }
-
-  Future<void> _loadData() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-
-    try {
-      // Fetch the three small docs in parallel (user profile, subscription,
-      // preferences). The default Career Profile is fetched separately
-      // since getDefaultAiProfile returns a model, not a DocumentSnapshot.
-      final results = await Future.wait([
-        FirebaseService.getUserProfile(uid),
-        FirebaseService.getSubscription(uid),
-        FirebaseService.getPreferences(uid),
-        FirebaseService.getDefaultAiProfile(uid),
-      ]);
-
-      if (mounted) {
-        final profileDoc = results[0] as DocumentSnapshot;
-        final subDoc = results[1] as DocumentSnapshot;
-        final prefDoc = results[2] as DocumentSnapshot;
-        final aiProfile = results[3] as AiProfileModel?;
-
-        setState(() {
-          _profile = profileDoc.exists
-              ? UserProfileModel.fromJson(profileDoc.data() as Map<String, dynamic>)
-              : null;
-          _subscription = subDoc.exists
-              ? SubscriptionModel.fromJson(subDoc.data() as Map<String, dynamic>)
-              : const SubscriptionModel();
-          _preferences = prefDoc.exists
-              ? UserPreferencesModel.fromJson(prefDoc.data() as Map<String, dynamic>)
-              : const UserPreferencesModel();
-          _aiProfile = aiProfile ?? const AiProfileModel();
-
-          _nameCtrl.text = _profile?.displayName ?? '';
-          _phoneCtrl.text = _profile?.phone ?? '';
-          _locationCtrl.text = _profile?.location ?? '';
-          _bioCtrl.text = _profile?.bio ?? '';
-
-          _isLoading = false;
-        });
-      }
-      await _loadAiProfiles();
-      await _loadClientProfiles();
-    } catch (e) {
-      debugPrint('Settings load error: $e');
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _saveProfile() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-    setState(() => _isSaving = true);
-
-    try {
-      final updates = <String, dynamic>{
-        'displayName': _nameCtrl.text.trim(),
-        'phone': _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
-        'location': _locationCtrl.text.trim().isEmpty ? null : _locationCtrl.text.trim(),
-        'bio': _bioCtrl.text.trim().isEmpty ? null : _bioCtrl.text.trim(),
-      };
-      await FirebaseService.updateUserProfile(uid, updates);
-      if (_nameCtrl.text.trim().isNotEmpty) {
-        await FirebaseAuth.instance.currentUser?.updateDisplayName(_nameCtrl.text.trim());
-      }
-      if (mounted) {
-        setState(() {
-          _profile = _profile?.copyWith(
-            displayName: _nameCtrl.text.trim(),
-            phone: _phoneCtrl.text.trim(),
-            location: _locationCtrl.text.trim(),
-            bio: _bioCtrl.text.trim(),
-          );
-          _isSaving = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated'), backgroundColor: AppColors.success),
-        );
-      }
-    } catch (e) {
-      if (mounted) setState(() => _isSaving = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     final isMobile = w < 768;
+    final state = ref.watch(settingsControllerProvider);
+
+    // Sync profile data into text controllers once it arrives.
+    ref.listen<SettingsState>(settingsControllerProvider, (prev, next) {
+      if (prev?.profile != next.profile) {
+        _syncProfileToControllers(next);
+      }
+      // Show feedback snackbar once per emit.
+      final fb = next.feedback;
+      if (fb != null && fb.id != _lastFeedbackId) {
+        _lastFeedbackId = fb.id;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(fb.message),
+            backgroundColor: fb.isError ? AppColors.error : AppColors.success,
+          ),
+        );
+        ref.read(settingsControllerProvider.notifier).acknowledgeFeedback();
+      }
+    });
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F5F2),
@@ -215,7 +106,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         children: [
           _buildTopBar(),
           Expanded(
-            child: _isLoading
+            child: state.isLoading
                 ? const Center(child: CircularProgressIndicator(color: AppColors.darkRaspberry))
                 : isMobile
                 ? _buildMobileLayout()
@@ -367,6 +258,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Widget _buildSidebarUserCard() {
     final user = FirebaseAuth.instance.currentUser;
+    final state = ref.watch(settingsControllerProvider);
     return Container(
       padding: const EdgeInsets.all(20),
       child: Row(
@@ -378,7 +270,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _profile?.displayName ?? 'User',
+                  state.profile?.displayName ?? 'User',
                   style: const TextStyle(
                     fontSize: 14,
                     fontFamily: AppFonts.poppins,
@@ -391,17 +283,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: _subscription?.plan == 'pro'
+                    color: state.subscription.plan == 'pro'
                         ? AppColors.success
-                        : _subscription?.plan == 'trial'
+                        : state.subscription.plan == 'trial'
                         ? AppColors.dustyMauve
                         : AppColors.petalFrost,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    _subscription?.plan == 'pro'
+                    state.subscription.plan == 'pro'
                         ? 'PRO'
-                        : _subscription?.plan == 'trial'
+                        : state.subscription.plan == 'trial'
                         ? 'TRIAL'
                         : 'FREE',
                     style: TextStyle(
@@ -409,7 +301,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       fontFamily: AppFonts.poppins,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1,
-                      color: (_subscription?.isPro ?? false)
+                      color: state.subscription.isPro
                           ? AppColors.white
                           : AppColors.darkRaspberry,
                     ),
@@ -543,6 +435,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Widget _profileContent() {
     final user = FirebaseAuth.instance.currentUser;
+    final state = ref.watch(settingsControllerProvider);
 
     return Column(
       key: const ValueKey('profile'),
@@ -561,7 +454,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _profile?.displayName ?? 'User',
+                    state.profile?.displayName ?? 'User',
                     style: const TextStyle(
                       fontSize: 20,
                       fontFamily: AppFonts.poppins,
@@ -571,7 +464,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    _profile?.email ?? '',
+                    state.profile?.email ?? '',
                     style: const TextStyle(
                       fontSize: 13,
                       fontFamily: AppFonts.openSans,
@@ -580,7 +473,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Member since ${_fmtDate(_profile?.createdAt)}',
+                    'Member since ${_fmtDate(state.profile?.createdAt)}',
                     style: const TextStyle(fontSize: 11, color: AppColors.slateGrey),
                   ),
                 ],
@@ -601,7 +494,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: 20),
             _field('Display Name', _nameCtrl, 'Your full name'),
             const SizedBox(height: 16),
-            _fieldReadOnly('Email', _profile?.email ?? ''),
+            _fieldReadOnly('Email', state.profile?.email ?? ''),
             const SizedBox(height: 16),
             _field('Phone', _phoneCtrl, '+92 300 1234567'),
             const SizedBox(height: 16),
@@ -614,14 +507,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: SizedBox(
                 height: 40,
                 child: ElevatedButton(
-                  onPressed: _isSaving ? null : _saveProfile,
+                  onPressed: state.isSaving
+                      ? null
+                      : () => ref.read(settingsControllerProvider.notifier).saveProfile(
+                    displayName: _nameCtrl.text,
+                    phone: _phoneCtrl.text,
+                    location: _locationCtrl.text,
+                    bio: _bioCtrl.text,
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.darkRaspberry,
                     foregroundColor: AppColors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     padding: const EdgeInsets.symmetric(horizontal: 28),
                   ),
-                  child: _isSaving
+                  child: state.isSaving
                       ? const SizedBox(width: 18, height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white))
                       : const Text('Save Changes', style: TextStyle(fontSize: 13, fontFamily: AppFonts.poppins, fontWeight: FontWeight.w600)),
@@ -638,6 +538,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Widget _securityContent() {
     final user = FirebaseAuth.instance.currentUser;
+    final state = ref.watch(settingsControllerProvider);
     final isGoogle = user?.providerData.any((p) => p.providerId == 'google.com') ?? false;
 
     return Column(
@@ -653,7 +554,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             _settingsRow(
               LucideIcons.mail,
               'Email Address',
-              _profile?.email ?? '',
+              state.profile?.email ?? '',
               trailing: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
@@ -689,31 +590,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 trailing: MouseRegion(
                   cursor: SystemMouseCursors.click,
                   child: GestureDetector(
-                    onTap: () async {
-                      try {
-                        final googleProvider = GoogleAuthProvider();
-                        await FirebaseAuth.instance.currentUser
-                            ?.linkWithPopup(googleProvider);
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Google account linked successfully'),
-                              backgroundColor: AppColors.success,
-                            ),
-                          );
-                          _loadData(); // Refresh to show updated sign-in method
-                        }
-                      } catch (e) {
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Failed to link: ${e.toString().contains('already') ? 'This Google account is already linked to another user' : 'Please try again'}'),
-                              backgroundColor: AppColors.error,
-                            ),
-                          );
-                        }
-                      }
-                    },
+                    onTap: () => ref.read(settingsControllerProvider.notifier).linkGoogleAccount(),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
@@ -798,7 +675,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // ─── BILLING TAB ──────────────────────────────────────────────────────
 
   Widget _billingContent() {
-    final sub = _subscription ?? const SubscriptionModel();
+    final state = ref.watch(settingsControllerProvider);
+    final sub = state.subscription;
     final isTrial = sub.plan == 'trial' && (sub.trialActive);
     final isPro = sub.plan == 'pro';
     final isFree = !isTrial && !isPro;
@@ -975,7 +853,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: 16),
             _historyItem(
               'Account Created',
-              _fmtDate(_profile?.createdAt),
+              _fmtDate(state.profile?.createdAt),
               LucideIcons.userPlus,
               AppColors.success,
             ),
@@ -1052,6 +930,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // ─── PREFERENCES TAB ──────────────────────────────────────────────────
 
   Widget _preferencesContent() {
+    final state = ref.watch(settingsControllerProvider);
     return Column(
       key: const ValueKey('preferences'),
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1063,7 +942,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _toggleRow('Email Notifications', 'Receive product updates and tips',
-                _preferences?.emailNotifications ?? true, (v) {
+                state.preferences.emailNotifications, (v) {
                   // TODO: save preference
                   setState(() {});
                 }),
@@ -1077,9 +956,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: const Text('Light', style: TextStyle(fontSize: 12, color: AppColors.prussianBlue)),
             )),
             const Divider(color: Color(0xFFF0EBE6), height: 32),
-            _settingsRow(LucideIcons.type, 'Default Font', _preferences?.defaultFont ?? 'Poppins'),
+            _settingsRow(LucideIcons.type, 'Default Font', state.preferences.defaultFont ?? 'Poppins'),
             const Divider(color: Color(0xFFF0EBE6), height: 32),
-            _settingsRow(LucideIcons.layout, 'Default Template', _preferences?.defaultTemplate ?? 'None'),
+            _settingsRow(LucideIcons.layout, 'Default Template', state.preferences.defaultTemplate ?? 'None'),
           ],
         )),
       ],
@@ -1089,6 +968,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // ─── Career Profile TAB ───────────────────────────────────────────────────
 
   Widget _aiProfileContent() {
+    final state = ref.watch(settingsControllerProvider);
     return Column(
       key: const ValueKey('ai'),
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1118,17 +998,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         const SizedBox(height: 24),
 
-        if (_loadingProfiles)
+        if (state.loadingAiProfiles)
           const Center(
             child: Padding(
               padding: EdgeInsets.all(40),
               child: CircularProgressIndicator(color: AppColors.darkRaspberry),
             ),
           )
-        else if (_aiProfiles.isEmpty)
+        else if (state.aiProfiles.isEmpty)
           _buildEmptyProfileState()
         else
-          ..._aiProfiles.map((profile) => _buildProfileCard(profile)),
+          ...state.aiProfiles.map((profile) => _buildProfileCard(profile)),
       ],
     );
   }
@@ -1310,7 +1190,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         SizedBox(width: 10),
                         Text('Duplicate', style: TextStyle(fontSize: 13)),
                       ])),
-                  if (_aiProfiles.length > 1)
+                  if (ref.read(settingsControllerProvider).aiProfiles.length > 1)
                     const PopupMenuItem(value: 'delete',
                         child: Row(children: [
                           Icon(LucideIcons.trash2, size: 14, color: AppColors.error),
@@ -1390,7 +1270,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         profileId: profileId,
         onContinue: () {
           Navigator.pop(dialogContext);
-          _loadAiProfiles();
+          ref.read(settingsControllerProvider.notifier).loadAiProfiles();
           ref.invalidate(aiProfilesProvider);
         },
         onSkip: () => Navigator.pop(dialogContext),
@@ -1400,41 +1280,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   void _handleProfileAction(String action, AiProfileModel profile) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null || profile.id == null) return;
-
+    final ctrl = ref.read(settingsControllerProvider.notifier);
     switch (action) {
       case 'edit':
         _openProfileEditor(profile.id);
         break;
-
       case 'default':
-        await FirebaseService.setDefaultAiProfile(uid, profile.id!);
-        await _loadAiProfiles();
+        await ctrl.setDefaultAiProfile(profile);
         ref.invalidate(aiProfilesProvider);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${profile.name} set as default'),
-                backgroundColor: AppColors.success),
-          );
-        }
         break;
-
       case 'duplicate':
-        final data = profile.toJson();
-        data.remove('id');
-        data['name'] = '${profile.name} (Copy)';
-        data['isDefault'] = false;await FirebaseService.createAiProfile(uid, data);
-        await _loadAiProfiles();
+        await ctrl.duplicateAiProfile(profile);
         ref.invalidate(aiProfilesProvider);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profile duplicated'),
-                backgroundColor: AppColors.success),
-          );
-        }
         break;
-
       case 'delete':
         _confirmDeleteAiProfile(profile);
         break;
@@ -1483,18 +1341,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 child: ElevatedButton(
                   onPressed: () async {
                     Navigator.pop(ctx);
-                    final uid = FirebaseAuth.instance.currentUser?.uid;
-                    if (uid != null && profile.id != null) {
-                      await FirebaseService.deleteAiProfile(uid, profile.id!);
-                      // If deleted was default, set another as default
-                      if (profile.isDefault) {
-                        final remaining = await FirebaseService.getAiProfiles(uid);
-                        if (remaining.docs.isNotEmpty) {
-                          await FirebaseService.setDefaultAiProfile(uid, remaining.docs.first.id);
-                        }
-                      }
-                      await _loadAiProfiles();
-                    }
+                    await ref.read(settingsControllerProvider.notifier).deleteAiProfile(profile);
                     ref.invalidate(aiProfilesProvider);
                   },
                   style: ElevatedButton.styleFrom(backgroundColor: AppColors.error,
@@ -1522,6 +1369,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // ─── CLIENT PROFILES TAB ──────────────────────────────────────────────
 
   Widget _clientProfilesContent() {
+    final state = ref.watch(settingsControllerProvider);
     return Column(
       key: const ValueKey('clients'),
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1549,13 +1397,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ],
         ),
         const SizedBox(height: 24),
-        if (_loadingClients)
+        if (state.loadingClientProfiles)
           const Center(child: Padding(padding: EdgeInsets.all(40),
               child: CircularProgressIndicator(color: AppColors.darkRaspberry)))
-        else if (_clientProfiles.isEmpty)
+        else if (state.clientProfiles.isEmpty)
           _buildEmptyClientState()
         else
-          ..._clientProfiles.map((c) => _buildClientCard(c)),
+          ...state.clientProfiles.map((c) => _buildClientCard(c)),
       ],
     );
   }
@@ -1658,49 +1506,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _openClientWizard(ClientProfileModel? existing) async {
     final result = await ClientWizardModal.show(context, existing: existing);
     if (result == null) return; // cancelled
-
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-
-    final data = result.toJson()..remove('id');
-    if (existing?.id != null) {
-      await FirebaseService.updateClientProfile(uid, existing!.id!, data);
-    } else {
-      await FirebaseService.createClientProfile(uid, data);
-    }
-    await _loadClientProfiles();
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(existing != null ? 'Client updated' : 'Client added'),
-          backgroundColor: AppColors.success));
-    }
+    if (!mounted) return;
+    await ref
+        .read(settingsControllerProvider.notifier)
+        .saveClientProfile(client: result, existing: existing);
   }
 
   void _handleClientAction(String action, ClientProfileModel client) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null || client.id == null) return;
+    final ctrl = ref.read(settingsControllerProvider.notifier);
     switch (action) {
       case 'edit':
         _openClientWizard(client);
         break;
       case 'duplicate':
-        final data = client.toJson();
-        data.remove('id');
-        data['clientName'] = '${client.clientName} (Copy)';
-        await FirebaseService.createClientProfile(uid, data);
-        await _loadClientProfiles();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Client duplicated'), backgroundColor: AppColors.success));
-        }
+        await ctrl.duplicateClientProfile(client);
         break;
       case 'delete':
-        await FirebaseService.deleteClientProfile(uid, client.id!);
-        await _loadClientProfiles();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Client deleted'), backgroundColor: AppColors.success));
-        }
+        await ctrl.deleteClientProfile(client);
         break;
     }
   }

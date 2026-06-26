@@ -697,8 +697,10 @@ extension CanvasOpExecutors on CanvasController {
   Future<void> _runGenerateContent(
       CanvasItem item,
       GenerateContentOp op,
-      ) async {
-    try {
+      ) async
+  {
+    try
+    {
       // Use aiRewrite for "rewrite" mode (operates on existing text),
       // aiFill for "replace" / "append" (generates fresh).
       final ctrl = item.controller!;
@@ -731,7 +733,7 @@ extension CanvasOpExecutors on CanvasController {
           _writeTextIntoItem(item, result, append: op.mode == GenerateMode.append);
         }
       }
-      notifyListeners();
+      notifyFromExtension();
     } catch (e) {
       debugPrint('🤖 generateContent failed: $e');
     }
