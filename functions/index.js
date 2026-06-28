@@ -1838,3 +1838,27 @@ exports.sendPasswordResetEmail = onCall(
     return { success: true };
   },
 );
+
+// ─── ADMIN ENDPOINTS ─────────────────────────────────────────────────────
+exports.setAdminClaim = require('./admin').setAdminClaim;
+
+exports.adminGetDashboardKpis = require('./admin_dashboard').adminGetDashboardKpis;
+
+exports.adminListUsers = require('./admin_users').adminListUsers;
+exports.adminGetUserOverview = require('./admin_users').adminGetUserOverview;
+
+exports.adminSetPlan = require('./admin_actions').adminSetPlan;
+exports.adminResetCounters = require('./admin_actions').adminResetCounters;
+exports.adminResetHourlyBurst = require('./admin_actions').adminResetHourlyBurst;
+exports.adminResetRefusalCount = require('./admin_actions').adminResetRefusalCount;
+exports.adminExtendTrial = require('./admin_actions').adminExtendTrial;
+
+exports.adminUpdateConfig = require('./admin_config').adminUpdateConfig;
+
+exports.adminUpdateAnnouncement = require('./admin_announcement').adminUpdateAnnouncement;
+
+exports.adminListAiActivity = require('./admin_ai_activity').adminListAiActivity;
+
+exports.adminGetCostOverview = require('./admin_cost_overview').adminGetCostOverview;
+
+exports.adminListUserDocuments = require('./admin_user_documents').adminListUserDocuments;
