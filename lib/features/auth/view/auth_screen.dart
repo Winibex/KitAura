@@ -30,6 +30,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   final _signUpEmail = TextEditingController();
   final _signUpPassword = TextEditingController();
   final _signUpConfirm = TextEditingController();
+  final _signupPhoneNumber = TextEditingController();
 
   bool _obscureSignInPw = true;
   bool _obscureSignUpPw = true;
@@ -43,6 +44,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     _signUpEmail.dispose();
     _signUpPassword.dispose();
     _signUpConfirm.dispose();
+    _signupPhoneNumber.dispose();
     super.dispose();
   }
 
@@ -395,6 +397,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         const SizedBox(height: 14),
 
         KitauraTextField(
+          label: 'Phone Number',
+          controller: _signupPhoneNumber,
+          hint: '+92 300 1234567',
+          keyboardType: TextInputType.phone,
+        ),
+        const SizedBox(height: 14),
+
+        KitauraTextField(
           label: 'Email address',
           controller: _signUpEmail,
           hint: 'you@example.com',
@@ -436,6 +446,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               _signUpPassword.text,
               _signUpConfirm.text,
               _signUpName.text.trim(),
+              _signupPhoneNumber.text.trim(),
             );
           },
         ),

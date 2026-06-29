@@ -128,6 +128,7 @@ class FirebaseService {
     required String displayName,
     String? photoUrl,
     required String signupSource, // 'email' | 'google' | etc.
+    required String phoneNumber,
   }) async
   {
     final batch = _db.batch();
@@ -139,7 +140,7 @@ class FirebaseService {
       'email':       email,
       'displayName': displayName,
       'photoUrl':    photoUrl,
-      'phone':       null,
+      'phone':       phoneNumber,
       'location':    null,
       'bio':         null,
       'hasUsedTrial': false,

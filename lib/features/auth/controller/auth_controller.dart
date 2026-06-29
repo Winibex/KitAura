@@ -132,11 +132,12 @@ class AuthController extends StateNotifier<AuthState> {
       String password,
       String confirmPassword,
       String displayName,
+      String phoneNumber,
       ) async
   {
     // Validate inputs before hitting the network.
     final validationError =
-    _validateSignUp(email, password, confirmPassword, displayName);
+    _validateSignUp(email, password, confirmPassword, displayName, phoneNumber);
     if (validationError != null) {
       state = AuthState(error: validationError);
       return;
@@ -158,6 +159,7 @@ class AuthController extends StateNotifier<AuthState> {
         email:        email,
         displayName:  displayName,
         signupSource: 'email',
+        phoneNumber: phoneNumber,
       );
 
       sendEmailVerification();
@@ -195,6 +197,7 @@ class AuthController extends StateNotifier<AuthState> {
           displayName: user.displayName ?? '',
           photoUrl: user.photoURL,
           signupSource: 'google',
+          phoneNumber: user.phoneNumber ?? '',
         );
         // Skip trackLogin — createNewUserDocuments already seeded loginCount=1
       } else {
@@ -361,8 +364,10 @@ class AuthController extends StateNotifier<AuthState> {
       String password,
       String confirmPassword,
       String displayName,
+      String phoneNumber,
       ) {
     if (displayName.trim().isEmpty)          return 'Please enter your full name.';
+    if (phoneNumber.trim().isEmpty)          return 'Please enter your phone number.';
     if (email.trim().isEmpty)                return 'Please enter your email address.';
     if (!_emailRegex.hasMatch(email.trim())) return 'Please enter a valid email address.';
     if (password.isEmpty)                    return 'Please enter a password.';
