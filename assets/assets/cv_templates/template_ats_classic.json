@@ -1,0 +1,701 @@
+{
+  "canvasBackground": "#FFFFFF",
+  "items": [
+    {
+      "type": "textSection",
+      "title": "Full Name",
+      "x": 50,
+      "y": 50,
+      "w": 495,
+      "h": 36,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Your Full Name\n",
+          "attributes": {
+            "bold": true,
+            "size": "22",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Job Title",
+      "x": 50,
+      "y": 90,
+      "w": 495,
+      "h": 22,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Software Engineer\n",
+          "attributes": {
+            "size": "13",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Contact",
+      "x": 50,
+      "y": 118,
+      "w": 495,
+      "h": 22,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "email@example.com | +1 234 567 890 | City, Country | linkedin.com/in/you | github.com/you\n",
+          "attributes": {
+            "size": "10",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "Header Divider",
+      "x": 50,
+      "y": 152,
+      "w": 495,
+      "h": 1,
+      "color": "#000000",
+      "borderColor": "#000000",
+      "borderWidth": 1,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Summary",
+      "x": 50,
+      "y": 168,
+      "w": 495,
+      "h": 70,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "PROFESSIONAL SUMMARY\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Software Engineer with 5+ years of experience building scalable web applications. Proficient in Python, JavaScript, and cloud technologies. Track record of delivering high-impact features that improve user engagement and operational efficiency.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "D1",
+      "x": 50,
+      "y": 244,
+      "w": 495,
+      "h": 1,
+      "color": "#000000",
+      "borderColor": "#000000",
+      "borderWidth": 1,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Experience",
+      "x": 50,
+      "y": 260,
+      "w": 495,
+      "h": 240,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "WORK EXPERIENCE\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Senior Software Engineer | Company Name | Jan 2021 – Present\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "City, Country\n",
+          "attributes": {
+            "size": "10",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Led development of microservices architecture serving 1M+ daily active users\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Reduced API response time by 40% through database query optimization\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Mentored 4 junior engineers; conducted 50+ code reviews per month\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Implemented automated testing pipeline, increasing code coverage from 45% to 85%\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Software Engineer | Previous Company | Jun 2019 – Dec 2020\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "City, Country\n",
+          "attributes": {
+            "size": "10",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Built RESTful APIs serving 50K+ daily requests with 99.9% uptime\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Implemented CI/CD pipeline reducing deployment time by 60%\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Collaborated with product team to ship 12 customer-facing features\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "D2",
+      "x": 50,
+      "y": 510,
+      "w": 495,
+      "h": 1,
+      "color": "#000000",
+      "borderColor": "#000000",
+      "borderWidth": 1,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Education",
+      "x": 50,
+      "y": 526,
+      "w": 495,
+      "h": 80,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "EDUCATION\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Bachelor of Science in Computer Science | University Name | Sep 2015 – Jun 2019\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "City, Country | GPA: 3.8/4.0\n",
+          "attributes": {
+            "size": "10",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Relevant Coursework: Data Structures, Algorithms, Distributed Systems, Machine Learning\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "D3",
+      "x": 50,
+      "y": 614,
+      "w": 495,
+      "h": 1,
+      "color": "#000000",
+      "borderColor": "#000000",
+      "borderWidth": 1,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Skills",
+      "x": 50,
+      "y": 630,
+      "w": 495,
+      "h": 100,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "TECHNICAL SKILLS\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Programming Languages: Python, JavaScript, TypeScript, Go, Java\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Frameworks & Libraries: React, Node.js, Django, FastAPI, Flutter\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Databases: PostgreSQL, MongoDB, Redis, Elasticsearch\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Cloud & DevOps: AWS, Docker, Kubernetes, CI/CD, Terraform, Git\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "D4",
+      "x": 50,
+      "y": 738,
+      "w": 495,
+      "h": 1,
+      "color": "#000000",
+      "borderColor": "#000000",
+      "borderWidth": 1,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Projects",
+      "x": 50,
+      "y": 754,
+      "w": 495,
+      "h": 120,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "PROJECTS\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Distributed Task Queue | github.com/you/taskqueue\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Open-source task queue with Redis backend, used by 500+ developers\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Tech: Python, Redis, Docker, GitHub Actions\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Real-time Analytics Dashboard | analytics.example.com\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Built dashboard processing 10K events/sec using WebSocket and Kafka\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Certifications",
+      "x": 50,
+      "y": 870,
+      "w": 495,
+      "h": 90,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "CERTIFICATIONS\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• AWS Certified Solutions Architect – Associate | Issued: Jan 2024\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Google Cloud Professional Cloud Architect | Issued: Mar 2023\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Certified Kubernetes Administrator (CKA) | Issued: Jul 2022\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "D5",
+      "x": 50,
+      "y": 970,
+      "w": 495,
+      "h": 1,
+      "color": "#000000",
+      "borderColor": "#000000",
+      "borderWidth": 1,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Awards",
+      "x": 50,
+      "y": 986,
+      "w": 495,
+      "h": 80,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "AWARDS AND HONORS\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Employee of the Year — Company Name | 2023\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Hackathon Winner — Annual Tech Conference | 2022\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "D6",
+      "x": 50,
+      "y": 1076,
+      "w": 495,
+      "h": 1,
+      "color": "#000000",
+      "borderColor": "#000000",
+      "borderWidth": 1,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Languages",
+      "x": 50,
+      "y": 1092,
+      "w": 495,
+      "h": 50,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "LANGUAGES\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "English (Native) | Spanish (Fluent) | Mandarin (Conversational)\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "D7",
+      "x": 50,
+      "y": 1150,
+      "w": 495,
+      "h": 1,
+      "color": "#000000",
+      "borderColor": "#000000",
+      "borderWidth": 1,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Volunteer",
+      "x": 50,
+      "y": 1166,
+      "w": 495,
+      "h": 90,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "VOLUNTEER EXPERIENCE\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Code Mentor | Code for Good | 2022 – Present\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Mentor underserved students learning programming fundamentals\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Conduct weekly 2-hour sessions on Python and web development\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    }
+  ]
+}

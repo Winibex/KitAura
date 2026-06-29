@@ -1,0 +1,349 @@
+{
+  "canvasBackground": "#FFFFFF",
+  "items": [
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 0, "y": 0, "w": 595, "h": 120,
+      "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "top_band"
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 0, "y": 120, "w": 595, "h": 4,
+      "color": "#CF4D6F", "borderColor": "#CF4D6F", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "top_band"
+    },
+    {
+      "type": "textSection",
+      "title": "Company Header",
+      "x": 50, "y": 30, "w": 300, "h": 60,
+      "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "top_band",
+      "delta": [
+        {"insert": "YOUR COMPANY NAME", "attributes": {"bold": true, "size": "16", "color": "#FFFFFF"}},
+        {"insert": "\n"},
+        {"insert": "Product Supplier  |  www.yourcompany.com", "attributes": {"size": "10", "color": "#A0AEC0"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Quote Number",
+      "x": 400, "y": 35, "w": 150, "h": 50,
+      "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "top_band",
+      "delta": [
+        {"insert": "QUOTATION", "attributes": {"bold": true, "size": "11", "color": "#CF4D6F"}},
+        {"insert": "\n"},
+        {"insert": "#QT-2026-001", "attributes": {"bold": true, "size": "13", "color": "#FFFFFF"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Title",
+      "x": 50, "y": 150, "w": 495, "h": 61,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "top_band",
+      "delta": [
+        {"insert": "Product Quotation & Catalog", "attributes": {"bold": true, "size": "22", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "Supply Proposal", "attributes": {"size": "12", "color": "#76818E"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Client Details",
+      "x": 50, "y": 225, "w": 240, "h": 105,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "top_band",
+      "delta": [
+        {"insert": "BILL TO", "attributes": {"bold": true, "size": "9", "color": "#CF4D6F"}},
+        {"insert": "\n"},
+        {"insert": "Client Name", "attributes": {"bold": true, "size": "12", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "Client Company", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "Client Address, City, ZIP", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "client@company.com", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Quote Details",
+      "x": 350, "y": 225, "w": 195, "h": 102,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "top_band",
+      "delta": [
+        {"insert": "QUOTE DETAILS", "attributes": {"bold": true, "size": "9", "color": "#CF4D6F"}},
+        {"insert": "\n"},
+        {"insert": "Date: January 15, 2026", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "Valid Until: February 15, 2026", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "Payment: Net 30", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "Delivery: 2-4 weeks", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 50, "y": 320, "w": 495, "h": 1,
+      "color": "#E0E0E0", "borderColor": "#E0E0E0", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "top_band"
+    },
+    {
+      "type": "textSection",
+      "title": "Products Heading",
+      "x": 50, "y": 340, "w": 495, "h": 28,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "heading",
+      "group": "products",
+      "delta": [
+        {"insert": "PRODUCT LIST", "attributes": {"bold": true, "size": "14", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "tableSection",
+      "title": "Product Table",
+      "x": 50, "y": 375, "w": 495, "h": 180,
+      "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "tableData": {
+        "headers": ["#", "Product / Model", "Specifications", "Qty", "Unit Price", "Total"],
+        "rows": [
+          ["1", "Product Model ABC-100", "Power: 5HP, Flow: 200 GPM, Material: SS316", "2", "$1,250.00", "$2,500.00"],
+          ["2", "Product Model DEF-200", "Power: 10HP, Flow: 400 GPM, Material: CI", "1", "$2,800.00", "$2,800.00"],
+          ["3", "Product Model GHI-50", "Power: 2HP, Flow: 80 GPM, Material: SS304", "4", "$650.00", "$2,600.00"],
+          ["4", "Spare Parts Kit — ABC Series", "Seals, bearings, impeller set", "2", "$180.00", "$360.00"],
+          ["5", "Installation & Commissioning", "On-site setup and testing", "1", "$1,500.00", "$1,500.00"]
+        ],
+        "headerBgColor": "#0F172A",
+        "headerTextColor": "#FFFFFF",
+        "cellTextColor": "#333333",
+        "borderColor": "#E0E0E0",
+        "fontSize": 9,
+        "showHeader": true
+      }
+    },
+    {
+      "type": "tableSection",
+      "title": "Pricing Summary",
+      "x": 330, "y": 575, "w": 215, "h": 110,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "tableData": {
+        "headers": ["Label", "Amount"],
+        "rows": [
+          ["Subtotal", "$9,760.00"],
+          ["Tax (8%)", "$780.80"],
+          ["Shipping", "$350.00"],
+          ["TOTAL", "$10,890.80"]
+        ],
+        "headerBgColor": "#FFFFFF",
+        "headerTextColor": "#FFFFFF",
+        "cellTextColor": "#333333",
+        "borderColor": "#FFFFFF",
+        "fontSize": 10,
+        "showHeader": false
+      }
+    },
+    {
+      "type": "textSection",
+      "title": "Specs Heading",
+      "x": 50, "y": 720, "w": 495, "h": 28,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "heading",
+      "group": "specs",
+      "delta": [
+        {"insert": "TECHNICAL SPECIFICATIONS", "attributes": {"bold": true, "size": "14", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Specs",
+      "x": 50, "y": 755, "w": 495, "h": 103,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "•  All products conform to recognized ISO and ANSI standards", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  Materials: Stainless Steel 304/316, Cast Iron, Carbon Steel available", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  Operating temperature range: -20°C to 120°C", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  Warranty: 12 months from date of commissioning or 18 months from delivery", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  Detailed datasheets available upon request", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Warranty Heading",
+      "x": 50, "y": 892, "w": 495, "h": 28,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "heading",
+      "group": "warranty",
+      "delta": [
+        {"insert": "WARRANTY & SUPPORT", "attributes": {"bold": true, "size": "14", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "tableSection",
+      "title": "Warranty Table",
+      "x": 50, "y": 925, "w": 495, "h": 140,
+      "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "tableData": {
+        "headers": ["Coverage", "Duration", "Details"],
+        "rows": [
+          ["Product Warranty", "12 months", "Covers manufacturing defects and material failures"],
+          ["Installation Warranty", "6 months", "Covers workmanship of on-site installation"],
+          ["Spare Parts", "6 months", "Replacement parts warranty from date of purchase"],
+          ["Technical Support", "24 months", "Phone and email support for operation queries"]
+        ],
+        "headerBgColor": "#0F172A",
+        "headerTextColor": "#FFFFFF",
+        "cellTextColor": "#333333",
+        "borderColor": "#E0E0E0",
+        "fontSize": 9,
+        "showHeader": true
+      }
+    },
+    {
+      "type": "textSection",
+      "title": "Delivery Heading",
+      "x": 50, "y": 1070, "w": 495, "h": 28,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "heading",
+      "group": "delivery",
+      "delta": [
+        {"insert": "DELIVERY & LOGISTICS", "attributes": {"bold": true, "size": "14", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Delivery",
+      "x": 50, "y": 1100, "w": 495, "h": 82,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "•  Standard delivery: 2-4 weeks from order confirmation", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  Express delivery available at additional cost", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  Shipping terms: FOB Destination — Incoterms 2020", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  Packaging: Industrial crate packaging with corrosion protection", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Terms Heading",
+      "x": 50, "y": 1210, "w": 495, "h": 28,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "heading",
+      "group": "terms",
+      "delta": [
+        {"insert": "TERMS & CONDITIONS", "attributes": {"bold": true, "size": "14", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Terms",
+      "x": 50, "y": 1240, "w": 495, "h": 82,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "•  Payment: 50% advance with PO, 50% before dispatch (Net 30 for approved accounts)", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  Prices are valid for 30 days from the date of this quotation", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  Orders subject to final confirmation of stock availability", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  Returns accepted within 15 days of delivery for unused items in original packaging", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Acceptance",
+      "x": 50, "y": 1365, "w": 220, "h": 81,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "signature",
+      "delta": [
+        {"insert": "ORDER CONFIRMED BY:", "attributes": {"bold": true, "size": "9", "color": "#CF4D6F"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "____________________________", "attributes": {"size": "10", "color": "#C5AFA4"}},
+        {"insert": "\n"},
+        {"insert": "Client Name  |  Date  |  PO #", "attributes": {"size": "9", "color": "#76818E"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Contact",
+      "x": 325, "y": 1365, "w": 220, "h": 70,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "SALES CONTACT:", "attributes": {"bold": true, "size": "9", "color": "#CF4D6F"}},
+        {"insert": "\n"},
+        {"insert": "Your Name  |  Sales Manager", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "sales@company.com  |  +1 234 567 890", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    }
+  ]
+}

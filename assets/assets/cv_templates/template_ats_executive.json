@@ -1,0 +1,696 @@
+{
+  "canvasBackground": "#FFFFFF",
+  "items": [
+    {
+      "type": "textSection",
+      "title": "Full Name",
+      "x": 50,
+      "y": 50,
+      "w": 495,
+      "h": 36,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "YOUR FULL NAME\n",
+          "attributes": {
+            "bold": true,
+            "size": "20",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Job Title",
+      "x": 50,
+      "y": 90,
+      "w": 495,
+      "h": 22,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Chief Operating Officer | Strategic Leader | Operations Expert\n",
+          "attributes": {
+            "size": "12",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Contact",
+      "x": 50,
+      "y": 118,
+      "w": 495,
+      "h": 22,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "email@example.com | +1 234 567 890 | linkedin.com/in/you | New York, NY\n",
+          "attributes": {
+            "size": "10",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "Header Divider",
+      "x": 50,
+      "y": 152,
+      "w": 495,
+      "h": 1,
+      "color": "#000000",
+      "borderColor": "#000000",
+      "borderWidth": 2,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Summary",
+      "x": 50,
+      "y": 168,
+      "w": 495,
+      "h": 80,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "EXECUTIVE SUMMARY\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Accomplished executive with 18+ years of progressive leadership experience driving operational excellence and strategic transformation at Fortune 500 organizations. Proven track record scaling teams from 50 to 500+ employees, leading P&L of $200M+, and delivering 25%+ year-over-year revenue growth.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "D1",
+      "x": 50,
+      "y": 256,
+      "w": 495,
+      "h": 1,
+      "color": "#000000",
+      "borderColor": "#000000",
+      "borderWidth": 1,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Skills",
+      "x": 50,
+      "y": 272,
+      "w": 495,
+      "h": 75,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "CORE COMPETENCIES\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Strategic Planning  |  P&L Management  |  Organizational Design  |  M&A Integration\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Operational Excellence  |  Change Management  |  Board Communication  |  Investor Relations\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Cross-functional Leadership  |  Digital Transformation  |  Global Operations  |  Risk Management\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "D2",
+      "x": 50,
+      "y": 355,
+      "w": 495,
+      "h": 1,
+      "color": "#000000",
+      "borderColor": "#000000",
+      "borderWidth": 1,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Experience",
+      "x": 50,
+      "y": 371,
+      "w": 495,
+      "h": 320,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "PROFESSIONAL EXPERIENCE\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "CHIEF OPERATING OFFICER | Enterprise Corp | Mar 2020 – Present\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "New York, NY  |  $200M annual revenue  |  500+ employees\n",
+          "attributes": {
+            "size": "10",
+            "color": "#555555",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Spearheaded operational strategy resulting in 35% revenue growth and 18% margin expansion over 4 years\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Led integration of 3 major acquisitions totaling $80M in combined value\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Restructured organization across 8 business units, improving productivity by 28%\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Built and managed executive team of 12 VPs and Directors\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Established quarterly board reporting framework adopted across 5 portfolio companies\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "VICE PRESIDENT OF OPERATIONS | Global Solutions Inc | Jun 2015 – Feb 2020\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Chicago, IL  |  $120M business unit  |  250+ employees\n",
+          "attributes": {
+            "size": "10",
+            "color": "#555555",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Drove operational transformation reducing costs by $15M annually while improving NPS by 25 points\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Led international expansion into 5 new markets across EMEA and APAC regions\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Implemented enterprise-wide ERP system on time and 8% under budget ($12M project)\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "DIRECTOR OF STRATEGY | Consulting Partners LLP | Aug 2010 – May 2015\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Boston, MA\n",
+          "attributes": {
+            "size": "10",
+            "color": "#555555",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Advised Fortune 100 clients on strategic initiatives generating $500M+ in combined value\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Led teams of 15+ consultants on complex engagements averaging $3M in fees\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "D3",
+      "x": 50,
+      "y": 700,
+      "w": 495,
+      "h": 1,
+      "color": "#000000",
+      "borderColor": "#000000",
+      "borderWidth": 1,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Education",
+      "x": 50,
+      "y": 716,
+      "w": 495,
+      "h": 90,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "EDUCATION\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "MASTER OF BUSINESS ADMINISTRATION (MBA)\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Harvard Business School  |  Boston, MA  |  2008 – 2010\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Baker Scholar (Top 5% of class)  |  Concentration: Strategy and Finance\n",
+          "attributes": {
+            "size": "10",
+            "color": "#555555",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "BACHELOR OF SCIENCE IN ECONOMICS\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Princeton University  |  Princeton, NJ  |  2002 – 2006\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Board",
+      "x": 50,
+      "y": 870,
+      "w": 495,
+      "h": 110,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "BOARD POSITIONS & ADVISORY ROLES\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Board Member  |  TechNonprofit Foundation  |  2021 – Present\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Independent Director  |  Mid-Cap Industrial Co (NYSE: XXX)  |  2020 – Present\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Advisory Board  |  Series-B SaaS Startup  |  2019 – Present\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "Member  |  Young Presidents' Organization (YPO)  |  2018 – Present\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "D4",
+      "x": 50,
+      "y": 990,
+      "w": 495,
+      "h": 1,
+      "color": "#000000",
+      "borderColor": "#000000",
+      "borderWidth": 1,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Awards",
+      "x": 50,
+      "y": 1006,
+      "w": 495,
+      "h": 90,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "AWARDS & RECOGNITION\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• CEO of the Year (Mid-Market)  |  Business Executive Awards  |  2023\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Top 100 Most Influential Operations Leaders  |  Operations Magazine  |  2022\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Best Turnaround Leadership  |  Industry Council  |  2021\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "D5",
+      "x": 50,
+      "y": 1106,
+      "w": 495,
+      "h": 1,
+      "color": "#000000",
+      "borderColor": "#000000",
+      "borderWidth": 1,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Speaking",
+      "x": 50,
+      "y": 1122,
+      "w": 495,
+      "h": 90,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "SPEAKING & PUBLICATIONS\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Keynote Speaker  |  World Business Forum  |  2023\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Panelist  |  Harvard Business Review Leadership Summit  |  2022\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "• Featured contributor in Forbes, HBR, and Fast Company\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "D6",
+      "x": 50,
+      "y": 1222,
+      "w": 495,
+      "h": 1,
+      "color": "#000000",
+      "borderColor": "#000000",
+      "borderWidth": 1,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Languages",
+      "x": 50,
+      "y": 1238,
+      "w": 495,
+      "h": 50,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "LANGUAGES\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        },
+        {
+          "insert": "English (Native)  |  French (Fluent)  |  Mandarin (Professional)\n",
+          "attributes": {
+            "size": "11",
+            "color": "#000000",
+            "font": "Arial"
+          }
+        }
+      ]
+    }
+  ]
+}

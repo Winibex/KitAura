@@ -1,0 +1,497 @@
+{
+  "canvasBackground": "#FFFFFF",
+  "items": [
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 0, "y": 0, "w": 595, "h": 842,
+      "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "hero"
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 50, "y": 180, "w": 80, "h": 3,
+      "color": "#C9A84C", "borderColor": "#C9A84C", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "hero"
+    },
+    {
+      "type": "textSection",
+      "title": "Company",
+      "x": 50, "y": 50, "w": 300, "h": 25,
+      "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "hero",
+      "delta": [
+        {"insert": "YOUR COMPANY", "attributes": {"bold": true, "size": "11", "color": "#C9A84C"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Title",
+      "x": 50, "y": 200, "w": 495, "h": 168,
+      "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "hero",
+      "delta": [
+        {"insert": "EXECUTIVE", "attributes": {"bold": true, "size": "36", "color": "#FFFFFF"}},
+        {"insert": "\n"},
+        {"insert": "PROPOSAL", "attributes": {"bold": true, "size": "36", "color": "#C9A84C"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "Strategic Partnership for Project Name", "attributes": {"size": "14", "color": "#A0AEC0"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Client",
+      "x": 50, "y": 420, "w": 495, "h": 70,
+      "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "hero",
+      "delta": [
+        {"insert": "PREPARED FOR", "attributes": {"bold": true, "size": "9", "color": "#C9A84C"}},
+        {"insert": "\n"},
+        {"insert": "Client Name, Title", "attributes": {"bold": true, "size": "15", "color": "#FFFFFF"}},
+        {"insert": "\n"},
+        {"insert": "Client Company  |  January 15, 2026", "attributes": {"size": "11", "color": "#A0AEC0"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 50, "y": 700, "w": 495, "h": 1,
+      "color": "#C9A84C", "borderColor": "#C9A84C", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "hero"
+    },
+    {
+      "type": "textSection",
+      "title": "Confidential",
+      "x": 50, "y": 720, "w": 495, "h": 60,
+      "color": "#0F172A", "borderColor": "#0F172A", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "hero",
+      "delta": [
+        {"insert": "CONFIDENTIAL", "attributes": {"bold": true, "size": "9", "color": "#C9A84C"}},
+        {"insert": "\n"},
+        {"insert": "This document contains proprietary information and is intended solely for the named recipient.", "attributes": {"size": "9", "color": "#718096"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 0, "y": 842, "w": 595, "h": 4,
+      "color": "#C9A84C", "borderColor": "#C9A84C", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom"
+    },
+    {
+      "type": "textSection",
+      "title": "Exec Summary Heading",
+      "x": 50, "y": 896, "w": 495, "h": 35,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "heading",
+      "group": "execSummary",
+      "delta": [
+        {"insert": "EXECUTIVE SUMMARY", "attributes": {"bold": true, "size": "18", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 50, "y": 931, "w": 50, "h": 3,
+      "color": "#C9A84C", "borderColor": "#C9A84C", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "underline",
+      "group": "execSummary"
+    },
+    {
+      "type": "textSection",
+      "title": "Executive Summary",
+      "x": 50, "y": 950, "w": 495, "h": 132,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Your Company is pleased to present this proposal for a strategic engagement with the client. This initiative addresses the critical business need and positions the organization for a clear strategic outcome.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "The proposed investment delivers measurable value with strong ROI within the project timeframe. Our approach is informed by years of experience serving industry leaders.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Situation Heading",
+      "x": 50, "y": 1110, "w": 495, "h": 35,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "heading",
+      "group": "situation",
+      "delta": [
+        {"insert": "SITUATION ANALYSIS", "attributes": {"bold": true, "size": "18", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 50, "y": 1145, "w": 50, "h": 3,
+      "color": "#C9A84C", "borderColor": "#C9A84C", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "underline",
+      "group": "situation"
+    },
+    {
+      "type": "textSection",
+      "title": "Situation Analysis",
+      "x": 50, "y": 1163, "w": 495, "h": 180,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Current State", "attributes": {"bold": true, "size": "12", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "Describe the client's current operating state and the key challenges costing the business in efficiency, revenue, or risk.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "Market Context", "attributes": {"bold": true, "size": "12", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "Industry trends make this initiative strategically urgent; competitors are moving first and timely execution is critical.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Solution Heading",
+      "x": 50, "y": 1350, "w": 495, "h": 35,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "heading",
+      "group": "solution",
+      "delta": [
+        {"insert": "RECOMMENDED SOLUTION", "attributes": {"bold": true, "size": "18", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 50, "y": 1385, "w": 50, "h": 3,
+      "color": "#C9A84C", "borderColor": "#C9A84C", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "underline",
+      "group": "solution"
+    },
+    {
+      "type": "textSection",
+      "title": "Solution",
+      "x": 50, "y": 1403, "w": 495, "h": 240,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "We recommend a multi-phase engagement that addresses immediate needs and long-term strategic positioning.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "Phase 1 — Assessment & Strategy", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "Comprehensive audit, stakeholder interviews, strategic framework development.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "Phase 2 — Implementation", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "Execution of approved strategy with dedicated project management.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "Phase 3 — Optimization & Transition", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "Performance optimization, knowledge transfer, and ongoing support planning.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Implementation Heading",
+      "x": 50, "y": 1738, "w": 495, "h": 35,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "heading",
+      "group": "implementation",
+      "delta": [
+        {"insert": "IMPLEMENTATION PLAN", "attributes": {"bold": true, "size": "18", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 50, "y": 1773, "w": 50, "h": 3,
+      "color": "#C9A84C", "borderColor": "#C9A84C", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "underline",
+      "group": "implementation"
+    },
+    {
+      "type": "tableSection",
+      "title": "Implementation Table",
+      "x": 50, "y": 1791, "w": 495, "h": 204,
+      "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "tableData": {
+        "headers": ["Phase", "Milestone", "Timeline", "Owner"],
+        "rows": [
+          ["Assessment", "Stakeholder interviews complete", "Week 1-2", "Joint"],
+          ["Assessment", "Strategic framework approved", "Week 3", "Your Co."],
+          ["Implementation", "Phase 1 deliverables complete", "Week 6", "Your Co."],
+          ["Implementation", "UAT sign-off", "Week 9", "Joint"],
+          ["Optimization", "Performance benchmarks met", "Week 11", "Your Co."],
+          ["Transition", "Knowledge transfer complete", "Week 12", "Joint"]
+        ],
+        "headerBgColor": "#0F172A",
+        "headerTextColor": "#C9A84C",
+        "cellTextColor": "#333333",
+        "borderColor": "#E0E0E0",
+        "fontSize": 10,
+        "showHeader": true
+      }
+    },
+    {
+      "type": "textSection",
+      "title": "Financial Heading",
+      "x": 50, "y": 1985, "w": 495, "h": 35,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "heading",
+      "group": "financial",
+      "delta": [
+        {"insert": "FINANCIAL OVERVIEW", "attributes": {"bold": true, "size": "18", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 50, "y": 2020, "w": 50, "h": 3,
+      "color": "#C9A84C", "borderColor": "#C9A84C", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "underline",
+      "group": "financial"
+    },
+    {
+      "type": "tableSection",
+      "title": "Financial Table",
+      "x": 50, "y": 2038, "w": 495, "h": 175,
+      "color": "#FFFFFF", "borderColor": "#E0E0E0", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "tableData": {
+        "headers": ["Component", "Description", "Investment"],
+        "rows": [
+          ["Assessment & Strategy", "Audit, research, strategic framework", "$XX,XXX"],
+          ["Implementation", "Core execution and project management", "$XX,XXX"],
+          ["Optimization & Transition", "Performance tuning, training, handover", "$XX,XXX"],
+          ["Contingency (10%)", "Risk buffer for scope adjustments", "$X,XXX"],
+          ["Total Investment", "", "$XXX,XXX"]
+        ],
+        "headerBgColor": "#0F172A",
+        "headerTextColor": "#C9A84C",
+        "cellTextColor": "#333333",
+        "borderColor": "#E0E0E0",
+        "fontSize": 10,
+        "showHeader": true
+      }
+    },
+    {
+      "type": "textSection",
+      "title": "Payment Terms",
+      "x": 50, "y": 2200, "w": 495, "h": 40,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Payment Terms: ", "attributes": {"bold": true, "size": "10", "color": "#0F172A"}},
+        {"insert": "30% upon signing, 40% at Phase 2 completion, 30% upon final delivery. Net 30 terms apply.", "attributes": {"size": "10", "color": "#76818E"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Risk Heading",
+      "x": 50, "y": 2576, "w": 495, "h": 35,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "heading",
+      "group": "risk",
+      "delta": [
+        {"insert": "RISK MITIGATION", "attributes": {"bold": true, "size": "18", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 50, "y": 2611, "w": 50, "h": 3,
+      "color": "#C9A84C", "borderColor": "#C9A84C", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "underline",
+      "group": "risk"
+    },
+    {
+      "type": "textSection",
+      "title": "Risk",
+      "x": 50, "y": 2630, "w": 495, "h": 154,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Scope Management", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "Formal change request process with impact assessment for any scope modifications.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "Quality Assurance", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "Dedicated QA lead with weekly quality reviews and stakeholder sign-offs.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "Communication", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "Bi-weekly executive briefings and real-time project dashboard access.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "Contingency", "attributes": {"bold": true, "size": "11", "color": "#0F172A"}},
+        {"insert": "\n"},
+        {"insert": "10% budget reserve and flexible timeline buffer built into the plan.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Credentials Heading",
+      "x": 50, "y": 2770, "w": 495, "h": 35,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "heading",
+      "group": "credentials",
+      "delta": [
+        {"insert": "OUR CREDENTIALS", "attributes": {"bold": true, "size": "18", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "rectangle",
+      "title": "",
+      "x": 50, "y": 2805, "w": 50, "h": 3,
+      "color": "#C9A84C", "borderColor": "#C9A84C", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "underline",
+      "group": "credentials"
+    },
+    {
+      "type": "textSection",
+      "title": "Credentials",
+      "x": 50, "y": 2823, "w": 495, "h": 99,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "Your Company has delivered many enterprise engagements across multiple industries. The portfolio includes notable named clients.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "Key differentiators: deep domain experience, proven execution track record, and high client retention.", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Terms Heading",
+      "x": 50, "y": 2940, "w": 495, "h": 35,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "heading",
+      "group": "terms",
+      "delta": [
+        {"insert": "TERMS", "attributes": {"bold": true, "size": "18", "color": "#0F172A"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Terms",
+      "x": 50, "y": 2975, "w": 495, "h": 82,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "delta": [
+        {"insert": "•  This proposal is valid for 30 days from the date of issue", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  All intellectual property transfers upon final payment", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  Both parties may terminate with 30 days written notice", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "•  A mutual NDA will be executed prior to engagement commencement", "attributes": {"size": "10", "color": "#333333"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Acceptance Client",
+      "x": 50, "y": 3115, "w": 220, "h": 82,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "signature",
+      "delta": [
+        {"insert": "ACCEPTED BY", "attributes": {"bold": true, "size": "9", "color": "#C9A84C"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "____________________________", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "Name  |  Title  |  Date", "attributes": {"size": "9", "color": "#76818E"}},
+        {"insert": "\n"}
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Acceptance Author",
+      "x": 325, "y": 3115, "w": 220, "h": 82,
+      "color": "#FFFFFF", "borderColor": "#FFFFFF", "borderWidth": 0,
+      "rotation": 0, "flipX": false, "flipY": false,
+      "sectionType": "custom",
+      "role": "signature",
+      "delta": [
+        {"insert": "SUBMITTED BY", "attributes": {"bold": true, "size": "9", "color": "#C9A84C"}},
+        {"insert": "\n"},
+        {"insert": "\n"},
+        {"insert": "____________________________", "attributes": {"size": "11", "color": "#333333"}},
+        {"insert": "\n"},
+        {"insert": "Name  |  Title  |  Date", "attributes": {"size": "9", "color": "#76818E"}},
+        {"insert": "\n"}
+      ]
+    }
+  ]
+}

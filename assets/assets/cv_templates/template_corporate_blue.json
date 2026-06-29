@@ -1,0 +1,534 @@
+{
+  "canvasBackground": "#FFFFFF",
+  "items": [
+    {
+      "type": "rectangle",
+      "title": "Header BG",
+      "x": 0,
+      "y": 0,
+      "w": 595,
+      "h": 110,
+      "color": "#1F4E79",
+      "borderColor": "#1F4E79",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "rectangle",
+      "title": "Accent Line",
+      "x": 0,
+      "y": 110,
+      "w": 595,
+      "h": 5,
+      "color": "#27AE60",
+      "borderColor": "#27AE60",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Full Name",
+      "x": 35,
+      "y": 26,
+      "w": 525,
+      "h": 38,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Your Full Name\n",
+          "attributes": {
+            "bold": true,
+            "size": "25",
+            "color": "#FFFFFF"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Job Title",
+      "x": 35,
+      "y": 70,
+      "w": 525,
+      "h": 24,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Project Manager  |  PMP Certified\n",
+          "attributes": {
+            "size": "13",
+            "color": "#BDD4E7"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Contact",
+      "x": 35,
+      "y": 128,
+      "w": 525,
+      "h": 24,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "email@example.com  |  +1 234 567 890  |  New York, NY  |  linkedin.com/in/you\n",
+          "attributes": {
+            "size": "10",
+            "color": "#555555"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "Divider 1",
+      "x": 35,
+      "y": 166,
+      "w": 525,
+      "h": 2,
+      "color": "#DDDDDD",
+      "borderColor": "#DDDDDD",
+      "borderWidth": 2,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Summary",
+      "x": 35,
+      "y": 182,
+      "w": 525,
+      "h": 80,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "PROFESSIONAL SUMMARY\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1F4E79"
+          }
+        },
+        {
+          "insert": "Certified project manager with 8+ years leading cross-functional teams in agile environments. Track record of delivering complex projects on time.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Experience",
+      "x": 35,
+      "y": 280,
+      "w": 525,
+      "h": 200,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "PROFESSIONAL EXPERIENCE\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1F4E79"
+          }
+        },
+        {
+          "insert": "Senior Project Manager  —  Corp Solutions  |  2020 – Present\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "• Managed portfolio of 12 projects worth $15M+ total budget\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Reduced project delivery time by 25% through process optimization\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Led team of 30+ across 3 time zones\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "Project Manager  —  Tech Corp  |  2017 – 2020\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "• Delivered 20+ software projects using Agile/Scrum methodology\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Achieved 95% client satisfaction rating\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "Divider 2",
+      "x": 35,
+      "y": 496,
+      "w": 525,
+      "h": 2,
+      "color": "#DDDDDD",
+      "borderColor": "#DDDDDD",
+      "borderWidth": 2,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Education",
+      "x": 35,
+      "y": 512,
+      "w": 525,
+      "h": 60,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "EDUCATION\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1F4E79"
+          }
+        },
+        {
+          "insert": "MBA Business Administration  —  Business School  |  2015 – 2017\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Skills & Certs",
+      "x": 35,
+      "y": 590,
+      "w": 525,
+      "h": 80,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "SKILLS & CERTIFICATIONS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1F4E79"
+          }
+        },
+        {
+          "insert": "PMP • PRINCE2 • Agile/Scrum • Jira • Confluence • MS Project\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "Budget Management • Risk Assessment • Stakeholder Communication\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Projects",
+      "x": 35,
+      "y": 690,
+      "w": 525,
+      "h": 130,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "KEY PROJECTS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1F4E79"
+          }
+        },
+        {
+          "insert": "Enterprise Cloud Migration  |  2023\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Led migration of 50+ legacy systems to AWS, saving $3M annually.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "Digital Transformation Initiative  |  2022\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Coordinated cross-functional teams for company-wide digital overhaul.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Awards",
+      "x": 35,
+      "y": 870,
+      "w": 525,
+      "h": 100,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "AWARDS & HONORS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1F4E79"
+          }
+        },
+        {
+          "insert": "• Project Manager of the Year — PMI Chapter | 2023\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Excellence in Leadership — Corp Solutions | 2022\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "Divider 3",
+      "x": 35,
+      "y": 990,
+      "w": 525,
+      "h": 2,
+      "color": "#DDDDDD",
+      "borderColor": "#DDDDDD",
+      "borderWidth": 2,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Volunteer",
+      "x": 35,
+      "y": 1006,
+      "w": 525,
+      "h": 110,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "VOLUNTEER EXPERIENCE\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1F4E79"
+          }
+        },
+        {
+          "insert": "PMI Chapter Volunteer  —  Project Management Institute  |  2020 – Present\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Organizing monthly workshops and mentoring aspiring project managers.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Languages",
+      "x": 35,
+      "y": 1136,
+      "w": 250,
+      "h": 80,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "LANGUAGES\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1F4E79"
+          }
+        },
+        {
+          "insert": "English — Native\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "Mandarin — Conversational\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "References",
+      "x": 305,
+      "y": 1136,
+      "w": 255,
+      "h": 80,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "REFERENCES\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1F4E79"
+          }
+        },
+        {
+          "insert": "Available upon request.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    }
+  ]
+}
