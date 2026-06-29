@@ -1574,7 +1574,7 @@ User: "delete the navy bar at top and add a thinner red one"
     data: {
       tool: "editorAI",
       type: isRefusal ? "aiEditRefusal" : "aiEdit",
-      status: "success",
+      status: isRefusal ? "refused" : "success",
       model: MODEL_SONNET,
       documentId,
       documentTitle,
@@ -1583,7 +1583,8 @@ User: "delete the navy bar at top and add a thinner red one"
       sectionTitle: null,
       rewriteOptions: null,
       spellcheckSummary: null,
-      errorMessage: isRefusal ? envelope.refusal : null,
+      errorMessage: null,
+      refusalReason: isRefusal ? envelope.refusal : null,
       durationMs: Date.now() - t0,
     },
     counterField: "editorAiCount",
@@ -1860,5 +1861,12 @@ exports.adminUpdateAnnouncement = require('./admin_announcement').adminUpdateAnn
 exports.adminListAiActivity = require('./admin_ai_activity').adminListAiActivity;
 
 exports.adminGetCostOverview = require('./admin_cost_overview').adminGetCostOverview;
+exports.adminGetCostByUser = require('./admin_cost_by_user').adminGetCostByUser;
+exports.adminGetCostByFeature = require('./admin_cost_by_feature').adminGetCostByFeature;
 
 exports.adminListUserDocuments = require('./admin_user_documents').adminListUserDocuments;
+
+exports.adminGetAbuseMonitor = require('./admin_abuse_monitor').adminGetAbuseMonitor;
+
+exports.adminListDocuments = require('./admin_documents').adminListDocuments;
+exports.adminGetDocument = require('./admin_documents').adminGetDocument;
