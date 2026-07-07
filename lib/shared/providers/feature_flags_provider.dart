@@ -28,6 +28,7 @@
 //   async.when(loading: ..., error: ..., data: (flags) { ... });
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // ─── MODEL ───────────────────────────────────────────────────────────────
@@ -83,12 +84,19 @@ final featureFlagsProvider = StreamProvider<FeatureFlags>((ref) {
       .doc('config/featureFlags')
       .snapshots()
       .map<FeatureFlags>((snap) {
-        if (!snap.exists) return FeatureFlags.allEnabled;
+        if (!snap.exists){
+          debugPrint("FeatureFlags doc does not exist.");
+          return FeatureFlags.allEnabled;
+        }
         final data = snap.data();
-        if (data == null) return FeatureFlags.allEnabled;
+        if (data == null){
+          debugPrint("FeatureFlags doc data is null.");
+          return FeatureFlags.allEnabled;
+        }
         return FeatureFlags.fromMap(data);
       })
-      .handleError((_) {
+      .handleError((e) {
+        debugPrint("FeatureFlags load error: $e");
         // Silent fallback — never kill features on a read error.
         return FeatureFlags.allEnabled;
       });
@@ -111,5 +119,6 @@ final flagsProvider = Provider<FeatureFlags>((ref) {
 /// the login screen (current behavior). When true, they can browse
 /// dashboards and template pickers without signing in.
 final guestModeEnabledProvider = Provider<bool>((ref) {
+  debugPrint("Guest mode enabled: ${ref.watch(flagsProvider).guestModeEnabled}");
   return ref.watch(flagsProvider).guestModeEnabled;
 });

@@ -5,12 +5,7 @@ import '../../../../core/constants/app_fonts.dart';
 import '../../../../core/constants/app_sizes.dart';
 
 class EmptyStateWidget extends StatelessWidget {
-  final VoidCallback onCreateCV;
-
-  const EmptyStateWidget({
-    super.key,
-    required this.onCreateCV,
-  });
+  const EmptyStateWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -51,21 +46,29 @@ class EmptyStateWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 15),
-          SizedBox(
-            width: 110,
-            child: ElevatedButton.icon(
-              onPressed: () => onCreateCV,
-              icon: const Icon(LucideIcons.plus, size: 13),
-              label: const Text('New CV'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.darkRaspberry,
-                foregroundColor: AppColors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                textStyle:TextStyle(fontFamily: AppFonts.poppins, fontWeight: FontWeight.w600, fontSize: AppSizes.caption(context),),
+           Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.darkRaspberry,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              width: 110,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Icon(LucideIcons.plus, size: 13, color: AppColors.white,),
+                  Text(
+                    'New CV',
+                    style: TextStyle(
+                      fontFamily: AppFonts.poppins,
+                      fontWeight: FontWeight.w600,
+                      fontSize: AppSizes.caption(context),
+                      color: AppColors.white
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
         ],
       ),
     );

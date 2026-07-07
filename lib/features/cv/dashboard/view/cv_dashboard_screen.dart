@@ -205,8 +205,10 @@ class _DashboardScreenState extends ConsumerState<CVDashboardScreen> {
         else if (state.cvs.isEmpty)
           SizedBox(
             height: 300,
-            child: EmptyStateWidget(
-              onCreateCV: () => context.go(AppRoutes.cvTemplates),
+            child: GestureDetector(
+              onTap: () => context.go(AppRoutes.cvTemplates),
+              child: EmptyStateWidget(
+              ),
             ),
           )
         else

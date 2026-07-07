@@ -27,8 +27,17 @@ import '../shared/widgets/no_internet_overlay.dart';
 
 /// Synchronous flag for the GoRouter redirect.
 /// Updated on every KitAuraApp rebuild via ref.watch.
+class _RouterRefreshNotifier extends ChangeNotifier {
+  _RouterRefreshNotifier() {
+    FirebaseAuth.instance.authStateChanges().listen((_) => notifyListeners());
+  }
+  void refresh() => notifyListeners();
+}
+
+final _routerRefreshNotifier = _RouterRefreshNotifier();
+
 class _GuestMode {
-  static bool enabled = true; // safe default: guest mode on
+  static bool? enabled; // null = still loading from Firestore
 }
 
 /// Routes accessible without any Firebase auth when guest mode is on.
@@ -48,6 +57,7 @@ bool _isGuestRoute(String location) {
 
 final _router = GoRouter(
   initialLocation: AppRoutes.dashboard,
+  refreshListenable: _routerRefreshNotifier,
   routes: [
     GoRoute(path: AppRoutes.auth, builder: (_, _) => const AuthScreen()),
 
@@ -150,16 +160,18 @@ final _router = GoRouter(
 
     // Not signed in
     if (!isLoggedIn) {
-      // Auth pages always accessible
-      if (isAuthRoute || isResetPassword) return null;
+      if (isAuthRoute || isResetPassword) {
+        // Guest mode loaded and ON → redirect away from login to dashboard
+        if (_GuestMode.enabled == true) return AppRoutes.dashboard;
+        return null;
+      }
 
-      // Guest mode: allow browsing dashboards + template pickers
-      if (_GuestMode.enabled && _isGuestRoute(location)) return null;
+      // Guest mode loaded and ON → allow guest routes
+      if (_GuestMode.enabled == true && _isGuestRoute(location)) return null;
 
-      // Everything else → login
+      // Still loading (null) or OFF (false) → login
       return AppRoutes.auth;
     }
-
     // Signed in (real or anonymous) → allow all routes
     return null;
   },
@@ -170,8 +182,14 @@ class KitAuraApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Keep guest-mode flag in sync for the GoRouter redirect
-    _GuestMode.enabled = ref.watch(guestModeEnabledProvider);
+    // Use raw async state so null = still loading (no dashboard flash)
+    _GuestMode.enabled = ref.watch(featureFlagsProvider).value?.guestModeEnabled;
+    ref.listen(featureFlagsProvider, (prev, next) {
+      final newVal = next.value?.guestModeEnabled;
+      debugPrint('Guest mode changed: ${_GuestMode.enabled} → $newVal');
+      _GuestMode.enabled = newVal;
+      _routerRefreshNotifier.refresh();
+    });
 
     return SkeletonizerConfig(
       data: SkeletonizerConfigData(
