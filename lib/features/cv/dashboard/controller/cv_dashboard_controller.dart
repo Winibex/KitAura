@@ -73,12 +73,24 @@ class DashboardController extends StateNotifier<CvDashboardState> {
   String? get _uid => _auth.currentUser?.uid;
 
   Future<void> loadDashboard({bool force = false}) async {
-    debugPrint("Loading CV Dashboard");
+
     if (_hasLoaded && !force) {
       if (state.isLoading) state = state.copyWith(isLoading: false);
       return;
     }
-    if (_uid == null) return;
+    if (_uid == null) {
+      // Guest with no anon session yet — show empty dashboard, not shimmer
+      state = state.copyWith(
+        isLoading: false,
+      );
+      _hasLoaded = false; // re-fetch once they sign in (anon or real)
+      debugPrint("User is null so cv dashboard does not loaded.");
+
+      return;
+    }
+
+    debugPrint("Loading CV Dashboard");
+
     state = state.copyWith(isLoading: true, error: null);
     try {
       // Load subscription data
@@ -133,6 +145,7 @@ class DashboardController extends StateNotifier<CvDashboardState> {
       debugPrint('loadDashboard error: $e\n$stack');
       state = state.copyWith(
         isLoading: false,
+        error: 'Failed to load cv dashboard. Refresh this page to retry.',
       );
     }
   }

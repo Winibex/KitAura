@@ -108,7 +108,10 @@ class AuthController extends StateNotifier<AuthState> {
         // analytics. Without this, trackLogin can race ahead of the token
         // refresh and the callable rejects with "unauthenticated".
         _safeTrackLogin();
-        state = AuthState(navigate: user.emailVerified ? AuthNav.dashboard : AuthNav.verifyEmail);
+
+        // state = AuthState(navigate: user.emailVerified ? AuthNav.dashboard : AuthNav.verifyEmail);
+
+        state = const AuthState(navigate: AuthNav.dashboard);
       }
     } on FirebaseAuthException catch (e) {
       state = AuthState(error: _mapFirebaseError(e.code));
@@ -162,9 +165,10 @@ class AuthController extends StateNotifier<AuthState> {
         phoneNumber: phoneNumber,
       );
 
-      sendEmailVerification();
-      // Email verification is required before dashboard access.
-      state = const AuthState(navigate: AuthNav.verifyEmail);
+      // sendEmailVerification();
+      // state = const AuthState(navigate: AuthNav.verifyEmail);
+
+      state = const AuthState(navigate: AuthNav.dashboard);
     } on FirebaseAuthException catch (e) {
       state = AuthState(error: _mapFirebaseError(e.code));
     } catch (e) {
@@ -204,11 +208,11 @@ class AuthController extends StateNotifier<AuthState> {
         _safeTrackLogin();
       }
 
-      // Google accounts arrive pre-verified, but we still check the flag so
-      // any edge cases (e.g. custom domain policy) are handled correctly.
-      state = AuthState(
-        navigate: user.emailVerified ? AuthNav.dashboard : AuthNav.verifyEmail,
-      );
+      // state = AuthState(
+      //   navigate: user.emailVerified ? AuthNav.dashboard : AuthNav.verifyEmail,
+      // );
+
+      state = const AuthState(navigate: AuthNav.dashboard);
     } on FirebaseAuthException catch (e) {
       // The user dismissed the popup — this is not an error worth surfacing.
       if (e.code == 'popup-closed-by-user' ||
@@ -232,6 +236,49 @@ class AuthController extends StateNotifier<AuthState> {
   Future<void> signOut() async {
     await FirebaseService.signOut();
     state = const AuthState();
+  }
+
+  // ===========================================================================
+  // Lazy Anonymous Sign-In (Guest Mode)
+  // ===========================================================================
+
+  /// Ensures a Firebase user exists for the current session.
+  /// Called lazily on the first action that needs Firestore (e.g. "New CV",
+  /// "Use this template", opening AI Setup wizard).
+  ///
+  /// - Already signed in (anon or real): returns uid immediately.
+  /// - Not signed in + [guestModeEnabled] true: creates anonymous session,
+  ///   bootstraps Firestore docs, returns uid.
+  /// - Not signed in + guest mode off: returns null (caller redirects to login).
+  ///
+  /// Does NOT emit loading/error/navigation state — this is a background
+  /// operation invisible to the user. Callers handle null (= redirect to login).
+  Future<String?> ensureAuthForAction({
+    required bool guestModeEnabled,
+  }) async {
+    final existing = FirebaseAuth.instance.currentUser;
+    if (existing != null) return existing.uid;
+
+    if (!guestModeEnabled) return null;
+
+    try {
+      final credential = await FirebaseService.signInAnonymously();
+      final user = credential.user!;
+
+      // Bootstrap Firestore docs — idempotent, safe to call if docs exist.
+      await FirebaseService.createNewUserDocuments(
+        uid: user.uid,
+        email: '',
+        displayName: 'Guest',
+        signupSource: 'anonymous',
+        phoneNumber: '',
+      );
+
+      return user.uid;
+    } catch (e) {
+      debugPrint('Anonymous sign-in failed: $e');
+      return null;
+    }
   }
 
   // ===========================================================================

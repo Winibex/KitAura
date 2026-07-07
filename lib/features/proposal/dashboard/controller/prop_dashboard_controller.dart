@@ -78,7 +78,15 @@ class PropDashboardController extends StateNotifier<PropDashboardState> {
       if (state.isLoading) state = state.copyWith(isLoading: false);
       return;
     }
-    if (_uid == null) return;
+    if (_uid == null) {
+      // Guest with no anon session yet — show empty dashboard, not shimmer
+      state = state.copyWith(
+        isLoading: false,
+      );
+      _hasLoaded = false; // re-fetch once they sign in (anon or real)
+      debugPrint("User is null so proposal dashboard does not loaded.");
+      return;
+    }
     state = state.copyWith(isLoading: true, error: null);
 
     try {
@@ -133,7 +141,10 @@ class PropDashboardController extends StateNotifier<PropDashboardState> {
       );
     } catch (e, stack) {
       debugPrint('PropDashboard loadDashboard error: $e\n$stack');
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(
+          isLoading: false,
+          error: 'Failed to load proposal dashboard. Refresh this page to retry.'
+      );
     }
   }
 

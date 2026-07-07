@@ -14,14 +14,41 @@ import '../controller/prop_template_controller.dart';
 import '../data/prop_template_data.dart';
 import 'prop_template_card_widget.dart';
 import 'prop_template_preview_modal.dart';
+import '../../../../shared/providers/feature_flags_provider.dart';
+import '../../../auth/controller/auth_controller.dart';
 
 class PropTemplatePickerScreen extends ConsumerWidget {
-  const PropTemplatePickerScreen({super.key});
+  final String? deepLinkTemplateId;
+  const PropTemplatePickerScreen({super.key, this.deepLinkTemplateId});
+
+  static final _handledDeepLinks = <String>{};
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(propTemplateControllerProvider);
     final ctrl = ref.read(propTemplateControllerProvider.notifier);
+
+    // Deep-link auto-open (one-shot)
+    if (deepLinkTemplateId != null &&
+        !_handledDeepLinks.contains(deepLinkTemplateId)) {
+      _handledDeepLinks.add(deepLinkTemplateId!);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final templates =
+            ref.read(propTemplateControllerProvider).filteredTemplates;
+        final match =
+            templates.where((t) => t.id == deepLinkTemplateId).firstOrNull;
+        if (match != null) {
+          _showPreview(context, ref, match);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Template not found'),
+              backgroundColor: AppColors.darkRaspberry,
+            ),
+          );
+        }
+      });
+    }
 
     return Scaffold(
       backgroundColor: AppColors.lavenderBlush,
@@ -41,7 +68,7 @@ class PropTemplatePickerScreen extends ConsumerWidget {
                   const SizedBox(height: 28),
                   _buildFilters(state, ctrl, context),
                   const SizedBox(height: 28),
-                  _buildGrid(context, state),
+                  _buildGrid(context, state, ref),
                 ],
               ),
             ),
@@ -153,7 +180,7 @@ class PropTemplatePickerScreen extends ConsumerWidget {
 
   // ─── GRID ─────────────────────────────────────────────────────────────
 
-  Widget _buildGrid(BuildContext context, PropTemplateState state) {
+  Widget _buildGrid(BuildContext context, PropTemplateState state, WidgetRef ref) {
     final list = state.filteredTemplates;
 
     if (state.isLoading) {
@@ -211,21 +238,28 @@ class PropTemplatePickerScreen extends ConsumerWidget {
           itemCount: list.length,
           itemBuilder: (ctx, i) => PropTemplateCardWidget(
             template: list[i],
-            onTap: () => _showPreview(context, list[i]),
+            onTap: () => _showPreview(context, ref, list[i]),
           ),
         );
       },
     );
   }
 
-  void _showPreview(BuildContext context, PropTemplateInfo info) {
+  void _showPreview(BuildContext context, WidgetRef ref, PropTemplateInfo info) {
     showDialog(
       context: context,
       barrierColor: Colors.black54,
       builder: (_) => PropTemplatePreviewModal(
         info: info,
-        onUse: () {
-          context.go('/proposals/edit/${info.id}');
+        onUse: () async {
+          final guestEnabled = ref.read(guestModeEnabledProvider);
+          final uid = await ref.read(authControllerProvider.notifier)
+              .ensureAuthForAction(guestModeEnabled: guestEnabled);
+          if (uid == null) {
+            if (context.mounted) context.go('/');
+            return;
+          }
+          if (context.mounted) context.go('/proposals/edit/${info.id}');
         },
       ),
     );

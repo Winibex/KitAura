@@ -73,12 +73,20 @@ class ClDashboardController extends StateNotifier<ClDashboardState> {
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
 
   Future<void> loadDashboard({bool force = false}) async {
-    debugPrint("Loading Cover Letter Dashboard");
     if (_hasLoaded && !force) {
       if (state.isLoading) state = state.copyWith(isLoading: false);
       return;
     }
-    if (_uid == null) return;
+    if (_uid == null) {
+      // Guest with no anon session yet — show empty dashboard, not shimmer
+      state = state.copyWith(
+        isLoading: false,
+      );
+      _hasLoaded = false; // re-fetch once they sign in (anon or real)
+      debugPrint("User is null so cl dashboard does not loaded.");
+      return;
+    }
+    debugPrint("Loading Cover Letter Dashboard");
     state = state.copyWith(isLoading: true, error: null);
 
     try {
@@ -126,7 +134,10 @@ class ClDashboardController extends StateNotifier<ClDashboardState> {
       );
     } catch (e, stack) {
       debugPrint('ClDashboard loadDashboard error: $e\n$stack');
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(
+          isLoading: false,
+        error: 'Failed to load cover letter dashboard. Refresh this page to retry.'
+      );
     }
   }
 

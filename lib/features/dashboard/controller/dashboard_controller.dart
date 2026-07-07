@@ -178,7 +178,16 @@ class DashboardController extends StateNotifier<DashboardState> {
       if (state.isLoading) state = state.copyWith(isLoading: false);
       return;
     }
-    if (_uid == null) return;
+    if (_uid == null) {
+      // Guest with no anon session yet — show empty dashboard, not shimmer
+      state = state.copyWith(
+        isLoading: false,
+        displayName: 'Guest',
+      );
+      _hasLoaded = false; // re-fetch once they sign in (anon or real)
+      debugPrint("User is null so dashboard does not loaded.");
+      return;
+    }
     debugPrint("Loading Main Dashboard");
     state = state.copyWith(isLoading: true, error: null);
 
@@ -310,7 +319,10 @@ class DashboardController extends StateNotifier<DashboardState> {
       );
     } catch (e, stack) {
       debugPrint('Dashboard load error: $e\n$stack');
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Failed to load dashboard. Refresh this page to retry.',
+      );
     }
   }
 

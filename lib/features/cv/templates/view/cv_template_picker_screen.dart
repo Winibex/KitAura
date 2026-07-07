@@ -12,9 +12,12 @@ import '../controller/cv_template_controller.dart';
 import '../../../../shared/models/template_model.dart';
 import 'cv_template_card_widget.dart';
 import 'cv_template_preview_modal.dart';
+import '../../../../shared/providers/feature_flags_provider.dart';
+import '../../../auth/controller/auth_controller.dart';
 
 class CVTemplatePickerScreen extends ConsumerStatefulWidget {
-  const CVTemplatePickerScreen({super.key});
+  final String? deepLinkTemplateId;
+  const CVTemplatePickerScreen({super.key, this.deepLinkTemplateId});
 
   @override
   ConsumerState<CVTemplatePickerScreen> createState() =>
@@ -22,6 +25,31 @@ class CVTemplatePickerScreen extends ConsumerStatefulWidget {
 }
 
 class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen> {
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.deepLinkTemplateId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final templates =
+            ref.read(templateControllerProvider).filteredTemplates;
+        final match = templates
+            .where((t) => t.id == widget.deepLinkTemplateId)
+            .firstOrNull;
+        if (match != null) {
+          _showPreviewModal(match);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Template not found'),
+              backgroundColor: AppColors.darkRaspberry,
+            ),
+          );
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -208,19 +236,30 @@ class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen>
 
   // ─── TEMPLATE FLOW ────────────────────────────────────────────────────
 
+  // REPLACE WITH:
+  Future<String?> _ensureAuth() async {
+    final guestEnabled = ref.read(guestModeEnabledProvider);
+    final uid = await ref.read(authControllerProvider.notifier)
+        .ensureAuthForAction(guestModeEnabled: guestEnabled);
+    if (uid == null && mounted) context.go('/');
+    return uid;
+  }
+
   void _showPreviewModal(TemplateModel template) {
     showDialog(
       context: context,
       builder: (_) => CVTemplatePreviewModal(
         template: template,
-        onUseTemplate: () {
-          // The modal closes itself internally. We just navigate.
-          // Defer to next frame so the modal's pop completes first.
+        onUseTemplate: () async {
+          final uid = await _ensureAuth();
+          if (uid == null) return;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) context.go('/cv/edit/${template.id}');
           });
         },
-        onStartBlank: () {
+        onStartBlank: () async {
+          final uid = await _ensureAuth();
+          if (uid == null) return;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) context.go('/cv/edit/blank');
           });

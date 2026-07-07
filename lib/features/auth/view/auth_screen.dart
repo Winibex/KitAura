@@ -8,6 +8,7 @@ import '../../../core/constants/app_fonts.dart';
 import '../../../core/constants/app_routes.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/responsive.dart';
+import '../../../shared/providers/feature_flags_provider.dart';
 import '../../../shared/widgets/auth_screen_wrapper.dart';
 import '../../../shared/widgets/error_banner.dart';
 import '../../../shared/widgets/form_field_widget.dart';
@@ -67,6 +68,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     // Listen for navigation signals from controller
     ref.listen<AuthState>(authControllerProvider, (_, next) {
       _handleNavigation(next);
+    });
+
+    // If signups get disabled mid-session, force user back to Sign In tab.
+    ref.listen<FeatureFlags>(flagsProvider, (_, flags) {
+      if (!flags.signupEnabled && !_isSignIn) {
+        setState(() => _isSignIn = true);
+      }
     });
 
     return Scaffold(
@@ -222,6 +230,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   // ── Tab switcher ─────────────────────────────────────────────────────
 
   Widget _buildTabSwitcher() {
+    final flags = ref.watch(flagsProvider);
+
+    // Signups paused — show notice in place of the tab switcher.
+    if (!flags.signupEnabled) {
+      return _signupsPausedNotice();
+    }
+
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
@@ -238,6 +253,39 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             setState(() => _isSignIn = false);
             ref.read(authControllerProvider.notifier).clearError();
           })),
+        ],
+      ),
+    );
+  }
+
+  Widget _signupsPausedNotice() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.petalFrost,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.dustyRose.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            LucideIcons.info,
+            size: 16,
+            color: AppColors.dustyMauve,
+          ),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Text(
+              'New signups are temporarily paused. Existing users can '
+                  'continue signing in below.',
+              style: TextStyle(
+                color: AppColors.prussianBlue,
+                fontSize: 12,
+                fontFamily: AppFonts.openSans,
+                height: 1.4,
+              ),
+            ),
+          ),
         ],
       ),
     );

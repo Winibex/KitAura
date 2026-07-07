@@ -9,7 +9,9 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_fonts.dart';
 import '../../../../core/constants/app_routes.dart';
+import '../../../../shared/providers/feature_flags_provider.dart';
 import '../../../../shared/widgets/app_top_bar.dart';
+import '../../../auth/controller/auth_controller.dart';
 import '../controller/cl_template_controller.dart';
 import '../data/cl_template_data.dart';
 import 'cl_template_card_widget.dart';
@@ -18,12 +20,37 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/utils/responsive.dart';
 
 class ClTemplatePickerScreen extends ConsumerWidget {
-  const ClTemplatePickerScreen({super.key});
+  final String? deepLinkTemplateId;
+  const ClTemplatePickerScreen({super.key, this.deepLinkTemplateId});
+
+  static final _handledDeepLinks = <String>{};
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(clTemplateControllerProvider);
     final ctrl = ref.read(clTemplateControllerProvider.notifier);
+
+    // Deep-link auto-open (one-shot)
+    if (deepLinkTemplateId != null &&
+        !_handledDeepLinks.contains(deepLinkTemplateId)) {
+      _handledDeepLinks.add(deepLinkTemplateId!);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final templates =
+            ref.read(clTemplateControllerProvider).filteredTemplates;
+        final match =
+            templates.where((t) => t.id == deepLinkTemplateId).firstOrNull;
+        if (match != null) {
+          _showPreview(context, ref, match);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Template not found'),
+              backgroundColor: AppColors.darkRaspberry,
+            ),
+          );
+        }
+      });
+    }
 
     return Scaffold(
       backgroundColor: AppColors.lavenderBlush,
@@ -45,7 +72,7 @@ class ClTemplatePickerScreen extends ConsumerWidget {
                   const SizedBox(height: 28),
                   _buildFilters(state, ctrl, context),
                   const SizedBox(height: 28),
-                  _buildGrid(context, state),
+                  _buildGrid(context, state, ref),
                 ],
               ),
             ),
@@ -143,7 +170,7 @@ class ClTemplatePickerScreen extends ConsumerWidget {
 
   // ─── GRID ─────────────────────────────────────────────────────────────
 
-  Widget _buildGrid(BuildContext context, ClTemplateState state) {
+  Widget _buildGrid(BuildContext context, ClTemplateState state, WidgetRef ref) {
     final list = state.filteredTemplates;
 
     if (state.isLoading) {
@@ -199,21 +226,28 @@ class ClTemplatePickerScreen extends ConsumerWidget {
           itemCount: list.length,
           itemBuilder: (ctx, i) => ClTemplateCardWidget(
             template: list[i],
-            onTap: () => _showPreview(context, list[i]),
+            onTap: () => _showPreview(context, ref, list[i]),
           ),
         );
       },
     );
   }
 
-  void _showPreview(BuildContext context, ClTemplateInfo info) {
+  void _showPreview(BuildContext context, WidgetRef ref, ClTemplateInfo info) {
     showDialog(
       context: context,
       barrierColor: Colors.black54,
       builder: (_) => ClTemplatePreviewModal(
         info: info,
-        onUse: () {
-          context.go('/cover-letters/edit/${info.id}');
+        onUse: () async {
+          final guestEnabled = ref.read(guestModeEnabledProvider);
+          final uid = await ref.read(authControllerProvider.notifier)
+              .ensureAuthForAction(guestModeEnabled: guestEnabled);
+          if (uid == null) {
+            if (context.mounted) context.go('/');
+            return;
+          }
+          if (context.mounted) context.go('/cover-letters/edit/${info.id}');
         },
       ),
     );

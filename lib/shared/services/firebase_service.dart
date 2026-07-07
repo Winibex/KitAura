@@ -101,6 +101,14 @@ class FirebaseService {
   /// Signs the current user out of Firebase Auth.
   static Future<void> signOut() async => await _auth.signOut();
 
+  /// Creates an anonymous Firebase Auth session.
+  /// The anonymous uid persists in the browser's IndexedDB across
+  /// tab/browser restarts on the same device.
+  /// Call [createNewUserDocuments] after to bootstrap Firestore docs.
+  static Future<UserCredential> signInAnonymously() async {
+    return await _auth.signInAnonymously();
+  }
+
   /// Sends a password-reset email to [email].
   /// The email contains a link that lets the user set a new password.
   static Future<void> sendPasswordResetEmail(String email) async {
@@ -131,6 +139,12 @@ class FirebaseService {
     required String phoneNumber,
   }) async
   {
+    // Idempotency guard — if user doc already exists, skip creation.
+    // Prevents overwriting data for already-initialized anonymous users
+    // or during credential linking (linkWithCredential preserves the uid).
+    final existingDoc = await _userDoc(uid).get();
+    if (existingDoc.exists) return;
+
     final batch = _db.batch();
     final now   = Timestamp.fromDate(DateTime.now());
 
@@ -150,8 +164,9 @@ class FirebaseService {
 
     // 2. ── Subscription — free tier with per-user billing cycle ──────
     final cycleEnd = DateTime.now().add(const Duration(days: 30));
+    final plan = signupSource == 'anonymous' ? 'guest' : 'free';
     final initialSubscription = SubscriptionModel(
-      plan: 'free',
+      plan: plan,
       cycleStartDate: now.toDate(),
       cycleEndDate: cycleEnd,
       lastResetDate: now.toDate(),

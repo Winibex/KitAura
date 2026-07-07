@@ -6,6 +6,7 @@
 
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
+const crypto = require('crypto');
 const { adminGuard, REGION } = require('./admin')._helpers;
 
 const VALID_SEVERITIES = ['info', 'warn', 'critical'];
@@ -86,16 +87,18 @@ exports.adminUpdateAnnouncement = onCall(
     const before = beforeSnap.exists ? beforeSnap.data() : {};
 
     const serverNow = admin.firestore.FieldValue.serverTimestamp();
-    const newDoc = {
-      active,
-      title,
-      body,
-      severity,
-      linkUrl: linkUrl && linkUrl.length > 0 ? linkUrl : null,
-      linkLabel: linkLabel && linkLabel.length > 0 ? linkLabel : null,
-      updatedAt: serverNow,
-      updatedBy: request.auth.uid,
-    };
+    // Fresh id on every save — any admin change re-notifies dismissed users.
+        const newDoc = {
+          id: crypto.randomBytes(8).toString('hex'),
+          active,
+          title,
+          body,
+          severity,
+          linkUrl: linkUrl && linkUrl.length > 0 ? linkUrl : null,
+          linkLabel: linkLabel && linkLabel.length > 0 ? linkLabel : null,
+          updatedAt: serverNow,
+          updatedBy: request.auth.uid,
+        };
 
     // Strip Timestamps from audit snapshots
     const stripMeta = (o) => {
