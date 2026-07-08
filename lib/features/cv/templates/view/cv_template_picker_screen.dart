@@ -14,6 +14,7 @@ import 'cv_template_card_widget.dart';
 import 'cv_template_preview_modal.dart';
 import '../../../../shared/providers/feature_flags_provider.dart';
 import '../../../auth/controller/auth_controller.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class CVTemplatePickerScreen extends ConsumerStatefulWidget {
   final String? deepLinkTemplateId;
@@ -239,8 +240,54 @@ class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen>
   // REPLACE WITH:
   Future<String?> _ensureAuth() async {
     final guestEnabled = ref.read(guestModeEnabledProvider);
+
+    // Already signed in — no loading needed
+    if (FirebaseAuth.instance.currentUser != null) {
+      return FirebaseAuth.instance.currentUser!.uid;
+    }
+
+    // Show loading while anon sign-in + doc bootstrap runs
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black26,
+      builder: (_) => const Center(
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 20, height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.darkRaspberry,
+                  ),
+                ),
+                SizedBox(width: 16),
+                Text(
+                  'Setting up your workspace...',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.prussianBlue,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
     final uid = await ref.read(authControllerProvider.notifier)
         .ensureAuthForAction(guestModeEnabled: guestEnabled);
+
+    // Dismiss loading
+    if (mounted && Navigator.canPop(context)) Navigator.pop(context);
+
     if (uid == null && mounted) context.go('/');
     return uid;
   }

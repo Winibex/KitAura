@@ -174,7 +174,14 @@ final _router = GoRouter(
       // Guest mode loaded and ON → allow guest routes
       if (_GuestMode.enabled == true && _isGuestRoute(location)) return null;
 
-      // Still loading (null) or OFF (false) → login
+      // Guest mode OFF → login
+      if (_GuestMode.enabled == false) return AppRoutes.auth;
+
+      // Still loading (null) + guest route → allow optimistically
+      // (avoids losing deep-link URLs while Firestore loads the flag)
+      if (_GuestMode.enabled == null && _isGuestRoute(location)) return null;
+
+      // Everything else → login
       return AppRoutes.auth;
     }
     // Signed in (real or anonymous) → allow all routes
