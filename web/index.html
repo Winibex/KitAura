@@ -102,13 +102,13 @@
 </style>
 
 <script>
-  window.addEventListener('flutter-first-frame', function() {
+  window.removeSplash = function() {
     var loading = document.getElementById('loading');
     if (loading) {
       loading.style.opacity = '0';
       setTimeout(function() { loading.remove(); }, 400);
     }
-  });
+  };
 </script>
 
 <script src="flutter_bootstrap.js" async></script>

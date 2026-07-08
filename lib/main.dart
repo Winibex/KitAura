@@ -16,7 +16,7 @@ void main() async {
   );
 
   await FirebaseAppCheck.instance.activate(
-    webProvider: ReCaptchaEnterpriseProvider('6LdEkUktAAAAADnsEQSwXC3JYHwl7D3unJ0VayyR'),
+    providerWeb: ReCaptchaEnterpriseProvider('6LdEkUktAAAAADnsEQSwXC3JYHwl7D3unJ0VayyR'),
   );
 
   ConnectivityService.initialize();

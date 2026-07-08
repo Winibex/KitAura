@@ -1,3 +1,6 @@
+import 'dart:js_interop';
+import 'dart:js_interop' as js;
+import 'dart:js_interop_unsafe';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,6 +27,8 @@ import 'features/auth/view/reset_password_screen.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import '../shared/widgets/no_internet_overlay.dart';
+import 'package:web/web.dart' as web;
+
 
 /// Synchronous flag for the GoRouter redirect.
 /// Updated on every KitAuraApp rebuild via ref.watch.
@@ -165,29 +170,36 @@ final _router = GoRouter(
 
     // Not signed in
     if (!isLoggedIn) {
+      // Flag still loading → allow current route (HTML splash hides it)
+      if (_GuestMode.enabled == null) return null;
+
       if (isAuthRoute || isResetPassword) {
-        // Guest mode loaded and ON → redirect away from login to dashboard
         if (_GuestMode.enabled == true) return AppRoutes.dashboard;
         return null;
       }
 
-      // Guest mode loaded and ON → allow guest routes
       if (_GuestMode.enabled == true && _isGuestRoute(location)) return null;
 
-      // Guest mode OFF → login
-      if (_GuestMode.enabled == false) return AppRoutes.auth;
-
-      // Still loading (null) + guest route → allow optimistically
-      // (avoids losing deep-link URLs while Firestore loads the flag)
-      if (_GuestMode.enabled == null && _isGuestRoute(location)) return null;
-
-      // Everything else → login
       return AppRoutes.auth;
     }
     // Signed in (real or anonymous) → allow all routes
     return null;
   },
 );
+
+bool _splashDismissed = false;
+void _dismissSplash() {
+  if (_splashDismissed) return;
+  _splashDismissed = true;
+  _doRemoveSplash();
+}
+
+void _doRemoveSplash() {
+  final fn = web.window.getProperty('removeSplash'.toJS);
+  if (fn != null) {
+    (fn as JSFunction).callAsFunction();
+  }
+}
 
 class KitAuraApp extends ConsumerWidget {
   const KitAuraApp({super.key});
@@ -196,6 +208,13 @@ class KitAuraApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Use raw async state so null = still loading (no dashboard flash)
     _GuestMode.enabled = ref.watch(featureFlagsProvider).value?.guestModeEnabled;
+
+    // Dismiss HTML splash once we know enough to route correctly
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null || _GuestMode.enabled != null) {
+      _dismissSplash();
+    }
+
     ref.listen(featureFlagsProvider, (prev, next) {
       final newVal = next.value?.guestModeEnabled;
       debugPrint('Guest mode changed: ${_GuestMode.enabled} → $newVal');
