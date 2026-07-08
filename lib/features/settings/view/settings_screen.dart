@@ -19,6 +19,7 @@ import '../../../shared/models/ai_profile_model.dart';
 import '../../../shared/models/client_profile_model.dart';
 import '../../../shared/widgets/client_wizard_modal.dart';
 import '../../../shared/widgets/go_pro_banners.dart';
+import '../../../shared/widgets/guest_signup_modal.dart';
 import '../../ai_setup/view/ai_setup_panel.dart';
 import '../../auth/controller/auth_controller.dart';
 import '../controller/settings_controller.dart';
@@ -188,7 +189,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     width: double.infinity,
                     height: 42,
                     child: ElevatedButton.icon(
-                      onPressed: () => context.go(AppRoutes.auth),
+                      onPressed: () async {
+                        final linked = await GuestSignupModal.show(context);
+                        if (linked && mounted) setState(() {});
+                      },
                       icon: const Icon(LucideIcons.logIn, size: 16),
                       label: const Text('Create Account'),
                       style: ElevatedButton.styleFrom(
@@ -431,8 +435,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         const SizedBox(height: 24),
         // Sign out at bottom
         _isGuest
-            ? _navAction(LucideIcons.logIn, 'Create Account', AppColors.darkRaspberry, () {
-          context.go(AppRoutes.auth);
+            ? _navAction(LucideIcons.logIn, 'Create Account', AppColors.darkRaspberry, () async {
+          final linked = await GuestSignupModal.show(context);
+          if (linked && mounted) {
+            ref.read(settingsControllerProvider.notifier).loadAll();
+            setState(() {});
+          }
         })
             : _navAction(LucideIcons.logOut, 'Sign Out', AppColors.slateGrey, () async {
           await ref.read(authControllerProvider.notifier).signOut();
@@ -917,7 +925,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ? 'Create a free account first, then start your 7-day trial.'
                   : '7 days unlimited access. No credit card required.',
               buttonLabel: _isGuest ? 'Create Account' : 'Start Free Trial',
-              onTap: _isGuest ? () => context.go(AppRoutes.auth) : () => showTrialDialog(context, ref),
+              onTap: _isGuest
+                  ? () async {
+                final linked = await GuestSignupModal.show(context);
+                if (linked && mounted) {
+                  ref.read(settingsControllerProvider.notifier).loadAll();
+                  setState(() {});
+                }
+              }
+                  : () => showTrialDialog(context, ref),
               gradientColors: const [AppColors.prussianBlue, Color(0xFF2D1B3D), AppColors.darkRaspberry],
             )
           else

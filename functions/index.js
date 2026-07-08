@@ -265,7 +265,7 @@ async function uploadDetail(uid, activityId, detail) {
 // 1. AI FILL
 // ════════════════════════════════════════════════════════════════════════
 
-exports.aiFill = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", timeoutSeconds: 300 }, async (req) => {
+exports.aiFill = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", timeoutSeconds: 300, enforceAppCheck: true }, async (req) => {
   if (!req.auth) throw new HttpsError("unauthenticated", "Sign in required.");
   const uid = req.auth.uid;
   const t0 = Date.now();
@@ -741,7 +741,7 @@ techStack, channels, kpiMetrics.`,
 // 2. SPELLCHECK — free, tracked
 // ════════════════════════════════════════════════════════════════════════
 
-exports.spellcheck = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", timeoutSeconds: 60 }, async (req) => {
+exports.spellcheck = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", timeoutSeconds: 60, enforceAppCheck: true }, async (req) => {
   if (!req.auth) throw new HttpsError("unauthenticated", "Sign in required.");
   const uid = req.auth.uid;
   const t0 = Date.now();
@@ -805,7 +805,7 @@ exports.spellcheck = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", t
 // 3. AI REWRITE
 // ═══════════════════════════════════════════════════════════════════════════
 
-exports.aiRewrite = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", timeoutSeconds: 120 }, async (req) => {
+exports.aiRewrite = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", timeoutSeconds: 120, enforceAppCheck: true }, async (req) => {
   if (!req.auth) throw new HttpsError("unauthenticated", "Sign in required.");
   const uid = req.auth.uid;
   const t0 = Date.now();
@@ -1313,7 +1313,7 @@ exports.activateTrial = onCall({ region: "us-central1", timeoutSeconds: 30 }, as
 //   updateText, formatText, updateItem, moveItem, deleteItem, duplicateItem,
 //   addItem, updateCanvas, generateContent, updateTable, updateReflow
 
-exports.aiEdit = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", timeoutSeconds: 60 }, async (req) => {
+exports.aiEdit = onCall({ secrets: [ANTHROPIC_KEY], region: "us-central1", timeoutSeconds: 60, enforceAppCheck: true }, async (req) => {
   if (!req.auth) throw new HttpsError("unauthenticated", "Sign in required.");
   const uid = req.auth.uid;
   const t0 = Date.now();
@@ -1870,3 +1870,9 @@ exports.adminGetAbuseMonitor = require('./admin_abuse_monitor').adminGetAbuseMon
 
 exports.adminListDocuments = require('./admin_documents').adminListDocuments;
 exports.adminGetDocument = require('./admin_documents').adminGetDocument;
+
+const { upgradeGuestToFree } = require("./upgrade_guest");
+const { mergeGuestData } = require("./merge_guest");
+
+exports.upgradeGuestToFree = upgradeGuestToFree;
+exports.mergeGuestData = mergeGuestData;

@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,6 +14,11 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  await FirebaseAppCheck.instance.activate(
+    webProvider: ReCaptchaEnterpriseProvider('6LdEkUktAAAAADnsEQSwXC3JYHwl7D3unJ0VayyR'),
+  );
+
   ConnectivityService.initialize();
   debugPaintSizeEnabled = false;
 

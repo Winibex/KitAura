@@ -6,11 +6,10 @@
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_fonts.dart';
-import '../../core/constants/app_routes.dart';
+import 'guest_signup_modal.dart';
 
 class GuestSaveModal extends StatelessWidget {
   /// e.g. 'CV', 'Cover Letter', 'Proposal'
@@ -161,9 +160,9 @@ class GuestSaveModal extends StatelessWidget {
               width: double.infinity,
               height: 48,
               child: ElevatedButton.icon(
-                onPressed: () {
+                onPressed: () async {
                   Navigator.pop(context);
-                  context.go(AppRoutes.auth);
+                  await GuestSignupModal.show(context);
                 },
                 icon: const Icon(LucideIcons.userPlus, size: 18),
                 label: const Text('Create Free Account'),
