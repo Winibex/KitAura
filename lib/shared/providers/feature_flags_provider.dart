@@ -61,7 +61,8 @@ class FeatureFlags {
   factory FeatureFlags.fromMap(Map<String, dynamic> m) {
     // Treat any non-false value (true, null, missing) as "enabled".
     // Only an explicit `false` disables a feature.
-    bool flag(String key) => m[key] != false;
+    bool flag(String key) => m[key] != true;
+    // bool flag(String key) => m[key] != false;
     return FeatureFlags(
       aiAssistantEnabled: flag('aiAssistantEnabled'),
       aiComposeEnabled: flag('aiComposeEnabled'),
