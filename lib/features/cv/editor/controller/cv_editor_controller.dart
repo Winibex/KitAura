@@ -15,6 +15,8 @@ import '../../../../shared/ai/claude_service.dart';
 import '../../../../shared/canvas/engine/canvas_controller.dart';
 import '../../../../shared/services/firebase_service.dart';
 import '../../../../shared/services/paywall_service.dart';
+import 'package:web/web.dart' as web;
+import 'dart:js_interop';
 import '../../templates/data/cv_template_data.dart';
 
 class CvEditorState {
@@ -116,10 +118,23 @@ class CvEditorController extends ChangeNotifier {
   bool _disposed = false;
   String _templateId = 'blank';
 
+  void _setupBeforeUnload() {
+    web.window.onbeforeunload = ((web.Event event) {
+      if (!_state.isSaved) {
+        event.preventDefault();
+      }
+    }).toJS;
+  }
+
+  void _removeBeforeUnload() {
+    web.window.onbeforeunload = null;
+  }
+
   @override
   void dispose() {
     _disposed = true;
     _autoSaveTimer?.cancel();
+    _removeBeforeUnload();
     super.dispose();
   }
 
@@ -151,6 +166,7 @@ class CvEditorController extends ChangeNotifier {
       await canvas.preloadFonts();
       if (_disposed) return;
       state = state.copyWith(isTemplateLoading: false);
+      _setupBeforeUnload();
       debugPrint('📝 [CvEditor] Initialization complete (existing doc)');
       return;
     }
@@ -161,8 +177,8 @@ class CvEditorController extends ChangeNotifier {
     await canvas.preloadFonts();
     if (_disposed) return;
     state = state.copyWith(isTemplateLoading: false);
+    _setupBeforeUnload();
     debugPrint('📝 [CvEditor] Initialization complete');
-    // Auto-save initial state
     _autoSave();
   }
 
@@ -236,11 +252,14 @@ class CvEditorController extends ChangeNotifier {
 
   void markDirty() {
     if (state.isSaved) {
-      debugPrint('📝 [CvEditor] Marked dirty — will auto-save in 2s');
+      debugPrint('📝 [CvEditor] Marked dirty — will auto-save');
     }
     state = state.copyWith(isSaved: false);
     _autoSaveTimer?.cancel();
-    _autoSaveTimer = Timer(const Duration(seconds: 2), _autoSave);
+    final delay = state.firestoreDocId == null
+        ? Duration.zero
+        : const Duration(seconds: 2);
+    _autoSaveTimer = Timer(delay, _autoSave);
   }
 
   Future<void> _autoSave() async {

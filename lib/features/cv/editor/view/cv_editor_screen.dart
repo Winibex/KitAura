@@ -34,6 +34,7 @@ import '../../../../shared/models/ai_profile_model.dart';
 import '../../../../shared/models/canvas_item.dart';
 import '../../../../shared/providers/ai_profiles_provider.dart';
 import '../../../../shared/widgets/command_k_bar.dart';
+import '../../../../shared/widgets/guest_save_modal.dart';
 import '../../../dashboard/controller/dashboard_controller.dart';
 import '../../../settings/view/upgrade_modal.dart';
 import '../../dashboard/controller/cv_dashboard_controller.dart';
@@ -506,6 +507,9 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
       final isFree = plan == 'free';
       final bytes = await _canvas.buildPdf(showWatermark: isFree);
       await Printing.sharePdf(bytes: bytes, filename: 'kitaura_cv.pdf');
+
+      // Nudge anonymous users to save their work
+      if (mounted) await GuestSaveModal.showIfGuest(context, 'CV');
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

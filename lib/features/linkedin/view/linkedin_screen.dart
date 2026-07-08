@@ -14,6 +14,12 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../shared/providers/ai_profiles_provider.dart';
 import '../../../shared/widgets/responsive_scaffold.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/constants/app_routes.dart';
+import '../../../shared/providers/feature_flags_provider.dart';
+import '../../../features/auth/controller/auth_controller.dart';
+import '../../../features/ai_setup/view/ai_setup_panel.dart';
 import '../controller/linkedin_controller.dart';
 
 class LinkedInScreen extends ConsumerStatefulWidget {
@@ -30,6 +36,7 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
+      if (FirebaseAuth.instance.currentUser == null) return;
       final ctrl = ref.read(linkedInControllerProvider.notifier);
       ctrl.checkAiProfile();
       ctrl.loadSaved();
@@ -98,6 +105,139 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
                   _buildSavedList(state),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── GUEST GUARD ────────────────────────────────────────────────────
+
+  void _showGuestProfileModal() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          width: 400,
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 30,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: AppColors.petalFrost,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(LucideIcons.sparkles,
+                    size: 26, color: AppColors.darkRaspberry),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Set Up Your Profile First',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontFamily: AppFonts.poppins,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.prussianBlue,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Add your experience, education, and skills so AI can generate personalized LinkedIn content for you.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontFamily: AppFonts.openSans,
+                  color: AppColors.slateGrey,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    // Ensure anon auth first
+                    final guestEnabled = ref.read(guestModeEnabledProvider);
+                    final uid = await ref
+                        .read(authControllerProvider.notifier)
+                        .ensureAuthForAction(guestModeEnabled: guestEnabled);
+                    if (uid == null || !mounted) return;
+                    // Open AI Setup wizard
+                    if (!mounted) return;
+                    showDialog(
+                      context: context,
+                      barrierColor: Colors.transparent,
+                      barrierDismissible: false,
+                      builder: (dialogCtx) => AiSetupPanel(
+                        toolType: AiToolType.cv,
+                        onContinue: () {
+                          Navigator.pop(dialogCtx);
+                          ref.invalidate(aiProfilesProvider);
+                          // Reload LinkedIn data now that profile exists
+                          final ctrl = ref.read(linkedInControllerProvider.notifier);
+                          ctrl.checkAiProfile();
+                          ctrl.loadSaved();
+                          ctrl.loadCvs();
+                        },
+                        onSkip: () => Navigator.pop(dialogCtx),
+                        onClose: () => Navigator.pop(dialogCtx),
+                      ),
+                    );
+                  },
+                  icon: const Icon(LucideIcons.userPlus, size: 16),
+                  label: const Text('Set Up Profile'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.darkRaspberry,
+                    foregroundColor: AppColors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 14,
+                      fontFamily: AppFonts.poppins,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    context.go(AppRoutes.auth);
+                  },
+                  child: const Text(
+                    'I already have an account — Sign In',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontFamily: AppFonts.poppins,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.darkRaspberry,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -458,7 +598,14 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
             child: ElevatedButton.icon(
               onPressed: (state.isGenerating || !state.canGenerate)
                   ? null
-                  : () => ref.read(linkedInControllerProvider.notifier).generate(),
+                  : () {
+                final user = FirebaseAuth.instance.currentUser;
+                if (user == null || user.isAnonymous) {
+                  _showGuestProfileModal();
+                  return;
+                }
+                ref.read(linkedInControllerProvider.notifier).generate();
+              },
               icon: state.isGenerating
                   ? const SizedBox(
                 width: 18,

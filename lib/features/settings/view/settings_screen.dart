@@ -49,7 +49,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref.read(settingsControllerProvider.notifier).loadAll();
+      if (FirebaseAuth.instance.currentUser != null) {
+        ref.read(settingsControllerProvider.notifier).loadAll();
+      }
     });
   }
 
@@ -106,7 +108,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         children: [
           _buildTopBar(),
           Expanded(
-            child: state.isLoading
+            child: (state.isLoading && FirebaseAuth.instance.currentUser != null)
                 ? const Center(child: CircularProgressIndicator(color: AppColors.darkRaspberry))
                 : isMobile
                 ? _buildMobileLayout()
@@ -114,6 +116,101 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  // ─── GUEST HELPERS ────────────────────────────────────────────────────
+
+  bool get _isGuest {
+    final user = FirebaseAuth.instance.currentUser;
+    return user == null || user.isAnonymous;
+  }
+
+  Widget _withGuestOverlay(Widget content, {String message = 'Sign in to edit your profile'}) {
+    return Stack(
+      children: [
+        IgnorePointer(
+          child: Opacity(opacity: 0.25, child: content),
+        ),
+        Positioned.fill(
+          child: Center(
+            child: Container(
+              width: 340,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.almondSilk),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 20,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: AppColors.petalFrost,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(LucideIcons.lock, size: 22, color: AppColors.darkRaspberry),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontFamily: AppFonts.poppins,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.prussianBlue,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Create a free account to save your\ndetails and access them from any device.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontFamily: AppFonts.openSans,
+                      color: AppColors.slateGrey,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 42,
+                    child: ElevatedButton.icon(
+                      onPressed: () => context.go(AppRoutes.auth),
+                      icon: const Icon(LucideIcons.logIn, size: 16),
+                      label: const Text('Create Account'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.darkRaspberry,
+                        foregroundColor: AppColors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 14,
+                          fontFamily: AppFonts.poppins,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -295,6 +392,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ? 'PRO'
                         : state.subscription.plan == 'trial'
                         ? 'TRIAL'
+                        : _isGuest
+                        ? 'GUEST'
                         : 'FREE',
                     style: TextStyle(
                       fontSize: 9,
@@ -331,7 +430,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _navItem(SettingsTab.billing, LucideIcons.creditCard, 'Plan & Billing'),
         const SizedBox(height: 24),
         // Sign out at bottom
-        _navAction(LucideIcons.logOut, 'Sign Out', AppColors.slateGrey, () async {
+        _isGuest
+            ? _navAction(LucideIcons.logIn, 'Create Account', AppColors.darkRaspberry, () {
+          context.go(AppRoutes.auth);
+        })
+            : _navAction(LucideIcons.logOut, 'Sign Out', AppColors.slateGrey, () async {
           await ref.read(authControllerProvider.notifier).signOut();
           if (buildContext.mounted) {
             buildContext.go(AppRoutes.auth);
@@ -417,9 +520,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget _buildActiveContent() {
     switch (_activeTab) {
       case SettingsTab.profile:
-        return _profileContent();
+        return _isGuest
+            ? _withGuestOverlay(_profileContent(), message: 'Sign in to edit your profile')
+            : _profileContent();
       case SettingsTab.security:
-        return _securityContent();
+        return _isGuest
+            ? _withGuestOverlay(_securityContent(), message: 'Sign in to manage security')
+            : _securityContent();
       case SettingsTab.billing:
         return _billingContent();
       case SettingsTab.preferences:
@@ -765,7 +872,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               _planDetailRow(LucideIcons.refreshCw, 'Usage Resets On', cycleResetLabel),
               const SizedBox(height: 10),
               _planDetailRow(LucideIcons.sparkles, 'Trial Available',
-                  (sub.trialUsed) ? 'Already used' : 'Yes — 7 days free'),
+                  _isGuest ? 'Sign up to activate' : (sub.trialUsed) ? 'Already used' : 'Yes — 7 days free'),
             ],
             if (isPro) ...[
               _planDetailRow(LucideIcons.calendar, 'Billing Cycle', cycleResetLabel),
@@ -805,10 +912,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         if (isFree) ...[
           if (!(sub.trialUsed))
             SettingsBillingCta(
-              title: 'Try KitAura Pro Free',
-              subtitle: '7 days unlimited access. No credit card required.',
-              buttonLabel: 'Start Free Trial',
-              onTap: () => showTrialDialog(context, ref),
+              title: _isGuest ? 'Sign Up to Unlock Pro Trial' : 'Try KitAura Pro Free',
+              subtitle: _isGuest
+                  ? 'Create a free account first, then start your 7-day trial.'
+                  : '7 days unlimited access. No credit card required.',
+              buttonLabel: _isGuest ? 'Create Account' : 'Start Free Trial',
+              onTap: _isGuest ? () => context.go(AppRoutes.auth) : () => showTrialDialog(context, ref),
               gradientColors: const [AppColors.prussianBlue, Color(0xFF2D1B3D), AppColors.darkRaspberry],
             )
           else
@@ -998,7 +1107,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         const SizedBox(height: 24),
 
-        if (state.loadingAiProfiles)
+        if (state.loadingAiProfiles && !_isGuest)
           const Center(
             child: Padding(
               padding: EdgeInsets.all(40),
@@ -1397,7 +1506,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ],
         ),
         const SizedBox(height: 24),
-        if (state.loadingClientProfiles)
+        if (state.loadingClientProfiles && !_isGuest)
           const Center(child: Padding(padding: EdgeInsets.all(40),
               child: CircularProgressIndicator(color: AppColors.darkRaspberry)))
         else if (state.clientProfiles.isEmpty)

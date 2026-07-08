@@ -46,6 +46,7 @@ bool _isGuestRoute(String location) {
     '/dashboard', '/cv', '/cv/templates',
     '/cover-letters', '/cover-letters/templates',
     '/proposals', '/proposals/templates',
+    '/settings', '/linkedin',
   };
   if (allowed.contains(location)) return true;
   // Template deep-links (Step 4 will add these routes)
@@ -156,7 +157,11 @@ final _router = GoRouter(
     final isResetPassword = location == AppRoutes.resetPassword;
 
     // Signed-in user (real or anonymous) on login page → dashboard
-    if (isLoggedIn && isAuthRoute) return AppRoutes.dashboard;
+    if (isLoggedIn && isAuthRoute) {
+      // Anonymous users may visit auth to create a real account
+      if (user.isAnonymous) return null;
+      return AppRoutes.dashboard;
+    }
 
     // Not signed in
     if (!isLoggedIn) {

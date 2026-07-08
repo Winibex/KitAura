@@ -10,6 +10,8 @@ import '../../../../shared/canvas/engine/canvas_controller.dart';
 import '../../../../shared/models/client_profile_model.dart';
 import '../../../../shared/services/firebase_service.dart';
 import '../../../../shared/services/paywall_service.dart';
+import 'package:web/web.dart' as web;
+import 'dart:js_interop';
 import '../../template/data/prop_template_data.dart';
 
 class PropEditorState {
@@ -114,10 +116,23 @@ class PropEditorController extends ChangeNotifier {
 
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
 
+  void _setupBeforeUnload() {
+    web.window.onbeforeunload = ((web.Event event) {
+      if (!_state.isSaved) {
+        event.preventDefault();
+      }
+    }).toJS;
+  }
+
+  void _removeBeforeUnload() {
+    web.window.onbeforeunload = null;
+  }
+
   @override
   void dispose() {
     _disposed = true;
     _autoSaveTimer?.cancel();
+    _removeBeforeUnload();
     super.dispose();
   }
 
@@ -142,12 +157,14 @@ class PropEditorController extends ChangeNotifier {
       await _loadFromFirestore(docId);
       await canvas.preloadFonts();
       state = state.copyWith(isTemplateLoading: false);
+      _setupBeforeUnload();
       debugPrint('📋 [PropEditor] Initialization complete (existing doc)');
       return;
     }
 
     await canvas.preloadFonts();
     state = state.copyWith(isTemplateLoading: false);
+    _setupBeforeUnload();
     debugPrint('📋 [PropEditor] Initialization complete');
     _autoSave();
   }
@@ -344,7 +361,10 @@ class PropEditorController extends ChangeNotifier {
 
   void _scheduleAutoSave() {
     _autoSaveTimer?.cancel();
-    _autoSaveTimer = Timer(const Duration(seconds: 2), _autoSave);
+    final delay = state.firestoreDocId == null
+        ? Duration.zero
+        : const Duration(seconds: 2);
+    _autoSaveTimer = Timer(delay, _autoSave);
   }
 
   Future<void> _autoSave() async {

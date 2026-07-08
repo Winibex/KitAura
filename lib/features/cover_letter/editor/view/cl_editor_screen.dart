@@ -35,6 +35,7 @@ import '../../../../shared/models/ai_profile_model.dart';
 import '../../../../shared/models/canvas_item.dart';
 import '../../../../shared/providers/ai_profiles_provider.dart';
 import '../../../../shared/widgets/command_k_bar.dart';
+import '../../../../shared/widgets/guest_save_modal.dart';
 import '../../../ai_setup/view/ai_setup_panel.dart';
 import '../../../cv/editor/view/spellcheck_panel.dart';
 import '../../../settings/view/upgrade_modal.dart';
@@ -224,6 +225,9 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
       final isFree = plan == 'free';
       final bytes = await _canvas.buildPdf(showWatermark: isFree);
       await Printing.sharePdf(bytes: bytes, filename: 'kitaura_cover_letter.pdf');
+
+      // Nudge anonymous users to save their work
+      if (mounted) await GuestSaveModal.showIfGuest(context, 'Cover Letter');
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
