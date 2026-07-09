@@ -766,4 +766,14 @@ class FirebaseService {
     } catch (_) {}
     return -1; // fallback
   }
+
+  /// Records that the user has dismissed a given announcement.
+  /// Called by AnnouncementBanner on dismiss or CTA click.
+  static Future<void> markAnnouncementSeen(String announcementId) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    await FirebaseFirestore.instance
+        .doc('users/${user.uid}')
+        .update({'lastSeenAnnouncementId': announcementId});
+  }
 }

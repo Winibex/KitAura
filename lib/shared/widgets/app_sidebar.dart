@@ -12,6 +12,7 @@ import '../../core/constants/app_fonts.dart';
 import '../../core/constants/app_routes.dart';
 import '../../features/dashboard/controller/dashboard_controller.dart';
 import '../../features/settings/view/upgrade_modal.dart';
+import '../providers/feature_flags_provider.dart';
 import 'go_pro_banners.dart';
 
 enum AppPage { dashboard, cvDashboard, cvTemplates, proposal, coverLetter, linkedin, settings }
@@ -93,18 +94,27 @@ class AppSidebar extends ConsumerWidget {
                       context.go(AppRoutes.proposalDashboard);
                     },
                   ),
-                  _SidebarItem(
-                    icon: LucideIcons.linkedin,
-                    label: 'LinkedIn Summary',
-                    isActive: active == AppPage.linkedin,
-                    onTap: () {
-                      // Close drawer if open (mobile)
-                      if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
-                        Navigator.of(context).pop();
-                      }
-                      context.go(AppRoutes.linkedin);
-                    },
-                  ),
+                  Builder(builder: (context) {
+                    final linkedinEnabled = ref
+                        .watch(featureFlagsProvider)
+                        .value
+                        ?.linkedinGeneratorEnabled ??
+                        true;
+                    return _SidebarItem(
+                      icon: LucideIcons.linkedin,
+                      label: 'LinkedIn Summary',
+                      isActive: active == AppPage.linkedin,
+                      isDisabled: !linkedinEnabled,
+                      disabledTooltip: 'Temporarily unavailable',
+                      onTap: () {
+                        if (!linkedinEnabled) return;
+                        if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
+                          Navigator.of(context).pop();
+                        }
+                        context.go(AppRoutes.linkedin);
+                      },
+                    );
+                  }),
                   const SizedBox(height: 8),
                   const Divider(color: AppColors.petalFrost),
                   const SizedBox(height: 8),
@@ -119,7 +129,14 @@ class AppSidebar extends ConsumerWidget {
                   Builder(builder: (context) {
                     final state = ref.watch(dashboardControllerProvider);
                     if (state.isPro) return const SizedBox.shrink();
-                    final canTrial = !state.trialUsed && state.plan == 'free';
+                    final trialEnabled = ref
+                        .watch(featureFlagsProvider)
+                        .value
+                        ?.trialEnabled ??
+                        true;
+                    final canTrial = !state.trialUsed &&
+                        state.plan == 'free' &&
+                        trialEnabled;
                     return _SidebarItem(
                       icon: canTrial ? LucideIcons.sparkles : LucideIcons.crown,
                       label: canTrial ? 'Start Free Trial' : 'Upgrade to Pro',
@@ -175,6 +192,8 @@ class _SidebarItem extends StatelessWidget {
   final VoidCallback onTap;
   final bool isActive;
   final bool isUpgrade;
+  final bool isDisabled;
+  final String? disabledTooltip;
 
   const _SidebarItem({
     required this.icon,
@@ -182,12 +201,30 @@ class _SidebarItem extends StatelessWidget {
     required this.onTap,
     this.isActive = false,
     this.isUpgrade = false,
+    this.isDisabled = false,
+    this.disabledTooltip,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
+    final Color iconColor = isDisabled
+        ? AppColors.almondSilk
+        : isActive
+        ? AppColors.darkRaspberry
+        : isUpgrade
+        ? AppColors.magentaBloom
+        : AppColors.slateGrey;
+
+    final Color textColor = isDisabled
+        ? AppColors.almondSilk
+        : isActive
+        ? AppColors.darkRaspberry
+        : isUpgrade
+        ? AppColors.darkRaspberry
+        : AppColors.prussianBlue;
+
+    Widget item = InkWell(
+      onTap: isDisabled ? null : onTap,
       borderRadius: BorderRadius.circular(8),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
@@ -204,32 +241,39 @@ class _SidebarItem extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              size: 18,
-              color: isActive
-                  ? AppColors.darkRaspberry
-                  : isUpgrade
-                  ? AppColors.magentaBloom
-                  : AppColors.slateGrey,
-            ),
+            Icon(icon, size: 18, color: iconColor),
             const SizedBox(width: 12),
-            Text(
-              label,
-              style: TextStyle(
-                color: isActive
-                    ? AppColors.darkRaspberry
-                    : isUpgrade
-                    ? AppColors.darkRaspberry
-                    : AppColors.prussianBlue,
-                fontSize: 14,
-                fontFamily: AppFonts.poppins,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 14,
+                  fontFamily: AppFonts.poppins,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                ),
               ),
             ),
+            if (isDisabled) ...[
+              const SizedBox(width: 4),
+              Icon(LucideIcons.lock, size: 12, color: AppColors.almondSilk),
+            ],
           ],
         ),
       ),
     );
+
+    if (isDisabled && disabledTooltip != null) {
+      item = Tooltip(
+        message: disabledTooltip!,
+        waitDuration: const Duration(milliseconds: 300),
+        child: MouseRegion(
+          cursor: SystemMouseCursors.forbidden,
+          child: item,
+        ),
+      );
+    }
+
+    return item;
   }
 }

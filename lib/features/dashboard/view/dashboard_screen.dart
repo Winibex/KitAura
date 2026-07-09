@@ -18,6 +18,7 @@ import '../../../shared/widgets/responsive_scaffold.dart';
 import '../../../shared/widgets/go_pro_banners.dart';
 import '../../settings/view/upgrade_modal.dart';
 import '../controller/dashboard_controller.dart';
+import '../../../shared/widgets/announcement_banner.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -63,6 +64,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const AnnouncementBanner(),
             _buildGreeting(state),
             const SizedBox(height: 28),
             _buildStatCards(state),

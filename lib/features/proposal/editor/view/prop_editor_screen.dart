@@ -31,6 +31,7 @@ import '../../../../shared/canvas/engine/shape_painter.dart';
 import '../../../../shared/canvas/engine/snap_guide.dart';
 import '../../../../shared/canvas/engine/viewport_fitter.dart';
 import '../../../../shared/models/canvas_item.dart';
+import '../../../../shared/providers/feature_flags_provider.dart';
 import '../../../../shared/widgets/command_k_bar.dart';
 import '../../../../shared/widgets/guest_save_modal.dart';
 import '../../../cv/editor/view/spellcheck_panel.dart';
@@ -201,6 +202,12 @@ class _PropEditorScreenState extends ConsumerState<PropEditorScreen> {
   // ─── ACTIONS ──────────────────────────────────────────────────────────
 
   void _openCommandK() {
+    final aiAssistantEnabled = ref
+        .read(featureFlagsProvider)
+        .value
+        ?.aiAssistantEnabled ??
+        true;
+    if (!aiAssistantEnabled) return;
     final state = _commandKBarKey.currentState as dynamic;
     state?.openBar();
   }
@@ -301,6 +308,11 @@ class _PropEditorScreenState extends ConsumerState<PropEditorScreen> {
     final s = _editor.state;
     final selected = _canvas.selected;
     final isMulti = _canvas.multiSelected.length > 1;
+    final aiAssistantEnabled = ref
+        .watch(featureFlagsProvider)
+        .value
+        ?.aiAssistantEnabled ??
+        true;
 
     ref.listen<ClaudeState>(claudeControllerProvider, (prev, next) {
       if (next.status == AiFillStatus.error && next.error != null) {
@@ -417,7 +429,7 @@ class _PropEditorScreenState extends ConsumerState<PropEditorScreen> {
                     ),
                   _buildZoomPanel(),
 
-                  if (!s.isTemplateLoading)
+                  if (!s.isTemplateLoading && aiAssistantEnabled)
                     Positioned(
                       left: 0,
                       right: 0,

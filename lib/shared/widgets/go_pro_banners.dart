@@ -24,6 +24,7 @@ import '../../core/constants/app_sizes.dart';
 import '../../core/utils/responsive.dart';
 import '../../features/dashboard/controller/dashboard_controller.dart';
 import '../ai/claude_service.dart';
+import '../providers/feature_flags_provider.dart';
 
 // ═══════════════════════════════════════════════════════════════════════
 // SHIMMER CTA BUTTON — reused across all banners
@@ -269,9 +270,11 @@ class GoProDashboardBanner extends ConsumerWidget {
       );
     }
 
-    // Free → trial or upgrade
+  // Free → trial or upgrade
+    final trialEnabled =
+        ref.watch(featureFlagsProvider).value?.trialEnabled ?? true;
     return _FreeDashboardBanner(
-      trialUsed: state.trialUsed,
+      trialUsed: state.trialUsed || !trialEnabled,
       onStartTrial: onStartTrial,
       onUpgrade: onUpgrade,
       proPrice: state.proPrice,
@@ -693,7 +696,9 @@ class GoProToolBanner extends ConsumerWidget {
     final state = ref.watch(dashboardControllerProvider);
     if (state.isPro) return const ProActiveDashboardBanner();
 
-    final trialUsed = state.trialUsed;
+    final trialEnabled =
+        ref.watch(featureFlagsProvider).value?.trialEnabled ?? true;
+    final trialUsed = state.trialUsed || !trialEnabled;
 
     return Container(
       margin: const EdgeInsets.only(top: 32),
@@ -797,7 +802,9 @@ class GoProStatCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context,  WidgetRef ref) {
     final state = ref.watch(dashboardControllerProvider);
-    bool trialUsed = state.trialUsed;
+    final trialEnabled =
+        ref.watch(featureFlagsProvider).value?.trialEnabled ?? true;
+    bool trialUsed = state.trialUsed || !trialEnabled;
 
     if (state.isPro) {
       // Simple branded card confirming Pro status
@@ -1252,6 +1259,20 @@ Future<bool?> showTrialActivationDialog(
 }
 
 Future<void> showTrialDialog(BuildContext context, WidgetRef ref) async {
+  final trialEnabled =
+      ref.read(featureFlagsProvider).value?.trialEnabled ?? true;
+  if (!trialEnabled) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Free trial is currently unavailable'),
+          backgroundColor: AppColors.slateGrey,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+    return;
+  }
   final activated = await showTrialActivationDialog(
     context,
     onActivate: () => ClaudeService.activateTrial(),

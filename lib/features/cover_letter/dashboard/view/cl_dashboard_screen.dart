@@ -11,6 +11,7 @@ import '../../../../core/constants/app_fonts.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/utils/responsive.dart';
+import '../../../../shared/widgets/announcement_banner.dart';
 import '../../../../shared/widgets/responsive_scaffold.dart';
 import '../../../../shared/widgets/go_pro_banners.dart';
 import '../../../../shared/widgets/stat_card.dart';
@@ -75,6 +76,7 @@ class _ClDashboardScreenState extends ConsumerState<ClDashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const AnnouncementBanner(),
                   _buildStatCards(state, dashboardState.proPrice),
                   const SizedBox(height: 24),
                   _buildCLSection(state),

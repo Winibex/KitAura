@@ -33,6 +33,7 @@ import '../../../../shared/canvas/engine/viewport_fitter.dart';
 import '../../../../shared/models/ai_profile_model.dart';
 import '../../../../shared/models/canvas_item.dart';
 import '../../../../shared/providers/ai_profiles_provider.dart';
+import '../../../../shared/providers/feature_flags_provider.dart';
 import '../../../../shared/widgets/command_k_bar.dart';
 import '../../../../shared/widgets/guest_save_modal.dart';
 import '../../../dashboard/controller/dashboard_controller.dart';
@@ -69,7 +70,7 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
   final TransformationController _zoomCtrl = TransformationController();
   double _currentZoom = 1.0;
   Offset? _zoomPanelPos; // null = default bottom-right
-  bool _fitted = false;  // hide canvas until first fit completes
+  bool _fitted = false; // hide canvas until first fit completes
   final _titleCtrl = TextEditingController();
   final Map<String, VoidCallback> _focusListeners = {};
   final Map<String, VoidCallback> _docListeners = {};
@@ -87,15 +88,17 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
     _editor = CvEditorController(
       canvas: _canvas,
       onDocCreated: ({required docId, required title, required templateId}) {
-        ref.read(cvDashboardControllerProvider.notifier).addCv(
-          CvSummaryModel(
-            id: docId,
-            title: title,
-            templateId: templateId,
-            updatedAt: DateTime.now(),
-            createdAt: DateTime.now(),
-          ),
-        );
+        ref
+            .read(cvDashboardControllerProvider.notifier)
+            .addCv(
+              CvSummaryModel(
+                id: docId,
+                title: title,
+                templateId: templateId,
+                updatedAt: DateTime.now(),
+                createdAt: DateTime.now(),
+              ),
+            );
       },
       onExported: () {
         ref.read(cvDashboardControllerProvider.notifier).incrementExportCount();
@@ -175,6 +178,7 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
             setState(() => _toolbarKey = UniqueKey());
           }
         }
+
         _focusListeners[item.id] = focusListener;
         item.focusNode!.addListener(focusListener);
 
@@ -185,6 +189,7 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
         void docListener() {
           _editor.markDirty();
         }
+
         _docListeners[item.id] = docListener;
         item.controller!.addListener(docListener);
       }
@@ -222,6 +227,9 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
   // ─── ACTIONS (thin wrappers that call controller) ─────────────────────
 
   void _openCommandK() {
+    final aiAssistantEnabled =
+        ref.read(featureFlagsProvider).value?.aiAssistantEnabled ?? true;
+    if (!aiAssistantEnabled) return;
     final state = _commandKBarKey.currentState as dynamic;
     state?.openBar();
   }
@@ -275,7 +283,11 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
                     ),
                     borderRadius: BorderRadius.circular(7),
                   ),
-                  child: const Icon(LucideIcons.userCircle, size: 14, color: AppColors.white),
+                  child: const Icon(
+                    LucideIcons.userCircle,
+                    size: 14,
+                    color: AppColors.white,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 const Text(
@@ -321,7 +333,9 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.white,
                           borderRadius: BorderRadius.circular(10),
@@ -337,8 +351,9 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
                               width: 32,
                               height: 32,
                               decoration: BoxDecoration(
-                                color: AppColors.darkRaspberry
-                                    .withValues(alpha: 0.1),
+                                color: AppColors.darkRaspberry.withValues(
+                                  alpha: 0.1,
+                                ),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Icon(
@@ -371,7 +386,10 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
                     onTap: () => Navigator.pop(ctx, p),
                     borderRadius: BorderRadius.circular(10),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? AppColors.lavenderBlush
@@ -408,7 +426,9 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
                                   children: [
                                     Flexible(
                                       child: Text(
-                                        p.name.isEmpty ? 'Untitled Profile' : p.name,
+                                        p.name.isEmpty
+                                            ? 'Untitled Profile'
+                                            : p.name,
                                         style: const TextStyle(
                                           fontSize: 13,
                                           fontFamily: AppFonts.poppins,
@@ -421,10 +441,15 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
                                     if (p.isDefault) ...[
                                       const SizedBox(width: 6),
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 5,
+                                          vertical: 1,
+                                        ),
                                         decoration: BoxDecoration(
                                           color: AppColors.darkRaspberry,
-                                          borderRadius: BorderRadius.circular(4),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
                                         ),
                                         child: const Text(
                                           'DEFAULT',
@@ -439,7 +464,8 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
                                     ],
                                   ],
                                 ),
-                                if (p.jobTitle != null && p.jobTitle!.isNotEmpty)
+                                if (p.jobTitle != null &&
+                                    p.jobTitle!.isNotEmpty)
                                   Text(
                                     p.jobTitle!,
                                     style: const TextStyle(
@@ -556,6 +582,7 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
         setState(() => _toolbarKey = UniqueKey());
       }
     }
+
     _focusListeners[item.id] = focusListener;
     item.focusNode!.addListener(focusListener);
 
@@ -576,9 +603,8 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
     final viewport = box.size;
     final zoom = _zoomCtrl.value.getMaxScaleOnAxis();
     final contentW = CanvasController.canvasW * zoom;
-    final contentH = (_canvas.totalCanvasHeight +
-        ((_canvas.totalPages - 1) * 24)) *
-        zoom;
+    final contentH =
+        (_canvas.totalCanvasHeight + ((_canvas.totalPages - 1) * 24)) * zoom;
     const margin = 200.0;
 
     final m = _zoomCtrl.value.clone();
@@ -639,6 +665,8 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
     final s = _editor.state;
     final selected = _canvas.selected;
     final isMulti = _canvas.multiSelected.length > 1;
+    final aiAssistantEnabled =
+        ref.watch(featureFlagsProvider).value?.aiAssistantEnabled ?? true;
 
     // Listen for AI state changes → toasts
     ref.listen<ClaudeState>(claudeControllerProvider, (prev, next) {
@@ -662,138 +690,139 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
       }
     });
 
+    final scaffoldBody = Column(
+      children: [
+        _buildAppBar(s),
+        Expanded(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Positioned.fill(
+                child: s.isTemplateLoading
+                    ? const Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircularProgressIndicator(
+                              color: AppColors.darkRaspberry,
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              'Loading template...',
+                              style: TextStyle(
+                                color: AppColors.slateGrey,
+                                fontSize: 13,
+                                fontFamily: AppFonts.poppins,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : _buildCanvas(),
+              ),
+              if (_isMobile && (_leftPanelOpen || _rightPanelOpen))
+                Positioned.fill(
+                  child: GestureDetector(
+                    onTap: () => setState(() {
+                      _leftPanelOpen = false;
+                      _rightPanelOpen = false;
+                    }),
+                    child: Container(
+                      color: Colors.black.withValues(alpha: 0.3),
+                    ),
+                  ),
+                ),
+              // Pinned page selector — fixed at top, doesn't scroll/zoom
+              if (!s.isTemplateLoading)
+                Positioned(
+                  top: 8,
+                  left: 0,
+                  right: 0,
+                  child: Center(child: _buildPageControls()),
+                ),
+              if (_leftPanelOpen)
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: EditorLeftPanel(
+                    ctrl: _canvas,
+                    onClose: () => setState(() => _leftPanelOpen = false),
+                    onAddText: _addTextAndWire,
+                  ),
+                ),
+              if (_rightPanelOpen)
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: _buildRightPanel(selected, isMulti),
+                ),
+              if (!_leftPanelOpen)
+                Positioned(
+                  left: 8,
+                  top: 8,
+                  child: EditorPanelToggle(
+                    icon: LucideIcons.panelLeft,
+                    onTap: () => setState(() {
+                      _leftPanelOpen = true;
+                      if (_isMobile) _rightPanelOpen = false;
+                    }),
+                  ),
+                ),
+              if (!_rightPanelOpen)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: EditorPanelToggle(
+                    icon: LucideIcons.panelRight,
+                    onTap: () => setState(() {
+                      _rightPanelOpen = true;
+                      if (_isMobile) _leftPanelOpen = false;
+                    }),
+                  ),
+                ),
+              if (_showSpellcheckPanel)
+                Positioned(
+                  right: _isMobile ? 8 : (_rightPanelOpen ? 268 : 8),
+                  left: _isMobile ? 8 : null,
+                  top: 8,
+                  child: SpellcheckPanel(
+                    items: _canvas.items,
+                    onClose: () {
+                      ref.read(spellcheckControllerProvider.notifier).reset();
+                      setState(() => _showSpellcheckPanel = false);
+                    },
+                  ),
+                ),
+              // Zoom controls
+              _buildZoomPanel(),
+
+              if (!s.isTemplateLoading && aiAssistantEnabled)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 16,
+                  child: CommandKBar(
+                    key: _commandKBarKey,
+                    canvasController: _canvas,
+                    tool: 'cv',
+                    documentId: _editor.state.firestoreDocId,
+                    documentTitle: _editor.state.title,
+                    templateId: widget.docId,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+
     return Scaffold(
       backgroundColor: AppColors.lavenderBlush,
-      body: CommandKShortcuts(
-        onOpen: _openCommandK,
-        child: Column(
-          children: [
-            _buildAppBar(s),
-            Expanded(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Positioned.fill(
-                    child: s.isTemplateLoading
-                        ? const Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                CircularProgressIndicator(
-                                  color: AppColors.darkRaspberry,
-                                ),
-                                SizedBox(height: 16),
-                                Text(
-                                  'Loading template...',
-                                  style: TextStyle(
-                                    color: AppColors.slateGrey,
-                                    fontSize: 13,
-                                    fontFamily: AppFonts.poppins,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : _buildCanvas(),
-                  ),
-                  if (_isMobile && (_leftPanelOpen || _rightPanelOpen))
-                    Positioned.fill(
-                      child: GestureDetector(
-                        onTap: () => setState(() {
-                          _leftPanelOpen = false;
-                          _rightPanelOpen = false;
-                        }),
-                        child: Container(
-                          color: Colors.black.withValues(alpha: 0.3),
-                        ),
-                      ),
-                    ),
-                  // Pinned page selector — fixed at top, doesn't scroll/zoom
-                  if (!s.isTemplateLoading)
-                    Positioned(
-                      top: 8,
-                      left: 0,
-                      right: 0,
-                      child: Center(child: _buildPageControls()),
-                    ),
-                  if (_leftPanelOpen)
-                    Positioned(
-                      left: 0,
-                      top: 0,
-                      bottom: 0,
-                      child: EditorLeftPanel(
-                        ctrl: _canvas,
-                        onClose: () => setState(() => _leftPanelOpen = false),
-                        onAddText: _addTextAndWire,
-                      ),
-                    ),
-                  if (_rightPanelOpen)
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      bottom: 0,
-                      child: _buildRightPanel(selected, isMulti),
-                    ),
-                  if (!_leftPanelOpen)
-                    Positioned(
-                      left: 8,
-                      top: 8,
-                      child: EditorPanelToggle(
-                        icon: LucideIcons.panelLeft,
-                        onTap: () => setState(() {
-                          _leftPanelOpen = true;
-                          if (_isMobile) _rightPanelOpen = false;
-                        }),
-                      ),
-                    ),
-                  if (!_rightPanelOpen)
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: EditorPanelToggle(
-                        icon: LucideIcons.panelRight,
-                        onTap: () => setState(() {
-                          _rightPanelOpen = true;
-                          if (_isMobile) _leftPanelOpen = false;
-                        }),
-                      ),
-                    ),
-                  if (_showSpellcheckPanel)
-                    Positioned(
-                      right: _isMobile ? 8 : (_rightPanelOpen ? 268 : 8),
-                      left: _isMobile ? 8 : null,
-                      top: 8,
-                      child: SpellcheckPanel(
-                        items: _canvas.items,
-                        onClose: () {
-                          ref.read(spellcheckControllerProvider.notifier).reset();
-                          setState(() => _showSpellcheckPanel = false);
-                        },
-                      ),
-                    ),
-                  // Zoom controls
-                  _buildZoomPanel(),
-
-                  if (!s.isTemplateLoading)
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 16,
-                      child: CommandKBar(
-                        key: _commandKBarKey,
-                        canvasController: _canvas,
-                        tool: 'cv',
-                        documentId: _editor.state.firestoreDocId,
-                        documentTitle: _editor.state.title,
-                        templateId: widget.docId,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+      body: aiAssistantEnabled
+          ? CommandKShortcuts(onOpen: _openCommandK, child: scaffoldBody)
+          : scaffoldBody,
     );
   }
 
@@ -821,10 +850,9 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
         // Keep dashboard in sync if doc already exists in Firestore
         if (_editor.state.firestoreDocId != null) {
           final newTitle = val.trim().isEmpty ? 'Untitled CV' : val.trim();
-          ref.read(cvDashboardControllerProvider.notifier).updateCv(
-            _editor.state.firestoreDocId!,
-            newTitle: newTitle,
-          );
+          ref
+              .read(cvDashboardControllerProvider.notifier)
+              .updateCv(_editor.state.firestoreDocId!, newTitle: newTitle);
         }
       },
       canUndo: _canvas.canUndo,
@@ -904,22 +932,22 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
           await ref
               .read(claudeControllerProvider.notifier)
               .fillSection(
-            itemId: item.id,
-            sectionType: item.sectionType,
-            sectionTitle: item.title,
-            controller: item.controller!,
-            cvId: _editor.state.firestoreDocId,
-            cvTitle: _editor.state.title,
-            profileId: _editor.state.selectedProfileId,
-          );
+                itemId: item.id,
+                sectionType: item.sectionType,
+                sectionTitle: item.title,
+                controller: item.controller!,
+                cvId: _editor.state.firestoreDocId,
+                cvTitle: _editor.state.title,
+                profileId: _editor.state.selectedProfileId,
+              );
         } else {
           // Raw insert — no API call, no tokens.
           await ref
               .read(claudeControllerProvider.notifier)
               .composeRawFromProfile(
-            item: item,
-            profileId: _editor.state.selectedProfileId,
-          );
+                item: item,
+                profileId: _editor.state.selectedProfileId,
+              );
         }
       },
       onRefine: (item, mode, customInstruction) async {
@@ -927,34 +955,36 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
         await ref
             .read(claudeControllerProvider.notifier)
             .rewriteSection(
-          itemId: item.id,
-          sectionType: item.sectionType,
-          sectionTitle: item.title,
-          controller: item.controller!,
-          mode: mode,
-          customInstruction: customInstruction,
-          cvId: _editor.state.firestoreDocId,
-          cvTitle: _editor.state.title,
-        );
+              itemId: item.id,
+              sectionType: item.sectionType,
+              sectionTitle: item.title,
+              controller: item.controller!,
+              mode: mode,
+              customInstruction: customInstruction,
+              cvId: _editor.state.firestoreDocId,
+              cvTitle: _editor.state.title,
+            );
       },
       // NEW: All-Sections Compose (only visible when nothing selected)
       onComposeAll: ({required useAi}) async {
         _canvas.saveSnapshot();
         if (useAi) {
-          await ref.read(claudeControllerProvider.notifier).fillAllCvSections(
-            items: _canvas.items,
-            cvId: _editor.state.firestoreDocId,
-            cvTitle: _editor.state.title,
-            templateId: widget.docId,
-            profileId: _editor.state.selectedProfileId,
-          );
+          await ref
+              .read(claudeControllerProvider.notifier)
+              .fillAllCvSections(
+                items: _canvas.items,
+                cvId: _editor.state.firestoreDocId,
+                cvTitle: _editor.state.title,
+                templateId: widget.docId,
+                profileId: _editor.state.selectedProfileId,
+              );
         } else {
           await ref
               .read(claudeControllerProvider.notifier)
               .composeRawAllCvSections(
-            items: _canvas.items,
-            profileId: _editor.state.selectedProfileId,
-          );
+                items: _canvas.items,
+                profileId: _editor.state.selectedProfileId,
+              );
         }
         // Re-wire focus listeners for newly populated items (in case any
         // Quill controllers got recreated during fill).
@@ -969,7 +999,8 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
     final btn = GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 32, height: 32,
+        width: 32,
+        height: 32,
         decoration: BoxDecoration(
           color: AppColors.lavenderBlush,
           borderRadius: BorderRadius.circular(6),
@@ -988,8 +1019,8 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
       onPanUpdate: (d) {
         final box = context.findRenderObject() as RenderBox?;
         if (box == null) return;
-        final cur = _zoomPanelPos ??
-            Offset(box.size.width - 180, box.size.height - 80);
+        final cur =
+            _zoomPanelPos ?? Offset(box.size.width - 180, box.size.height - 80);
         setState(() {
           _zoomPanelPos = Offset(
             (cur.dx + d.delta.dx).clamp(0, box.size.width - 170),
@@ -1001,8 +1032,11 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
         cursor: SystemMouseCursors.move,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Icon(LucideIcons.gripVertical, size: 16,
-              color: AppColors.slateGrey.withValues(alpha: 0.6)),
+          child: Icon(
+            LucideIcons.gripVertical,
+            size: 16,
+            color: AppColors.slateGrey.withValues(alpha: 0.6),
+          ),
         ),
       ),
     );
@@ -1013,7 +1047,11 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
         color: AppColors.white,
         borderRadius: BorderRadius.circular(10),
         boxShadow: const [
-          BoxShadow(color: Color(0x1A000000), blurRadius: 8, offset: Offset(0, 2)),
+          BoxShadow(
+            color: Color(0x1A000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
         ],
       ),
       child: Row(
@@ -1027,15 +1065,23 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
               message: 'Fit to page',
               child: GestureDetector(
                 onTap: () => _fitToPage(),
-                child: Text('${(_currentZoom * 100).round()}%',
-                    style: const TextStyle(
-                      fontSize: 11, fontFamily: AppFonts.poppins,
-                      fontWeight: FontWeight.w600, color: AppColors.prussianBlue,
-                    )),
+                child: Text(
+                  '${(_currentZoom * 100).round()}%',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontFamily: AppFonts.poppins,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.prussianBlue,
+                  ),
+                ),
               ),
             ),
           ),
-          _zoomBtn(LucideIcons.scan, () => _fitToPage(), tooltip: 'Fit to screen'),
+          _zoomBtn(
+            LucideIcons.scan,
+            () => _fitToPage(),
+            tooltip: 'Fit to screen',
+          ),
           _zoomBtn(LucideIcons.plus, _zoomIn, tooltip: 'Zoom in'),
         ],
       ),
@@ -1044,7 +1090,11 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
     if (_zoomPanelPos == null) {
       return Positioned(bottom: 16, right: 16, child: panel);
     }
-    return Positioned(left: _zoomPanelPos!.dx, top: _zoomPanelPos!.dy, child: panel);
+    return Positioned(
+      left: _zoomPanelPos!.dx,
+      top: _zoomPanelPos!.dy,
+      child: panel,
+    );
   }
 
   Widget _buildCanvas() {
@@ -1055,14 +1105,20 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
           if (event is PointerScrollEvent) {
             // Two-finger scroll → PAN only (both axes). Never zoom.
             final m = _zoomCtrl.value.clone()
-              ..translateByDouble(-event.scrollDelta.dx, -event.scrollDelta.dy, 0, 1);
+              ..translateByDouble(
+                -event.scrollDelta.dx,
+                -event.scrollDelta.dy,
+                0,
+                1,
+              );
             _zoomCtrl.value = m;
             _clampPan();
           } else if (event is PointerScaleEvent) {
             // Trackpad pinch → zoom.
             final newZoom = (_currentZoom * event.scale).clamp(0.3, 2.0);
             final factor = newZoom / _currentZoom;
-            final m = _zoomCtrl.value.clone()..scaleByDouble(factor, factor, factor, 1);
+            final m = _zoomCtrl.value.clone()
+              ..scaleByDouble(factor, factor, factor, 1);
             _zoomCtrl.value = m;
             setState(() => _currentZoom = newZoom);
           }
@@ -1076,10 +1132,12 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
             maxScale: 2.0,
             constrained: false,
             panEnabled: true,
-            scaleEnabled: false,   // ← OFF: stops vertical scroll from zooming
+            scaleEnabled: false, // ← OFF: stops vertical scroll from zooming
             boundaryMargin: const EdgeInsets.all(double.infinity),
             onInteractionUpdate: (details) {
-              setState(() => _currentZoom = _zoomCtrl.value.getMaxScaleOnAxis());
+              setState(
+                () => _currentZoom = _zoomCtrl.value.getMaxScaleOnAxis(),
+              );
             },
             child: Padding(
               padding: const EdgeInsets.all(32),
@@ -1088,17 +1146,17 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
                   SizedBox(
                     width: CanvasController.canvasW,
                     height:
-                    _canvas.totalCanvasHeight +
+                        _canvas.totalCanvasHeight +
                         ((_canvas.totalPages - 1) * 24),
                     child: Stack(
                       clipBehavior: Clip.none,
                       children: [
                         ...List.generate(
                           _canvas.totalPages,
-                              (pageIdx) => _buildPageBackground(pageIdx),
+                          (pageIdx) => _buildPageBackground(pageIdx),
                         ),
                         ..._canvas.items.map(
-                              (item) => CanvasItemWidget(
+                          (item) => CanvasItemWidget(
                             key: ValueKey(item.id),
                             item: item,
                             isSelected: item.id == _canvas.selectedId,
@@ -1107,7 +1165,7 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
                             ),
                             canvasW: CanvasController.canvasW,
                             canvasH:
-                            _canvas.totalCanvasHeight +
+                                _canvas.totalCanvasHeight +
                                 ((_canvas.totalPages - 1) * 24),
                             onSelect: () {
                               _canvas.select(item.id);
@@ -1116,14 +1174,14 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
                               }
                             },
                             onMultiMoveUpdate:
-                            _canvas.multiSelected.contains(item.id)
+                                _canvas.multiSelected.contains(item.id)
                                 ? (delta) {
-                              _canvas.multiMoveUpdate(delta);
-                              setState(() {});
-                            }
+                                    _canvas.multiMoveUpdate(delta);
+                                    setState(() {});
+                                  }
                                 : null,
                             onMultiMoveEnd:
-                            _canvas.multiSelected.contains(item.id)
+                                _canvas.multiSelected.contains(item.id)
                                 ? () => _canvas.multiMoveEnd()
                                 : null,
                             onSaveSnapshot: _canvas.saveSnapshot,
@@ -1153,7 +1211,6 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
                               ),
                             ),
                           ),
-        
                       ],
                     ),
                   ),
@@ -1205,7 +1262,7 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
           }
           if (!_isMobile && _isMarqueeActive) {
             setState(
-                  () => _marqueeEnd = Offset(
+              () => _marqueeEnd = Offset(
                 d.localPosition.dx,
                 d.localPosition.dy + yOffset,
               ),

@@ -52,6 +52,15 @@ class _LinkedInScreenState extends ConsumerState<LinkedInScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final linkedinEnabled = ref
+        .watch(featureFlagsProvider)
+        .value
+        ?.linkedinGeneratorEnabled ??
+        true;
+    if (!linkedinEnabled) {
+      return const _LinkedInUnavailableScreen();
+    }
+
     final state = ref.watch(linkedInControllerProvider);
 
     // Profiles come from the shared cache (loaded once across the app).
@@ -1208,4 +1217,72 @@ class _ProfileDropdownItem {
     required this.isDefault,
     required this.jobTitle,
   });
+}
+
+class _LinkedInUnavailableScreen extends StatelessWidget {
+  const _LinkedInUnavailableScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return ResponsiveScaffold(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: AppColors.petalFrost,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: const Icon(
+                    LucideIcons.wrench,
+                    size: 32,
+                    color: AppColors.darkRaspberry,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'LinkedIn Content Studio',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontFamily: AppFonts.poppins,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.prussianBlue,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Temporarily unavailable',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontFamily: AppFonts.poppins,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.darkRaspberry,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  "We're making some improvements to the LinkedIn generator. "
+                      "It'll be back shortly — check back soon.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontFamily: AppFonts.openSans,
+                    color: AppColors.slateGrey,
+                    height: 1.6,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

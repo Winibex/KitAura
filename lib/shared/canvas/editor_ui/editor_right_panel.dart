@@ -14,6 +14,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:file_picker/file_picker.dart';
 
@@ -23,6 +24,7 @@ import '../../../core/constants/app_fonts.dart';
 import '../../models/canvas_item.dart';
 import '../../models/canvas_item_type.dart';
 import '../../models/section_type.dart';
+import '../../providers/feature_flags_provider.dart';
 import '../engine/canvas_controller.dart';
 import 'editor_dialogs.dart';
 import 'editor_panel_config.dart';
@@ -30,14 +32,12 @@ import 'editor_widgets.dart';
 
 typedef PickCareerProfileCallback = Future<String?> Function();
 
-typedef AiComposeCallback = Future<void> Function(
-    CanvasItem item, {
-    required bool useAi,
-    });
+typedef AiComposeCallback =
+    Future<void> Function(CanvasItem item, {required bool useAi});
 
 typedef AiComposeAllCallback = Future<void> Function({required bool useAi});
 
-class EditorRightPanel extends StatefulWidget {
+class EditorRightPanel extends ConsumerStatefulWidget {
   final CanvasController ctrl;
   final CanvasItem? selected;
   final bool isMultiSelected;
@@ -48,10 +48,11 @@ class EditorRightPanel extends StatefulWidget {
   final VoidCallback? onSpellcheck;
   final bool isSpellchecking;
   final Future<void> Function(
-      CanvasItem item,
-      String mode,
-      String? customInstruction,
-      )? onRefine;
+    CanvasItem item,
+    String mode,
+    String? customInstruction,
+  )?
+  onRefine;
   final AiComposeCallback? onCompose;
   final AiComposeAllCallback? onComposeAll;
   final bool isComposing;
@@ -80,12 +81,19 @@ class EditorRightPanel extends StatefulWidget {
   });
 
   @override
-  State<EditorRightPanel> createState() => _EditorRightPanelState();
+  ConsumerState<EditorRightPanel> createState() => _EditorRightPanelState();
 }
 
-class _EditorRightPanelState extends State<EditorRightPanel> {
+class _EditorRightPanelState extends ConsumerState<EditorRightPanel> {
   String? _activeCustomMode;
   final _customInstructionCtrl = TextEditingController();
+
+  bool get _aiComposeEnabled =>
+      ref.watch(featureFlagsProvider).value?.aiComposeEnabled ?? true;
+  bool get _aiRefineEnabled =>
+      ref.watch(featureFlagsProvider).value?.aiRefineEnabled ?? true;
+  bool get _aiProofreadEnabled =>
+      ref.watch(featureFlagsProvider).value?.aiProofreadEnabled ?? true;
 
   @override
   void dispose() {
@@ -165,9 +173,11 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
 
   Widget _buildSelectedItemPanel(BuildContext context, CanvasItem item) {
     final isText = item.isText;
-    final showAiBlock = isText &&
-        (widget.config.showAiCompose || widget.config.showAiRefine) &&
-        (widget.onCompose != null || widget.onRefine != null);
+    final composeAvailable =
+        widget.config.showAiCompose && widget.onCompose != null && _aiComposeEnabled;
+    final refineAvailable =
+        widget.config.showAiRefine && widget.onRefine != null && _aiRefineEnabled;
+    final showAiBlock = isText && (composeAvailable || refineAvailable);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,8 +287,10 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
   // ── AI TOOLS — selected mode ────────────────────────────────────
 
   Widget _buildAiToolsForSelected(CanvasItem item) {
-    final showCompose = widget.config.showAiCompose && widget.onCompose != null;
-    final showRefine = widget.config.showAiRefine && widget.onRefine != null;
+    final showCompose =
+        widget.config.showAiCompose && widget.onCompose != null && _aiComposeEnabled;
+    final showRefine =
+        widget.config.showAiRefine && widget.onRefine != null && _aiRefineEnabled;
     final showProfile = (showCompose || showRefine) &&
         widget.config.showCareerProfileSelector &&
         widget.onPickCareerProfile != null;
@@ -293,10 +305,7 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const AiSectionHeader(
-            label: 'AI TOOLS',
-            icon: LucideIcons.sparkles,
-          ),
+          const AiSectionHeader(label: 'AI TOOLS', icon: LucideIcons.sparkles),
           if (showProfile) ...[
             AiLabelTooltip(
               label: AiLabels.careerProfile,
@@ -325,10 +334,7 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
             const SizedBox(height: 12),
           ],
           if (showRefine) ...[
-            AiLabelTooltip(
-              label: AiLabels.aiRefine,
-              tip: AiTooltips.aiRefine,
-            ),
+            AiLabelTooltip(label: AiLabels.aiRefine, tip: AiTooltips.aiRefine),
             const SizedBox(height: 6),
             _buildRefineButtons(item),
             if (_activeCustomMode == 'custom') ...[
@@ -354,10 +360,7 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const AiSectionHeader(
-            label: 'AI TOOLS',
-            icon: LucideIcons.sparkles,
-          ),
+          const AiSectionHeader(label: 'AI TOOLS', icon: LucideIcons.sparkles),
           if (widget.onPickCareerProfile != null) ...[
             AiLabelTooltip(
               label: AiLabels.careerProfile,
@@ -391,13 +394,13 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
               onPressed: busy ? null : () => widget.onComposeAll!(useAi: true),
               icon: busy
                   ? const SizedBox(
-                width: 12,
-                height: 12,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.white,
-                ),
-              )
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.white,
+                      ),
+                    )
                   : const Icon(LucideIcons.sparkles, size: 12),
               label: Text(
                 busy ? 'Composing all sections...' : AiLabels.composeWithAi,
@@ -422,7 +425,7 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
           height: 30,
           child: Tooltip(
             message:
-            'Copies Career Profile data into every section. No AI, no tokens.',
+                'Copies Career Profile data into every section. No AI, no tokens.',
             child: OutlinedButton.icon(
               onPressed: busy ? null : () => widget.onComposeAll!(useAi: false),
               icon: const Icon(
@@ -489,8 +492,9 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
                     color: hasProfile
                         ? AppColors.prussianBlue
                         : AppColors.slateGrey,
-                    fontWeight:
-                    hasProfile ? FontWeight.w600 : FontWeight.normal,
+                    fontWeight: hasProfile
+                        ? FontWeight.w600
+                        : FontWeight.normal,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -629,7 +633,9 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? AppColors.lavenderBlush
@@ -666,8 +672,11 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
                             ),
                           ),
                           if (isSelected)
-                            const Icon(LucideIcons.check,
-                                size: 16, color: AppColors.darkRaspberry),
+                            const Icon(
+                              LucideIcons.check,
+                              size: 16,
+                              color: AppColors.darkRaspberry,
+                            ),
                         ],
                       ),
                     ),
@@ -704,13 +713,13 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
                   : () => widget.onCompose!(item, useAi: true),
               icon: busy
                   ? const SizedBox(
-                width: 12,
-                height: 12,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.white,
-                ),
-              )
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.white,
+                      ),
+                    )
                   : const Icon(LucideIcons.sparkles, size: 12),
               label: Text(
                 busy ? 'Composing...' : AiLabels.composeWithAi,
@@ -783,7 +792,11 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
   Widget _buildRefineButtons(CanvasItem item) {
     final busy = widget.isRefining;
     final presetModes = [
-      ('professional', AiLabels.refineProfessional, AiTooltips.refineProfessional),
+      (
+        'professional',
+        AiLabels.refineProfessional,
+        AiTooltips.refineProfessional,
+      ),
       ('concise', AiLabels.refineConcise, AiTooltips.refineConcise),
       ('detailed', AiLabels.refineDetailed, AiTooltips.refineDetailed),
       ('creative', AiLabels.refineCreative, AiTooltips.refineCreative),
@@ -828,9 +841,10 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
               onPressed: busy
                   ? null
                   : () => setState(() {
-                _activeCustomMode =
-                _activeCustomMode == 'custom' ? null : 'custom';
-              }),
+                      _activeCustomMode = _activeCustomMode == 'custom'
+                          ? null
+                          : 'custom';
+                    }),
               icon: Icon(
                 _activeCustomMode == 'custom'
                     ? LucideIcons.chevronUp
@@ -899,8 +913,9 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(8),
-        border:
-        Border.all(color: AppColors.darkRaspberry.withValues(alpha: 0.3)),
+        border: Border.all(
+          color: AppColors.darkRaspberry.withValues(alpha: 0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -949,28 +964,29 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
             width: double.infinity,
             height: 30,
             child: ElevatedButton.icon(
-              onPressed: widget.isRefining ||
-                  _customInstructionCtrl.text.trim().isEmpty
+              onPressed:
+                  widget.isRefining ||
+                      _customInstructionCtrl.text.trim().isEmpty
                   ? null
                   : () async {
-                final instruction = _customInstructionCtrl.text.trim();
-                await widget.onRefine!(item, 'custom', instruction);
-                if (mounted) {
-                  setState(() {
-                    _activeCustomMode = null;
-                    _customInstructionCtrl.clear();
-                  });
-                }
-              },
+                      final instruction = _customInstructionCtrl.text.trim();
+                      await widget.onRefine!(item, 'custom', instruction);
+                      if (mounted) {
+                        setState(() {
+                          _activeCustomMode = null;
+                          _customInstructionCtrl.clear();
+                        });
+                      }
+                    },
               icon: widget.isRefining
                   ? const SizedBox(
-                width: 11,
-                height: 11,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.white,
-                ),
-              )
+                      width: 11,
+                      height: 11,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.white,
+                      ),
+                    )
                   : const Icon(LucideIcons.send, size: 11),
               label: Text(
                 widget.isRefining ? 'Refining...' : 'Refine with Instructions',
@@ -1031,8 +1047,7 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
         ),
       const SizedBox(height: 8),
       EditorColorRow(
-        label:
-        item.type == CanvasItemType.line ? 'Line Color' : 'Border Color',
+        label: item.type == CanvasItemType.line ? 'Line Color' : 'Border Color',
         color: item.borderColor,
         onTap: () async {
           final c = await EditorDialogs.showColorPicker(
@@ -1066,8 +1081,7 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
               min: 0,
               max: 360,
               activeColor: AppColors.darkRaspberry,
-              onChanged: (v) =>
-                  widget.ctrl.updateRotation(v * (math.pi / 180)),
+              onChanged: (v) => widget.ctrl.updateRotation(v * (math.pi / 180)),
               onChangeEnd: (_) => widget.ctrl.saveSnapshot(),
             ),
           ),
@@ -1174,9 +1188,9 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
           child: OutlinedButton.icon(
             onPressed: widget.ctrl.hasClipboardDelta
                 ? () {
-              widget.ctrl.pasteFormattedText();
-              setState(() {});
-            }
+                    widget.ctrl.pasteFormattedText();
+                    setState(() {});
+                  }
                 : null,
             icon: Icon(
               LucideIcons.clipboardPaste,
@@ -1257,8 +1271,9 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
   }
 
   Widget _buildPageSettings(BuildContext context) {
-    final showAllSectionsBlock =
-        widget.config.showAiCompose && widget.onComposeAll != null;
+    final showAllSectionsBlock = widget.config.showAiCompose &&
+        widget.onComposeAll != null &&
+        _aiComposeEnabled;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1294,18 +1309,24 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
                 items: const [
                   DropdownMenuItem(
                     value: 'a4',
-                    child: Text('A4 (595 × 842)',
-                        style: TextStyle(fontSize: 12)),
+                    child: Text(
+                      'A4 (595 × 842)',
+                      style: TextStyle(fontSize: 12),
+                    ),
                   ),
                   DropdownMenuItem(
                     value: 'letter',
-                    child: Text('Letter (612 × 792)',
-                        style: TextStyle(fontSize: 12)),
+                    child: Text(
+                      'Letter (612 × 792)',
+                      style: TextStyle(fontSize: 12),
+                    ),
                   ),
                   DropdownMenuItem(
                     value: 'legal',
-                    child: Text('Legal (612 × 1008)',
-                        style: TextStyle(fontSize: 12)),
+                    child: Text(
+                      'Legal (612 × 1008)',
+                      style: TextStyle(fontSize: 12),
+                    ),
                   ),
                 ],
                 onChanged: (v) {},
@@ -1334,7 +1355,7 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
           ),
           const SizedBox(height: 16),
         ],
-        if (widget.onSpellcheck != null) ...[
+        if (widget.onSpellcheck != null && _aiProofreadEnabled) ...[
           const AiSectionHeader(
             label: 'AI PROOFREAD',
             icon: LucideIcons.spellCheck,
@@ -1352,26 +1373,23 @@ class _EditorRightPanelState extends State<EditorRightPanel> {
               onPressed: widget.isSpellchecking ? null : widget.onSpellcheck,
               icon: widget.isSpellchecking
                   ? const SizedBox(
-                width: 14,
-                height: 14,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.white,
-                ),
-              )
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.white,
+                      ),
+                    )
                   : const Icon(LucideIcons.spellCheck, size: 16),
               label: Text(
-                widget.isSpellchecking
-                    ? 'Checking...'
-                    : AiLabels.checkSpelling,
+                widget.isSpellchecking ? 'Checking...' : AiLabels.checkSpelling,
                 style: const TextStyle(fontSize: 12),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.prussianBlue,
                 foregroundColor: AppColors.white,
                 disabledBackgroundColor: AppColors.slateGrey,
-                disabledForegroundColor:
-                AppColors.white.withValues(alpha: 0.7),
+                disabledForegroundColor: AppColors.white.withValues(alpha: 0.7),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),

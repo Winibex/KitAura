@@ -15,9 +15,10 @@ import '../../core/constants/app_routes.dart';
 import '../../features/auth/controller/auth_controller.dart';
 import '../../features/settings/view/upgrade_modal.dart';
 import '../../shared/widgets/user_popup_menu.dart';
+import '../providers/feature_flags_provider.dart';
 import 'go_pro_banners.dart';
 
-class AppTopBar extends ConsumerWidget {
+class AppTopBar extends ConsumerStatefulWidget {
   final bool canBack;
   final String whereToGo;
   final bool showMenuButton;
@@ -32,18 +33,29 @@ class AppTopBar extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AppTopBar> createState() => _AppTopBarState();
+}
+
+class _AppTopBarState extends ConsumerState<AppTopBar> {
+  @override
+  void initState() {
+    super.initState();
+    // Ensure subscription data is loaded regardless of which screen the user
+    // lands on. Fires once on mount. The controller's _hasLoaded flag
+    // guarantees no duplicate Firebase reads if another screen already loaded.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(dashboardControllerProvider.notifier).loadDashboard();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(dashboardControllerProvider);
-
-    // Ensure subscription data is loaded regardless of which screen the user lands on
-    if (!state.isLoading && state.plan == 'free' && state.loginCount == 0) {
-      // State is at defaults — hasn't loaded yet
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(dashboardControllerProvider.notifier).loadDashboard();
-      });
-    }
-
-    bool isPro = state.isPro;
+    final bool isPro = state.isPro;
+    final trialEnabled =
+        ref.watch(featureFlagsProvider).value?.trialEnabled ?? true;
+    final bool effectiveTrialUsed = state.trialUsed || !trialEnabled;
 
     return Container(
       height: 56,
@@ -53,19 +65,19 @@ class AppTopBar extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          if(canBack)...[
-              IconButton(
-                icon: const Icon(LucideIcons.arrowLeft,
-                    color: AppColors.white, size: 20),
-                onPressed: () => context.go(whereToGo),
-              ),
+          if (widget.canBack) ...[
+            IconButton(
+              icon: const Icon(LucideIcons.arrowLeft,
+                  color: AppColors.white, size: 20),
+              onPressed: () => context.go(widget.whereToGo),
+            ),
           ],
-          if (showMenuButton)
+          if (widget.showMenuButton)
             IconButton(
               icon: const Icon(LucideIcons.menu, color: AppColors.white, size: 20),
-              onPressed: onMenuTap,
+              onPressed: widget.onMenuTap,
             ),
-          SizedBox(width: 20,),
+          const SizedBox(width: 20),
           Image.asset(AppAssets.logoHorizontalLight, height: 24),
           const Spacer(),
 
@@ -100,7 +112,8 @@ class AppTopBar extends ConsumerWidget {
               cursor: SystemMouseCursors.click,
               child: GestureDetector(
                 onTap: () {
-                  final canTrial = !state.trialUsed && state.plan == 'free';
+                  final canTrial =
+                      !effectiveTrialUsed && state.plan == 'free';
                   if (canTrial) {
                     showTrialDialog(context, ref);
                   } else {
@@ -117,13 +130,13 @@ class AppTopBar extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        state.trialUsed ? LucideIcons.crown : LucideIcons.sparkles,
+                        effectiveTrialUsed ? LucideIcons.crown : LucideIcons.sparkles,
                         size: 13,
                         color: AppColors.white,
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        state.trialUsed ? 'Upgrade to Pro' : 'Start Free Trial',
+                        effectiveTrialUsed ? 'Upgrade to Pro' : 'Start Free Trial',
                         style: const TextStyle(
                           color: AppColors.white,
                           fontSize: 12,
