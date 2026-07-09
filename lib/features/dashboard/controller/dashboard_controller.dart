@@ -184,7 +184,7 @@ class DashboardController extends StateNotifier<DashboardState> {
         isLoading: false,
         displayName: 'Guest',
       );
-      _hasLoaded = false; // re-fetch once they sign in (anon or real)
+      _hasLoaded = true;
       debugPrint("User is null so dashboard does not loaded.");
       return;
     }

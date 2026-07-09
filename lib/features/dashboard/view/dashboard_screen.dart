@@ -1662,6 +1662,10 @@ class _AutoScrollingTemplateStripState
 
   void _onTick(Duration _) {
     if (_disposed || _paused || !_scrollCtrl.hasClients) return;
+
+    final position = _scrollCtrl.position;
+    if (!position.hasContentDimensions) return; // layout hasn't run yet — try again next frame
+
     final max = _scrollCtrl.position.maxScrollExtent;
     if (max <= 0) return;
 
