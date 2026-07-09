@@ -201,17 +201,32 @@ void _doRemoveSplash() {
   }
 }
 
-class KitAuraApp extends ConsumerWidget {
+class KitAuraApp extends ConsumerStatefulWidget {
   const KitAuraApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Use raw async state so null = still loading (no dashboard flash)
-    _GuestMode.enabled = ref.watch(featureFlagsProvider).value?.guestModeEnabled;
+  ConsumerState<KitAuraApp> createState() => _KitAuraAppState();
+}
 
-    // Dismiss HTML splash once we know enough to route correctly
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null || _GuestMode.enabled != null) {
+class _KitAuraAppState extends ConsumerState<KitAuraApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Listen to auth state — dismiss splash the moment auth resolves,
+    // regardless of whether the feature flag stream has finished.
+    FirebaseAuth.instance.authStateChanges().listen((user) {
+      _dismissSplash();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Track guest mode from feature flags. Null = still loading.
+    final flagsAsync = ref.watch(featureFlagsProvider);
+    _GuestMode.enabled = flagsAsync.value?.guestModeEnabled;
+
+    // Dismiss splash as soon as feature flags resolve (success OR error).
+    if (flagsAsync.hasValue || flagsAsync.hasError) {
       _dismissSplash();
     }
 
@@ -220,6 +235,10 @@ class KitAuraApp extends ConsumerWidget {
       debugPrint('Guest mode changed: ${_GuestMode.enabled} → $newVal');
       _GuestMode.enabled = newVal;
       _routerRefreshNotifier.refresh();
+      // Dismiss splash on error too — never leave users stuck.
+      if (next.hasValue || next.hasError) {
+        _dismissSplash();
+      }
     });
 
     return SkeletonizerConfig(

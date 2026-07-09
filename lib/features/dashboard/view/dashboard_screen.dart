@@ -3,7 +3,9 @@
 // Platform overview — shows usage stats, quick-start cards for each tool,
 // recent activity across all tools, and upgrade CTA.
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -16,6 +18,8 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../shared/widgets/responsive_scaffold.dart';
 import '../../../shared/widgets/go_pro_banners.dart';
+import '../../../shared/widgets/template_thumbnail.dart';
+import '../../cv/templates/data/cv_template_data.dart';
 import '../../settings/view/upgrade_modal.dart';
 import '../controller/dashboard_controller.dart';
 import '../../../shared/widgets/announcement_banner.dart';
@@ -57,6 +61,23 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Widget _buildContent() {
     final state = ref.watch(dashboardControllerProvider);
+
+    // Compact empty state — for guests and signed-in users with no docs.
+    final user = FirebaseAuth.instance.currentUser;
+    final isGuest = user?.isAnonymous ?? (user == null);
+    final hasNoDocs = state.totalDocuments == 0;
+
+    // Guests: render immediately, no need to wait for the controller
+    // (unauthed guests have no user doc to load anyway).
+    if (isGuest) {
+      return _buildEmptyStateContent(state, isGuest: true);
+    }
+    // Signed-in users with no docs: wait for the controller to finish
+    // to avoid flashing the empty state before real data arrives.
+    if (!state.isLoading && hasNoDocs) {
+      return _buildEmptyStateContent(state, isGuest: false);
+    }
+
     return SingleChildScrollView(
       padding: EdgeInsets.all(AppSizes.pagePadding(context)),
       child: Skeletonizer(
@@ -88,6 +109,699 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
             const SizedBox(height: 40),
           ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  COMPACT EMPTY STATE (guests + first-time signed-in users)
+  // ═══════════════════════════════════════════════════════════════════
+
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  COMPACT EMPTY STATE (guests + first-time signed-in users)
+  // ═══════════════════════════════════════════════════════════════════
+
+  Widget _buildEmptyStateContent(DashboardState state, {required bool isGuest}) {
+    final isMobile = Responsive.isMobile(context);
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSizes.pagePadding(context),
+        vertical: isMobile ? 16 : 32,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildEmptyHeader(isGuest, state),
+          const SizedBox(height: 20),
+          _buildPrimaryStartCard(),
+          const SizedBox(height: 24),
+          _buildToolRow(),
+          const SizedBox(height: 28),
+          _buildTemplateCarousel(),
+          if (isGuest) ...[
+            const SizedBox(height: 24),
+            _buildGuestSaveStrip(),
+          ],
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  // ─── Header ─────────────────────────────────────────────────────
+
+  Widget _buildEmptyHeader(bool isGuest, DashboardState state) {
+    final name = state.displayName;
+    final showName = !isGuest && name.isNotEmpty && name != 'Guest';
+    final title = showName ? 'Welcome, $name' : 'Welcome to KitAura';
+    final subtitle = isGuest
+        ? "Try any tool below \u2014 no signup required to get started."
+        : "Let's create your first document.";
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            color: AppColors.prussianBlue,
+            fontSize: AppSizes.headingLg(context),
+            fontFamily: AppFonts.poppins,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          subtitle,
+          style: TextStyle(
+            color: AppColors.slateGrey,
+            fontSize: Responsive.isMobile(context) ? 13 : 14,
+            fontFamily: AppFonts.openSans,
+          ),
+        ),
+      ],
+    ).animate().fadeIn(duration: 300.ms);
+  }
+
+  // ─── Primary "Start with a CV" card ─────────────────────────────
+
+  Widget _buildPrimaryStartCard() {
+    final isMobile = Responsive.isMobile(context);
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () => context.go(AppRoutes.cvTemplates),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.prussianBlue,
+                Color(0xFF1E2745),
+                Color(0xFF3D1A2E),
+              ],
+              stops: [0.0, 0.6, 1.0],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.prussianBlue.withValues(alpha: 0.25),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Stack(
+              children: [
+                // Decorative shapes on the right (desktop only)
+                if (!isMobile) ...[
+                  Positioned(
+                    top: -30,
+                    right: -30,
+                    child: Container(
+                      width: 140,
+                      height: 140,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.darkRaspberry.withValues(alpha: 0.12),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -50,
+                    right: 80,
+                    child: Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.magentaBloom.withValues(alpha: 0.08),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 20,
+                    right: 180,
+                    child: Transform.rotate(
+                      angle: 0.4,
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: AppColors.petalFrost.withValues(alpha: 0.1),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+                Padding(
+                  padding: EdgeInsets.all(isMobile ? 20 : 28),
+                  child: isMobile
+                      ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _startCardIcon(),
+                      const SizedBox(height: 14),
+                      _startCardText(),
+                      const SizedBox(height: 14),
+                      _startCardChips(),
+                      const SizedBox(height: 16),
+                      _startCardCta(),
+                    ],
+                  )
+                      : Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      _startCardIcon(),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _startCardText(),
+                            const SizedBox(height: 12),
+                            _startCardChips(),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      _startCardCta(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _startCardIcon() {
+    return Container(
+      width: 52,
+      height: 52,
+      decoration: BoxDecoration(
+        color: AppColors.darkRaspberry.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.white.withValues(alpha: 0.15),
+          width: 1,
+        ),
+      ),
+      child: const Icon(LucideIcons.sparkles, size: 24, color: AppColors.white),
+    );
+  }
+
+  Widget _startCardText() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text(
+          'Start with a CV',
+          style: TextStyle(
+            color: AppColors.white,
+            fontSize: 18,
+            fontFamily: AppFonts.poppins,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Pick a template and let AI fill in the details.',
+          style: TextStyle(
+            color: AppColors.white.withValues(alpha: 0.75),
+            fontSize: 12.5,
+            fontFamily: AppFonts.openSans,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _startCardChips() {
+    final chips = [
+      ('11 templates', LucideIcons.layout),
+      ('AI-powered', LucideIcons.zap),
+      ('PDF export', LucideIcons.download),
+    ];
+    return Wrap(
+      spacing: 8,
+      runSpacing: 6,
+      children: chips
+          .map(
+            (c) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: AppColors.white.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: AppColors.white.withValues(alpha: 0.15),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(c.$2, size: 11, color: AppColors.white.withValues(alpha: 0.85)),
+              const SizedBox(width: 5),
+              Text(
+                c.$1,
+                style: TextStyle(
+                  color: AppColors.white.withValues(alpha: 0.85),
+                  fontSize: 10.5,
+                  fontFamily: AppFonts.poppins,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      )
+          .toList(),
+    );
+  }
+
+  Widget _startCardCta() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.white.withValues(alpha: 0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Choose template',
+            style: TextStyle(
+              color: AppColors.darkRaspberry,
+              fontSize: 12,
+              fontFamily: AppFonts.poppins,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(width: 6),
+          const Icon(LucideIcons.arrowRight, size: 13, color: AppColors.darkRaspberry),
+        ],
+      ),
+    );
+  }
+
+  // ─── Tool row (CL, Proposal, LinkedIn) ──────────────────────────
+
+  Widget _buildToolRow() {
+    final tools = [
+      _EmptyToolData(
+        icon: LucideIcons.mail,
+        title: 'Cover Letter',
+        subtitle: 'Personalized for every job',
+        color: AppColors.magentaBloom,
+        onTap: () => context.go(AppRoutes.clTemplates),
+      ),
+      _EmptyToolData(
+        icon: LucideIcons.briefcase,
+        title: 'Proposal',
+        subtitle: 'Win more clients',
+        color: AppColors.dustyMauve,
+        onTap: () => context.go(AppRoutes.proposalTemplates),
+      ),
+      _EmptyToolData(
+        icon: LucideIcons.linkedin,
+        title: 'LinkedIn Content',
+        subtitle: 'Optimize your profile',
+        color: AppColors.dustyRose,
+        onTap: () => context.go(AppRoutes.linkedin),
+      ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'OR START WITH',
+          style: TextStyle(
+            color: AppColors.slateGrey,
+            fontSize: 10,
+            fontFamily: AppFonts.poppins,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.4,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ResponsiveBuilder(
+          mobile: Column(
+            children: tools
+                .map((t) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _buildToolTile(t),
+            ))
+                .toList(),
+          ),
+          desktop: Row(
+            children: tools
+                .map((t) => Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  right: t == tools.last ? 0 : 12,
+                ),
+                child: _buildToolTile(t),
+              ),
+            ))
+                .toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildToolTile(_EmptyToolData data) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: data.onTap,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.petalFrost, width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.prussianBlue.withValues(alpha: 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: data.color.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(data.icon, size: 19, color: data.color),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      data.title,
+                      style: const TextStyle(
+                        color: AppColors.prussianBlue,
+                        fontSize: 13,
+                        fontFamily: AppFonts.poppins,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      data.subtitle,
+                      style: const TextStyle(
+                        color: AppColors.slateGrey,
+                        fontSize: 11,
+                        fontFamily: AppFonts.openSans,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(LucideIcons.arrowRight, size: 15, color: data.color),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─── Template carousel ──────────────────────────────────────────
+
+  Widget _buildTemplateCarousel() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'POPULAR TEMPLATES',
+              style: TextStyle(
+                color: AppColors.slateGrey,
+                fontSize: 10,
+                fontFamily: AppFonts.poppins,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.4,
+              ),
+            ),
+            const Spacer(),
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: () => context.go(AppRoutes.cvTemplates),
+                child: Row(
+                  children: [
+                    Text(
+                      'View all',
+                      style: TextStyle(
+                        color: AppColors.darkRaspberry,
+                        fontSize: 11,
+                        fontFamily: AppFonts.poppins,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(
+                      LucideIcons.arrowRight,
+                      size: 12,
+                      color: AppColors.darkRaspberry,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 240,
+          child: _AutoScrollingTemplateStrip(
+            templates: CvTemplateData.all,
+            onTemplateTap: (id) => context.go('/cv/templates/$id'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ─── Guest "save your work" strip ───────────────────────────────
+
+  Widget _buildGuestSaveStrip() {
+    final isMobile = Responsive.isMobile(context);
+
+    final benefits = [
+      ('Never lose your work', LucideIcons.save),
+      ('Access from any device', LucideIcons.smartphone),
+      ('More templates & AI', LucideIcons.sparkles),
+    ];
+
+    return Container(
+      padding: EdgeInsets.all(isMobile ? 14 : 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            AppColors.lavenderBlush,
+            AppColors.petalFrost.withValues(alpha: 0.6),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.petalFrost,
+          width: 1.5,
+        ),
+      ),
+      child: isMobile
+          ? Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _guestStripHeader(),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: benefits.map(_guestStripChip).toList(),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: _guestStripCta(),
+          ),
+        ],
+      )
+          : Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppColors.darkRaspberry.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              LucideIcons.userPlus,
+              size: 18,
+              color: AppColors.darkRaspberry,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  "You're browsing as a guest",
+                  style: TextStyle(
+                    color: AppColors.prussianBlue,
+                    fontSize: 13,
+                    fontFamily: AppFonts.poppins,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: benefits.map(_guestStripChip).toList(),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          _guestStripCta(),
+        ],
+      ),
+    );
+  }
+
+  Widget _guestStripHeader() {
+    return Row(
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: AppColors.darkRaspberry.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Icon(
+            LucideIcons.userPlus,
+            size: 17,
+            color: AppColors.darkRaspberry,
+          ),
+        ),
+        const SizedBox(width: 10),
+        const Expanded(
+          child: Text(
+            "You're browsing as a guest",
+            style: TextStyle(
+              color: AppColors.prussianBlue,
+              fontSize: 13,
+              fontFamily: AppFonts.poppins,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _guestStripChip((String, IconData) data) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.petalFrost),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(data.$2, size: 10, color: AppColors.darkRaspberry),
+          const SizedBox(width: 4),
+          Text(
+            data.$1,
+            style: const TextStyle(
+              color: AppColors.prussianBlue,
+              fontSize: 10.5,
+              fontFamily: AppFonts.poppins,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _guestStripCta() {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () => context.go(AppRoutes.auth),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.darkRaspberry,
+            borderRadius: BorderRadius.circular(999),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.darkRaspberry.withValues(alpha: 0.25),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Sign up',
+                style: TextStyle(
+                  color: AppColors.white,
+                  fontSize: 12,
+                  fontFamily: AppFonts.poppins,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(width: 6),
+              Icon(LucideIcons.arrowRight, size: 13, color: AppColors.white),
+            ],
+          ),
         ),
       ),
     );
@@ -895,4 +1609,268 @@ class _QuickStartData {
     required this.onTap,
     this.comingSoon = false,
   });
+}
+
+class _EmptyToolData {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+  const _EmptyToolData({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+}
+
+// ─── Auto-scrolling template carousel ─────────────────────────────
+
+class _AutoScrollingTemplateStrip extends StatefulWidget {
+  final List<CvTemplateInfo> templates;
+  final void Function(String templateId) onTemplateTap;
+
+  const _AutoScrollingTemplateStrip({
+    required this.templates,
+    required this.onTemplateTap,
+  });
+
+  @override
+  State<_AutoScrollingTemplateStrip> createState() =>
+      _AutoScrollingTemplateStripState();
+}
+
+class _AutoScrollingTemplateStripState
+    extends State<_AutoScrollingTemplateStrip>
+    with SingleTickerProviderStateMixin {
+  final _scrollCtrl = ScrollController();
+  Ticker? _ticker;
+  bool _paused = false;
+  bool _disposed = false;
+
+  static const double _thumbWidth = 150.0;
+  static const double _gap = 14.0;
+  static const double _pxPerFrame = 0.4;
+
+  @override
+  void initState() {
+    super.initState();
+    _ticker = createTicker(_onTick)..start();
+  }
+
+  void _onTick(Duration _) {
+    if (_disposed || _paused || !_scrollCtrl.hasClients) return;
+    final max = _scrollCtrl.position.maxScrollExtent;
+    if (max <= 0) return;
+
+    final next = _scrollCtrl.offset + _pxPerFrame;
+    // Loop: when we reach the end of the first copy, jump back by the width
+    // of one copy (invisible reset).
+    final copyWidth = widget.templates.length * (_thumbWidth + _gap);
+    if (next >= copyWidth) {
+      _scrollCtrl.jumpTo(next - copyWidth);
+    } else {
+      _scrollCtrl.jumpTo(next);
+    }
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _ticker?.dispose();
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Duplicate the list so the scroll loop feels seamless.
+    final doubled = [...widget.templates, ...widget.templates];
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _paused = true),
+      onExit: (_) => setState(() => _paused = false),
+      child: ListView.builder(
+        controller: _scrollCtrl,
+        scrollDirection: Axis.horizontal,
+        physics: const ClampingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        itemCount: doubled.length,
+        itemBuilder: (context, i) {
+          final t = doubled[i];
+          return Padding(
+            padding: EdgeInsets.only(right: _gap),
+            child: _CarouselTemplateCard(
+              template: t,
+              width: _thumbWidth,
+              onTap: () => widget.onTemplateTap(t.id),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _CarouselTemplateCard extends StatefulWidget {
+  final CvTemplateInfo template;
+  final double width;
+  final VoidCallback onTap;
+
+  const _CarouselTemplateCard({
+    required this.template,
+    required this.width,
+    required this.onTap,
+  });
+
+  @override
+  State<_CarouselTemplateCard> createState() => _CarouselTemplateCardState();
+}
+
+class _CarouselTemplateCardState extends State<_CarouselTemplateCard> {
+  bool _hovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          transform: Matrix4.identity()..translateByDouble(0, _hovering ? -4 : 0, 0, 1),
+          width: widget.width,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.prussianBlue.withValues(
+                  alpha: _hovering ? 0.16 : 0.08,
+                ),
+                blurRadius: _hovering ? 16 : 10,
+                offset: Offset(0, _hovering ? 8 : 4),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Stack(
+              children: [
+                // Thumbnail
+                TemplateThumbnail(
+                  assetPath: widget.template.assetPath,
+                  width: widget.width,
+                  height: 212,
+                  borderRadius: 0,
+                  showShadow: false,
+                ),
+                // Pro badge
+                if (widget.template.isPremium)
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.dustyMauve,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(LucideIcons.lock, color: AppColors.white, size: 8),
+                          SizedBox(width: 3),
+                          Text(
+                            'Pro',
+                            style: TextStyle(
+                              color: AppColors.white,
+                              fontSize: 9,
+                              fontFamily: AppFonts.poppins,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                // Hover overlay
+                if (_hovering)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            AppColors.prussianBlue.withValues(alpha: 0.85),
+                          ],
+                          stops: const [0.55, 1.0],
+                        ),
+                      ),
+                      alignment: Alignment.bottomLeft,
+                      padding: const EdgeInsets.all(10),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.template.label,
+                            style: const TextStyle(
+                              color: AppColors.white,
+                              fontSize: 11,
+                              fontFamily: AppFonts.poppins,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.darkRaspberry,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Use template',
+                                  style: TextStyle(
+                                    color: AppColors.white,
+                                    fontSize: 9.5,
+                                    fontFamily: AppFonts.poppins,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                SizedBox(width: 4),
+                                Icon(
+                                  LucideIcons.arrowRight,
+                                  size: 10,
+                                  color: AppColors.white,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

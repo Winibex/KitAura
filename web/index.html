@@ -123,13 +123,26 @@
 </style>
 
 <script>
-  window.removeSplash = function() {
-    var loading = document.getElementById('loading');
-    if (loading) {
-      loading.style.opacity = '0';
-      setTimeout(function() { loading.remove(); }, 400);
-    }
+  var __splashRemoved = false;
+
+  // Central splash removal. Idempotent.
+  window.removeSplash = function () {
+    if (__splashRemoved) return;
+    __splashRemoved = true;
+    var splash = document.getElementById('splash');
+    if (!splash) return;
+    splash.style.opacity = '0';
+    setTimeout(function () {
+      splash.parentNode && splash.parentNode.removeChild(splash);
+    }, 400);
   };
+
+  // Safety net: dismiss the splash the moment Flutter renders its first
+  // frame, even if the Dart-side logic hasn't called removeSplash() yet.
+  // This event fires from the Flutter engine itself.
+  window.addEventListener('flutter-first-frame', function () {
+    window.removeSplash();
+  });
 </script>
 
 <script src="flutter_bootstrap.js" async></script>
