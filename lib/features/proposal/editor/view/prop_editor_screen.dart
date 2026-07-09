@@ -527,6 +527,18 @@ class _PropEditorScreenState extends ConsumerState<PropEditorScreen> {
   // ─── RIGHT PANEL ──────────────────────────────────────────────────────
 
   Widget _buildRightPanel(CanvasItem? selected, bool isMulti) {
+    final aiProofreadEnabled = ref
+        .watch(featureFlagsProvider)
+        .value
+        ?.aiProofreadEnabled ??
+        true;
+    final spellcheckHandler = aiProofreadEnabled
+        ? () {
+      ref.read(spellcheckControllerProvider.notifier).checkAll(_canvas.items);
+      setState(() => _showSpellcheckPanel = true);
+    }
+        : null;
+
     if (selected == null && !isMulti) {
       return Container(
         width: 260,
@@ -559,10 +571,7 @@ class _PropEditorScreenState extends ConsumerState<PropEditorScreen> {
                 padding: const EdgeInsets.all(10),
                 child: PropDetailsPanel(
                   editor: _editor,
-                  onSpellcheck: () {
-                    ref.read(spellcheckControllerProvider.notifier).checkAll(_canvas.items);
-                    setState(() => _showSpellcheckPanel = true);
-                  },
+                  onSpellcheck: spellcheckHandler,
                   isSpellchecking: ref.watch(spellcheckControllerProvider).isChecking,
                   onGenerateAll: () async {
                     await ref.read(claudeControllerProvider.notifier).fillAllProposalSections(
@@ -601,10 +610,7 @@ class _PropEditorScreenState extends ConsumerState<PropEditorScreen> {
       isRefining:
       ref.watch(claudeControllerProvider).activeOperation == 'rewrite',
       isSpellchecking: ref.watch(spellcheckControllerProvider).isChecking,
-      onSpellcheck: () {
-        ref.read(spellcheckControllerProvider.notifier).checkAll(_canvas.items);
-        setState(() => _showSpellcheckPanel = true);
-      },
+      onSpellcheck: spellcheckHandler,
       onRefine: (item, mode, customInstruction) async {
         _canvas.saveSnapshot();
         await ref.read(claudeControllerProvider.notifier).rewriteSection(

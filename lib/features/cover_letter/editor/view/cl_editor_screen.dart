@@ -833,6 +833,18 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
   // ─── RIGHT PANEL ──────────────────────────────────────────────────────
 
   Widget _buildRightPanel(CanvasItem? selected, bool isMulti) {
+    final aiProofreadEnabled = ref
+        .watch(featureFlagsProvider)
+        .value
+        ?.aiProofreadEnabled ??
+        true;
+    final spellcheckHandler = aiProofreadEnabled
+        ? () {
+      ref.read(spellcheckControllerProvider.notifier).checkAll(_canvas.items);
+      setState(() => _showSpellcheckPanel = true);
+    }
+        : null;
+
     // When nothing is selected in CL editor → show CL details panel
     // When a section IS selected → show normal right panel with AI tools
     if (selected == null && !isMulti) {
@@ -883,10 +895,7 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
                 child: ClDetailsPanel(
                   editor: _editor,
                   onPickCareerProfile: _pickCareerProfile,
-                  onSpellcheck: () {
-                    ref.read(spellcheckControllerProvider.notifier).checkAll(_canvas.items);
-                    setState(() => _showSpellcheckPanel = true);
-                  },
+                  onSpellcheck: spellcheckHandler,
                   isSpellchecking: ref.watch(spellcheckControllerProvider).isChecking,
                   onGenerateAll: () async {
                     _canvas.saveSnapshot();
@@ -918,10 +927,7 @@ class _ClEditorScreenState extends ConsumerState<ClEditorScreen> {
       isRefining:
       ref.watch(claudeControllerProvider).activeOperation == 'rewrite',
       isSpellchecking: ref.watch(spellcheckControllerProvider).isChecking,
-      onSpellcheck: () {
-        ref.read(spellcheckControllerProvider.notifier).checkAll(_canvas.items);
-        setState(() => _showSpellcheckPanel = true);
-      },
+      onSpellcheck: spellcheckHandler,
       onRefine: (item, mode, customInstruction) async {
         _canvas.saveSnapshot();
         await ref.read(claudeControllerProvider.notifier).rewriteSection(
