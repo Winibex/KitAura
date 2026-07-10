@@ -1,0 +1,608 @@
+{
+  "canvasBackground": "#FFFFFF",
+  "items": [
+    {
+      "type": "rectangle",
+      "title": "Header BG",
+      "x": 0,
+      "y": 0,
+      "w": 595,
+      "h": 120,
+      "color": "#1B2A4A",
+      "borderColor": "#1B2A4A",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "rectangle",
+      "title": "Gold Accent P1",
+      "x": 0,
+      "y": 0,
+      "w": 5,
+      "h": 842,
+      "color": "#C9A84C",
+      "borderColor": "#C9A84C",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "rectangle",
+      "title": "Gold Accent P2",
+      "x": 0,
+      "y": 842,
+      "w": 5,
+      "h": 842,
+      "color": "#C9A84C",
+      "borderColor": "#C9A84C",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Full Name",
+      "x": 30,
+      "y": 28,
+      "w": 535,
+      "h": 38,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Your Full Name\n",
+          "attributes": {
+            "bold": true,
+            "size": "26",
+            "color": "#FFFFFF"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Job Title",
+      "x": 30,
+      "y": 72,
+      "w": 535,
+      "h": 26,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Senior Software Engineer\n",
+          "attributes": {
+            "size": "14",
+            "color": "#C9A84C"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Contact",
+      "x": 30,
+      "y": 134,
+      "w": 535,
+      "h": 24,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "email@example.com  |  +1 234 567 890  |  City, Country  |  linkedin.com/in/you\n",
+          "attributes": {
+            "size": "10",
+            "color": "#555555"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "Divider 1",
+      "x": 30,
+      "y": 172,
+      "w": 535,
+      "h": 2,
+      "color": "#C9A84C",
+      "borderColor": "#C9A84C",
+      "borderWidth": 2,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Professional Summary",
+      "x": 30,
+      "y": 188,
+      "w": 535,
+      "h": 90,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "PROFESSIONAL SUMMARY\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1B2A4A"
+          }
+        },
+        {
+          "insert": "Results-driven professional with 5+ years of experience building scalable web applications. Passionate about clean code, system design, and delivering impactful user experiences.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Work Experience",
+      "x": 30,
+      "y": 296,
+      "w": 535,
+      "h": 200,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "WORK EXPERIENCE\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1B2A4A"
+          }
+        },
+        {
+          "insert": "Senior Developer  —  Company Name  |  2021 – Present\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "• Led development of core product features used by 100K+ users\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Reduced load time by 40% through architecture improvements\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Mentored junior developers and conducted code reviews\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "Junior Developer  —  Previous Company  |  2019 – 2021\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "• Built RESTful APIs serving 50K+ daily requests\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Implemented CI/CD pipeline reducing deployment time by 60%\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Education",
+      "x": 30,
+      "y": 512,
+      "w": 535,
+      "h": 70,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "EDUCATION\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1B2A4A"
+          }
+        },
+        {
+          "insert": "BSc Computer Science  —  University Name  |  2015 – 2019\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Graduated with Honours. Coursework: Data Structures, Algorithms.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "Divider 2",
+      "x": 30,
+      "y": 596,
+      "w": 535,
+      "h": 2,
+      "color": "#DDDDDD",
+      "borderColor": "#DDDDDD",
+      "borderWidth": 2,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Technical Skills",
+      "x": 30,
+      "y": 612,
+      "w": 260,
+      "h": 90,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "TECHNICAL SKILLS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1B2A4A"
+          }
+        },
+        {
+          "insert": "Flutter • Dart • React • Node.js\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "Python • TypeScript • SQL\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "Firebase • AWS • Docker • Git\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Certifications",
+      "x": 305,
+      "y": 612,
+      "w": 260,
+      "h": 90,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "CERTIFICATIONS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1B2A4A"
+          }
+        },
+        {
+          "insert": "• AWS Certified Solutions Architect\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Google Cloud Professional\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Projects",
+      "x": 30,
+      "y": 870,
+      "w": 535,
+      "h": 150,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "PROJECTS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1B2A4A"
+          }
+        },
+        {
+          "insert": "E-commerce Platform  |  2024\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Full-stack e-commerce platform with Stripe integration and admin dashboard.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "Tech: Flutter, Firebase, Stripe, Node.js\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "AI Resume Builder  |  2023\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "AI-powered tool that generates and optimizes CVs using Claude API.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Awards",
+      "x": 30,
+      "y": 1040,
+      "w": 535,
+      "h": 90,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "AWARDS & HONORS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1B2A4A"
+          }
+        },
+        {
+          "insert": "• Employee of the Year — Company Name | 2024\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "• Best Innovation Award — Tech Conference | 2023\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Volunteer",
+      "x": 30,
+      "y": 1150,
+      "w": 535,
+      "h": 100,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "VOLUNTEER EXPERIENCE\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1B2A4A"
+          }
+        },
+        {
+          "insert": "Mentor  —  Code for Good  |  2022 – Present\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A"
+          }
+        },
+        {
+          "insert": "Teaching programming fundamentals to underprivileged students.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Languages",
+      "x": 30,
+      "y": 1270,
+      "w": 260,
+      "h": 80,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "LANGUAGES\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1B2A4A"
+          }
+        },
+        {
+          "insert": "English — Native\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        },
+        {
+          "insert": "Spanish — Fluent\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Hobbies",
+      "x": 305,
+      "y": 1270,
+      "w": 260,
+      "h": 80,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "INTERESTS\n",
+          "attributes": {
+            "bold": true,
+            "size": "13",
+            "color": "#1B2A4A"
+          }
+        },
+        {
+          "insert": "Photography • Hiking • Open Source\n",
+          "attributes": {
+            "size": "11",
+            "color": "#333333"
+          }
+        }
+      ]
+    },
+    {
+      "type": "rectangle",
+      "title": "Footer Line",
+      "x": 0,
+      "y": 1678,
+      "w": 595,
+      "h": 6,
+      "color": "#1B2A4A",
+      "borderColor": "#1B2A4A",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    }
+  ]
+}

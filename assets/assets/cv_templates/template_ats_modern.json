@@ -1,0 +1,596 @@
+{
+  "canvasBackground": "#FFFFFF",
+  "items": [
+    {
+      "type": "textSection",
+      "title": "Full Name",
+      "x": 50,
+      "y": 45,
+      "w": 495,
+      "h": 36,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Your Full Name\n",
+          "attributes": {
+            "bold": true,
+            "size": "24",
+            "color": "#1A1A1A",
+            "font": "OpenSans"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Job Title",
+      "x": 50,
+      "y": 86,
+      "w": 495,
+      "h": 22,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "Senior Product Manager\n",
+          "attributes": {
+            "size": "13",
+            "color": "#0066CC",
+            "font": "OpenSans"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Contact",
+      "x": 50,
+      "y": 115,
+      "w": 495,
+      "h": 22,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "email@example.com  •  +1 234 567 890  •  San Francisco, CA  •  linkedin.com/in/you\n",
+          "attributes": {
+            "size": "10",
+            "color": "#444444",
+            "font": "OpenSans"
+          }
+        }
+      ]
+    },
+    {
+      "type": "line",
+      "title": "Header Divider",
+      "x": 50,
+      "y": 148,
+      "w": 495,
+      "h": 1,
+      "color": "#0066CC",
+      "borderColor": "#0066CC",
+      "borderWidth": 2,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "type": "textSection",
+      "title": "Summary",
+      "x": 50,
+      "y": 165,
+      "w": 495,
+      "h": 70,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "SUMMARY\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#0066CC",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "Strategic product manager with 7+ years driving product vision and execution at high-growth SaaS companies. Proven track record of launching 0-to-1 products and scaling user bases from thousands to millions. Skilled at cross-functional leadership.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#222222",
+            "font": "OpenSans"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Experience",
+      "x": 50,
+      "y": 250,
+      "w": 495,
+      "h": 260,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "PROFESSIONAL EXPERIENCE\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#0066CC",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "Senior Product Manager  •  TechCorp  •  Jan 2021 – Present\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "San Francisco, CA\n",
+          "attributes": {
+            "size": "10",
+            "color": "#666666",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "• Led product strategy for B2B SaaS platform serving 500+ enterprise customers\n",
+          "attributes": {
+            "size": "11",
+            "color": "#222222",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "• Launched 3 major features driving $4M in incremental ARR within 12 months\n",
+          "attributes": {
+            "size": "11",
+            "color": "#222222",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "• Built and managed roadmap for 15-person engineering team across 3 squads\n",
+          "attributes": {
+            "size": "11",
+            "color": "#222222",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "• Conducted 100+ customer interviews to inform product direction\n",
+          "attributes": {
+            "size": "11",
+            "color": "#222222",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#222222",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "Product Manager  •  StartupCo  •  Jun 2018 – Dec 2020\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "San Francisco, CA\n",
+          "attributes": {
+            "size": "10",
+            "color": "#666666",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "• Owned end-to-end product lifecycle for mobile app with 2M+ MAU\n",
+          "attributes": {
+            "size": "11",
+            "color": "#222222",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "• Increased user retention by 35% through onboarding redesign\n",
+          "attributes": {
+            "size": "11",
+            "color": "#222222",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "• Collaborated with design, eng, and marketing on quarterly OKRs\n",
+          "attributes": {
+            "size": "11",
+            "color": "#222222",
+            "font": "OpenSans"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Education",
+      "x": 50,
+      "y": 520,
+      "w": 495,
+      "h": 80,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "EDUCATION\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#0066CC",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "MBA  •  Stanford Graduate School of Business  •  2016 – 2018\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "BS Computer Science  •  University of California, Berkeley  •  2011 – 2015\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "GPA: 3.85/4.0  •  Phi Beta Kappa Honor Society\n",
+          "attributes": {
+            "size": "10",
+            "color": "#666666",
+            "font": "OpenSans"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Skills",
+      "x": 50,
+      "y": 610,
+      "w": 495,
+      "h": 95,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "SKILLS\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#0066CC",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "Product Strategy  •  Roadmap Planning  •  User Research  •  A/B Testing\n",
+          "attributes": {
+            "size": "11",
+            "color": "#222222",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "SQL  •  Python  •  Figma  •  Jira  •  Amplitude  •  Mixpanel\n",
+          "attributes": {
+            "size": "11",
+            "color": "#222222",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "Agile/Scrum  •  Cross-functional Leadership  •  Stakeholder Management\n",
+          "attributes": {
+            "size": "11",
+            "color": "#222222",
+            "font": "OpenSans"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Projects",
+      "x": 50,
+      "y": 715,
+      "w": 495,
+      "h": 130,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "KEY PROJECTS\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#0066CC",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "Enterprise Analytics Suite  •  2024\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "Led 0-to-1 product launch generating $2M ARR in first 6 months. Coordinated 20-person cross-functional team across product, eng, design, and GTM.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#222222",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "\n",
+          "attributes": {
+            "size": "11",
+            "color": "#222222",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "Self-Serve Onboarding Platform  •  2023\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "Reduced time-to-value from 14 days to 2 days, improving conversion 3x.\n",
+          "attributes": {
+            "size": "11",
+            "color": "#222222",
+            "font": "OpenSans"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Certifications",
+      "x": 50,
+      "y": 870,
+      "w": 495,
+      "h": 80,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "CERTIFICATIONS\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#0066CC",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "• Certified Scrum Product Owner (CSPO)  •  Scrum Alliance  •  2022\n",
+          "attributes": {
+            "size": "11",
+            "color": "#222222",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "• Pragmatic Marketing Certified (PMC-III)  •  Pragmatic Institute  •  2021\n",
+          "attributes": {
+            "size": "11",
+            "color": "#222222",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "• Google Analytics Individual Qualification  •  Google  •  2020\n",
+          "attributes": {
+            "size": "11",
+            "color": "#222222",
+            "font": "OpenSans"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Awards",
+      "x": 50,
+      "y": 960,
+      "w": 495,
+      "h": 90,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "AWARDS & RECOGNITION\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#0066CC",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "• Product Innovation Award  •  TechCorp  •  2023\n",
+          "attributes": {
+            "size": "11",
+            "color": "#222222",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "• Top 30 Under 30 Product Managers  •  Product Coalition  •  2022\n",
+          "attributes": {
+            "size": "11",
+            "color": "#222222",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "• Best Customer Impact Feature  •  StartupCo Annual Awards  •  2020\n",
+          "attributes": {
+            "size": "11",
+            "color": "#222222",
+            "font": "OpenSans"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Volunteer",
+      "x": 50,
+      "y": 1060,
+      "w": 495,
+      "h": 100,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "VOLUNTEER EXPERIENCE\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#0066CC",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "Product Mentor  •  Product School  •  2021 – Present\n",
+          "attributes": {
+            "bold": true,
+            "size": "11",
+            "color": "#1A1A1A",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "• Mentor 5+ aspiring product managers through structured curriculum\n",
+          "attributes": {
+            "size": "11",
+            "color": "#222222",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "• Conduct monthly portfolio reviews and career coaching sessions\n",
+          "attributes": {
+            "size": "11",
+            "color": "#222222",
+            "font": "OpenSans"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textSection",
+      "title": "Languages",
+      "x": 50,
+      "y": 1170,
+      "w": 495,
+      "h": 50,
+      "color": "#FFFFFF",
+      "borderColor": "#E0E0E0",
+      "borderWidth": 0,
+      "rotation": 0,
+      "flipX": false,
+      "flipY": false,
+      "delta": [
+        {
+          "insert": "LANGUAGES\n",
+          "attributes": {
+            "bold": true,
+            "size": "12",
+            "color": "#0066CC",
+            "font": "OpenSans"
+          }
+        },
+        {
+          "insert": "English (Native)  •  Spanish (Professional)  •  French (Conversational)\n",
+          "attributes": {
+            "size": "11",
+            "color": "#222222",
+            "font": "OpenSans"
+          }
+        }
+      ]
+    }
+  ]
+}
