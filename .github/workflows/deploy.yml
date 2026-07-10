@@ -1,4 +1,4 @@
-name: Build and Deploy Flutter Web to Hostinger
+name: Build and Deploy Flutter Web to Firebase Hosting
 
 on:
   push:
@@ -8,8 +8,6 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout code
@@ -40,15 +38,10 @@ jobs:
             --tree-shake-icons \
             --source-maps
 
-      - name: Push build output to deploy branch
-        run: |
-          cd build/web
-          git init
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git checkout -b hostinger-deploy
-          git add -A
-          git commit -m "deploy: $(date +'%Y-%m-%d %H:%M:%S')"
-          git push --force \
-            https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git \
-            hostinger-deploy
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          channelId: live
+          projectId: kitaura-app
