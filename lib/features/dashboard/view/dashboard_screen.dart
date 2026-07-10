@@ -1663,10 +1663,14 @@ class _AutoScrollingTemplateStripState
   void _onTick(Duration _) {
     if (_disposed || _paused || !_scrollCtrl.hasClients) return;
 
-    final position = _scrollCtrl.position;
-    if (!position.hasContentDimensions) return; // layout hasn't run yet — try again next frame
+    // Guard against ticker firing before ScrollController is attached to
+    // a laid-out ListView. hasClients alone isn't sufficient on first frame.
+    final position = _scrollCtrl.positions.isEmpty
+        ? null
+        : _scrollCtrl.positions.first;
+    if (position == null || !position.hasContentDimensions) return;
 
-    final max = _scrollCtrl.position.maxScrollExtent;
+    final max = position.maxScrollExtent;
     if (max <= 0) return;
 
     final next = _scrollCtrl.offset + _pxPerFrame;

@@ -209,11 +209,12 @@ class KitAuraApp extends ConsumerStatefulWidget {
 }
 
 class _KitAuraAppState extends ConsumerState<KitAuraApp> {
+
   @override
   void initState() {
     super.initState();
-    // Listen to auth state — dismiss splash the moment auth resolves,
-    // regardless of whether the feature flag stream has finished.
+
+  // Auth-based splash dismissal (independent of feature flag stream).
     FirebaseAuth.instance.authStateChanges().listen((user) {
       _dismissSplash();
     });
@@ -221,25 +222,22 @@ class _KitAuraAppState extends ConsumerState<KitAuraApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Track guest mode from feature flags. Null = still loading.
+  // Track guest mode from feature flags. Null = still loading.
     final flagsAsync = ref.watch(featureFlagsProvider);
-    _GuestMode.enabled = flagsAsync.value?.guestModeEnabled;
+    final newVal = flagsAsync.value?.guestModeEnabled;
+
+  // Only trigger router refresh when the value actually changes,
+  // not on every rebuild. This prevents an infinite rebuild loop.
+    if (_GuestMode.enabled != newVal) {
+      _GuestMode.enabled = newVal;
+    // Defer to next microtask so we don't notify during a build.
+      Future.microtask(() => _routerRefreshNotifier.refresh());
+    }
 
     // Dismiss splash as soon as feature flags resolve (success OR error).
     if (flagsAsync.hasValue || flagsAsync.hasError) {
       _dismissSplash();
     }
-
-    ref.listen(featureFlagsProvider, (prev, next) {
-      final newVal = next.value?.guestModeEnabled;
-      debugPrint('Guest mode changed: ${_GuestMode.enabled} → $newVal');
-      _GuestMode.enabled = newVal;
-      _routerRefreshNotifier.refresh();
-      // Dismiss splash on error too — never leave users stuck.
-      if (next.hasValue || next.hasError) {
-        _dismissSplash();
-      }
-    });
 
     return SkeletonizerConfig(
       data: SkeletonizerConfigData(
