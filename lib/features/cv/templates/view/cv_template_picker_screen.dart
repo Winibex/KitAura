@@ -247,49 +247,63 @@ class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen>
     }
 
     // Show loading while anon sign-in + doc bootstrap runs
+    final loadingContext = context;
     showDialog(
-      context: context,
+      context: loadingContext,
       barrierDismissible: false,
       barrierColor: Colors.black26,
-      builder: (_) => const Center(
-        child: Card(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 20, height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: AppColors.darkRaspberry,
+      builder: (_) => PopScope(
+        canPop: false,
+        child: const Center(
+          child: Card(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 20, height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.darkRaspberry,
+                    ),
                   ),
-                ),
-                SizedBox(width: 16),
-                Text(
-                  'Setting up your workspace...',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.prussianBlue,
+                  SizedBox(width: 16),
+                  Text(
+                    'Setting up your workspace...',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.prussianBlue,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
 
-    final uid = await ref.read(authControllerProvider.notifier)
-        .ensureAuthForAction(guestModeEnabled: guestEnabled);
+    try {
+      final uid = await ref.read(authControllerProvider.notifier)
+          .ensureAuthForAction(guestModeEnabled: guestEnabled);
 
-    // Dismiss loading
-    if (mounted && Navigator.canPop(context)) Navigator.pop(context);
+      // Dismiss loading dialog safely
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
 
-    if (uid == null && mounted) context.go('/');
-    return uid;
+      return uid;
+    } catch (e) {
+      // Dismiss loading dialog on error
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+      debugPrint('ensureAuth failed: $e');
+      return null;
+    }
   }
 
   void _showPreviewModal(TemplateModel template) {
@@ -300,16 +314,22 @@ class _CVTemplatePickerScreenState extends ConsumerState<CVTemplatePickerScreen>
         onUseTemplate: () async {
           final uid = await _ensureAuth();
           if (uid == null) return;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) context.go('/cv/edit/${template.id}');
-          });
+          // Close the preview modal first, then navigate.
+          if (mounted && Navigator.canPop(context)) {
+            Navigator.pop(context);
+          }
+          await Future.delayed(const Duration(milliseconds: 50));
+          if (mounted) context.go('/cv/edit/${template.id}');
         },
         onStartBlank: () async {
           final uid = await _ensureAuth();
           if (uid == null) return;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) context.go('/cv/edit/blank');
-          });
+          // Close the preview modal first, then navigate.
+          if (mounted && Navigator.canPop(context)) {
+            Navigator.pop(context);
+          }
+          await Future.delayed(const Duration(milliseconds: 50));
+          if (mounted) context.go('/cv/edit/blank');
         },
       ),
     );

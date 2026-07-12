@@ -6,6 +6,7 @@
 
 import 'dart:convert';
 import 'dart:js_interop';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -147,10 +148,17 @@ class _CvEditorScreenState extends ConsumerState<CvEditorScreen> {
     if (!mounted) return;
     final s = _editor.state;
 
-    // Show paywall dialog
     if (s.paywallMessage != null) {
-      showDialog(context: context, builder: (_) => const UpgradeModal());
-      _editor.clearPaywallMessage();
+      // Don't show paywall for anonymous users during initial load —
+      // their subscription doc may not exist yet.
+      final user = FirebaseAuth.instance.currentUser;
+      final isAnon = user?.isAnonymous ?? false;
+      if (isAnon && s.isTemplateLoading) {
+        _editor.clearPaywallMessage();
+      } else {
+        showDialog(context: context, builder: (_) => const UpgradeModal());
+        _editor.clearPaywallMessage();
+      }
     }
 
     // URL update: after first save, replace template ID in URL with real doc ID
