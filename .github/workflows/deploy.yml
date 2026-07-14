@@ -39,33 +39,22 @@ jobs:
             --source-maps \
             --pwa-strategy none
 
-      # Existing users have the old SW registered at this URL.
-      # Their browser periodically checks it for updates.
-      # This self-destructing version: skipWaiting → clears caches → unregisters itself.
-      # After one visit, the SW is gone forever and cache headers take over.
+      # Safety net: existing users may still have an old SW registered.
+      # This self-destructing version activates, clears caches, unregisters.
       - name: Add self-destructing service worker (cleans up old installations)
         run: |
           cat > build/web/flutter_service_worker.js << 'EOSW'
           'use strict';
-          // Self-destructing service worker.
-          // Replaces the old Flutter SW so existing browsers detect the "update",
-          // install this version, which immediately clears all caches and
-          // unregisters itself. One-time transition to header-only caching.
-          self.addEventListener('install', function() {
-            self.skipWaiting();
-          });
+          self.addEventListener('install', function() { self.skipWaiting(); });
           self.addEventListener('activate', function(event) {
             event.waitUntil(
               caches.keys()
                 .then(function(names) {
                   return Promise.all(names.map(function(n) { return caches.delete(n); }));
                 })
-                .then(function() {
-                  return self.registration.unregister();
-                })
+                .then(function() { return self.registration.unregister(); })
             );
           });
-          // Pass through all fetches to the network (no caching).
           self.addEventListener('fetch', function(event) {
             event.respondWith(fetch(event.request));
           });

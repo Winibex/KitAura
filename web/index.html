@@ -56,7 +56,6 @@
     z-index: 9999;
     transition: opacity 0.4s ease;
   ">
-  <!-- Animated SVG wordmark instead of pixelated PNG -->
   <div style="
       color: white;
       font-family: 'Segoe UI', system-ui, sans-serif;
@@ -75,7 +74,6 @@
       opacity: 0;
       animation: fadeUp 0.6s ease forwards 0.5s;
     ">Your career, beautifully crafted.</div>
-  <!-- Loading bar -->
   <div style="
       margin-top: 48px;
       width: 48px;
@@ -107,9 +105,9 @@
     100% { transform: translateX(100%); }
   }
 </style>
+
 <script>
   var __splashRemoved = false;
-  // Central splash removal. Idempotent.
   window.removeSplash = function () {
     if (__splashRemoved) return;
     __splashRemoved = true;
@@ -120,54 +118,68 @@
       splash.parentNode && splash.parentNode.removeChild(splash);
     }, 400);
   };
-  // Safety net: dismiss the splash the moment Flutter renders its first
-  // frame, even if the Dart-side logic hasn't called removeSplash() yet.
-  // This event fires from the Flutter engine itself.
   window.addEventListener('flutter-first-frame', function () {
     window.removeSplash();
   });
 </script>
 
 <!--
-  Service Worker Cleanup
-  KitAura is always-online (Firebase, AI, Firestore) — no offline value.
-  Firebase Hosting cache headers handle versioning:
-    index.html              → no-cache (always fresh on every visit)
-    hashed .js/.css/fonts   → 1-year immutable (new build = new hash = new URL)
-  The old SW intercepted fetches and served stale cached content, bypassing
-  these headers. This block unregisters it + clears its caches.
-  The deployment pipeline also ships a self-destructing flutter_service_worker.js
-  so existing users' browsers pick up the "update" and auto-clean.
+  Cache Management
+  Flutter Web outputs fixed-name files (flutter_bootstrap.js, main.dart.js)
+  that change every build. firebase.json sets these to "no-cache" (cache but
+  always revalidate via ETag). Fonts and images stay immutable.
+
+  Problem: existing users may have old versions cached with "immutable" headers
+  from a previous misconfiguration. The fetch() with cache:'reload' below
+  bypasses the old immutable entry and updates the browser cache with the
+  server's current response (which now has "no-cache" headers).
+  This runs once per CACHE_VER bump, controlled by localStorage.
 -->
 <script>
   (function () {
-    if (!('serviceWorker' in navigator)) return;
-
-    // Unregister all service workers from the main thread
-    navigator.serviceWorker.getRegistrations().then(function (regs) {
-      regs.forEach(function (r) { r.unregister(); });
-    });
-
-    // Clear all SW caches (flutter_assets, fonts, etc.)
-    if ('caches' in window) {
-      caches.keys().then(function (names) {
-        names.forEach(function (n) { caches.delete(n); });
+    // Service worker cleanup (belt and suspenders)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function (regs) {
+        regs.forEach(function (r) { r.unregister(); });
       });
+      if ('caches' in window) {
+        caches.keys().then(function (names) {
+          names.forEach(function (n) { caches.delete(n); });
+        });
+      }
     }
 
-    // One-time auto-reload when the self-destructing SW takes control.
-    // This transitions existing users from SW-cached to header-cached content.
-    // After the SW unregisters itself, this listener becomes a permanent no-op.
-    var _reloading = false;
-    navigator.serviceWorker.addEventListener('controllerchange', function () {
-      if (!_reloading) {
-        _reloading = true;
-        window.location.reload();
-      }
-    });
+    // --- Cache-bust + Flutter loader ---
+    var CACHE_VER = '1';
+    var isStale = false;
+    try { isStale = localStorage.getItem('kitaura_cv') !== CACHE_VER; } catch(e) {}
+
+    function loadFlutter() {
+      var s = document.createElement('script');
+      s.src = 'flutter_bootstrap.js';
+      s.async = true;
+      document.body.appendChild(s);
+    }
+
+    if (isStale) {
+      // Pre-fetch critical files with cache:'reload' to bypass old immutable
+      // entries and replace them with the server's current (no-cache) response.
+      // After this, Flutter loads from the updated cache — no stale content.
+      Promise.all([
+        fetch('flutter_bootstrap.js', { cache: 'reload' }),
+        fetch('main.dart.js', { cache: 'reload' })
+      ]).then(function () {
+        try { localStorage.setItem('kitaura_cv', CACHE_VER); } catch(e) {}
+        loadFlutter();
+      }).catch(function () {
+        // Network error — load Flutter anyway (uses whatever cache has)
+        try { localStorage.setItem('kitaura_cv', CACHE_VER); } catch(e) {}
+        loadFlutter();
+      });
+    } else {
+      loadFlutter();
+    }
   })();
 </script>
-
-<script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

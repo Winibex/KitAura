@@ -50,20 +50,11 @@
     ],
     "headers": [
       {
-        "source": "**/*.@(js|css|woff|woff2|ttf|otf)",
+        "source": "**",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "public, max-age=31536000, immutable"
-          }
-        ]
-      },
-      {
-        "source": "**/*.@(jpg|jpeg|gif|png|webp|svg|ico)",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public, max-age=31536000, immutable"
+            "value": "no-cache"
           }
         ]
       },
@@ -77,29 +68,20 @@
         ]
       },
       {
-        "source": "flutter_bootstrap.js",
+        "source": "**/*.@(woff|woff2|ttf|otf)",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "no-cache, no-store, must-revalidate"
+            "value": "public, max-age=31536000, immutable"
           }
         ]
       },
       {
-        "source": "flutter_service_worker.js",
+        "source": "**/*.@(jpg|jpeg|gif|png|webp|svg|ico)",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "no-cache, no-store, must-revalidate"
-          }
-        ]
-      },
-      {
-        "source": "manifest.json",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache, no-store, must-revalidate"
+            "value": "public, max-age=31536000, immutable"
           }
         ]
       }
