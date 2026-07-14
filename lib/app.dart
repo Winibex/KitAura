@@ -248,7 +248,7 @@ class _KitAuraAppState extends ConsumerState<KitAuraApp> {
         justifyMultiLineText: true,
       ),
       child: MaterialApp.router(
-        title: 'Kitaura v3',
+        title: 'Kitaura v4',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         routerConfig: _router,
