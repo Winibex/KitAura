@@ -29,7 +29,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import '../shared/widgets/no_internet_overlay.dart';
 import 'package:web/web.dart' as web;
 
-
 /// Synchronous flag for the GoRouter redirect.
 /// Updated on every KitAuraApp rebuild via ref.watch.
 class _RouterRefreshNotifier extends ChangeNotifier {
@@ -249,7 +248,7 @@ class _KitAuraAppState extends ConsumerState<KitAuraApp> {
         justifyMultiLineText: true,
       ),
       child: MaterialApp.router(
-        title: 'Kitaura v2',
+        title: 'Kitaura v3',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         routerConfig: _router,

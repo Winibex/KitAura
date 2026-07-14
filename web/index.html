@@ -4,26 +4,20 @@
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
-
     The path provided below has to start and end with a slash "/" in order for
     it to work correctly.
-
     For more details:
     * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
     This is a placeholder for base href that will be replaced by the value of
     the `--base-href` argument provided to `flutter build`.
   -->
   <base href="$FLUTTER_BASE_HREF">
-
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="Build professional CVs, cover letters, and proposals in minutes with AI. Free to start, no signup required." />
-
   <!-- Primary Meta Tags -->
   <meta name="title" content="KitAura — AI-Powered CV, Cover Letter & Proposal Builder" />
   <meta name="keywords" content="CV builder, resume builder, cover letter, proposal builder, AI resume, LinkedIn content, free CV" />
-
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://app-kitaura.winibex.com/" />
@@ -33,23 +27,19 @@
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:site_name" content="KitAura" />
-
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:url" content="https://app-kitaura.winibex.com/" />
   <meta name="twitter:title" content="KitAura — AI-Powered CV, Cover Letter & Proposal Builder" />
   <meta name="twitter:description" content="Build professional CVs, cover letters, and proposals in minutes with AI. Free to start, no signup required." />
   <meta name="twitter:image" content="https://app-kitaura.winibex.com/icons/og-image.png" />
-
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="kitaura">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
-
   <title>kitaura</title>
   <link rel="manifest" href="manifest.json">
 </head>
@@ -66,7 +56,6 @@
     z-index: 9999;
     transition: opacity 0.4s ease;
   ">
-
   <!-- Animated SVG wordmark instead of pixelated PNG -->
   <div style="
       color: white;
@@ -77,7 +66,6 @@
       opacity: 0;
       animation: fadeUp 0.6s ease forwards 0.2s;
     ">KITAURA</div>
-
   <div style="
       color: #76818E;
       font-family: 'Segoe UI', system-ui, sans-serif;
@@ -87,7 +75,6 @@
       opacity: 0;
       animation: fadeUp 0.6s ease forwards 0.5s;
     ">Your career, beautifully crafted.</div>
-
   <!-- Loading bar -->
   <div style="
       margin-top: 48px;
@@ -109,7 +96,6 @@
       "></div>
   </div>
 </div>
-
 <style>
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(8px); }
@@ -121,10 +107,8 @@
     100% { transform: translateX(100%); }
   }
 </style>
-
 <script>
   var __splashRemoved = false;
-
   // Central splash removal. Idempotent.
   window.removeSplash = function () {
     if (__splashRemoved) return;
@@ -136,13 +120,52 @@
       splash.parentNode && splash.parentNode.removeChild(splash);
     }, 400);
   };
-
   // Safety net: dismiss the splash the moment Flutter renders its first
   // frame, even if the Dart-side logic hasn't called removeSplash() yet.
   // This event fires from the Flutter engine itself.
   window.addEventListener('flutter-first-frame', function () {
     window.removeSplash();
   });
+</script>
+
+<!--
+  Service Worker Cleanup
+  KitAura is always-online (Firebase, AI, Firestore) — no offline value.
+  Firebase Hosting cache headers handle versioning:
+    index.html              → no-cache (always fresh on every visit)
+    hashed .js/.css/fonts   → 1-year immutable (new build = new hash = new URL)
+  The old SW intercepted fetches and served stale cached content, bypassing
+  these headers. This block unregisters it + clears its caches.
+  The deployment pipeline also ships a self-destructing flutter_service_worker.js
+  so existing users' browsers pick up the "update" and auto-clean.
+-->
+<script>
+  (function () {
+    if (!('serviceWorker' in navigator)) return;
+
+    // Unregister all service workers from the main thread
+    navigator.serviceWorker.getRegistrations().then(function (regs) {
+      regs.forEach(function (r) { r.unregister(); });
+    });
+
+    // Clear all SW caches (flutter_assets, fonts, etc.)
+    if ('caches' in window) {
+      caches.keys().then(function (names) {
+        names.forEach(function (n) { caches.delete(n); });
+      });
+    }
+
+    // One-time auto-reload when the self-destructing SW takes control.
+    // This transitions existing users from SW-cached to header-cached content.
+    // After the SW unregisters itself, this listener becomes a permanent no-op.
+    var _reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (!_reloading) {
+        _reloading = true;
+        window.location.reload();
+      }
+    });
+  })();
 </script>
 
 <script src="flutter_bootstrap.js" async></script>
